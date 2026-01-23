@@ -27,10 +27,12 @@ Thumbs.db
 # Backend (Java/Maven)
 # =====================================================
 backend/target/
+backend/data/
 *.class
 *.jar
 *.war
 *.log
+*.db
 
 # =====================================================
 # Frontend (Node/npm)

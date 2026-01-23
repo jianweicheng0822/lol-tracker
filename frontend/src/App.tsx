@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 
 // --- Type Definitions ---
 type Region = "NA" | "EUW" | "KR" | "JP" | "BR" | "OCE";
@@ -31,6 +31,15 @@ type PlayerStats = {
   averageKda: number;
 };
 
+type FavoritePlayer = {
+  id: number;
+  puuid: string;
+  gameName: string;
+  tagLine: string;
+  region: string;
+  savedAt: string;
+};
+
 export default function LoLTracker() {
   // --- State Hooks ---
   const [gameName, setGameName] = useState("");
@@ -44,6 +53,10 @@ export default function LoLTracker() {
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [expandedMatchId, setExpandedMatchId] = useState<string | null>(null);
+
+  // Favorites state
+  const [favorites, setFavorites] = useState<FavoritePlayer[]>([]);
+  const [isFavorite, setIsFavorite] = useState(false);
 
   // --- Helpers ---
   const canSearch = useMemo(() => {
@@ -74,6 +87,87 @@ export default function LoLTracker() {
     }
   };
 
+  // Load favorites on app start
+  const loadFavorites = async () => {
+    try {
+      const res = await fetch("http://localhost:8080/api/favorites");
+      if (res.ok) {
+        const data = await res.json();
+        setFavorites(data);
+      }
+    } catch (e) {
+      console.error("Failed to load favorites:", e);
+    }
+  };
+
+  // Check if current player is a favorite
+  const checkIsFavorite = async (puuid: string) => {
+    try {
+      const res = await fetch(`http://localhost:8080/api/favorites/check/${puuid}`);
+      if (res.ok) {
+        const data = await res.json();
+        setIsFavorite(data.isFavorite);
+      }
+    } catch (e) {
+      console.error("Failed to check favorite:", e);
+    }
+  };
+
+  // Add current player to favorites
+  const addToFavorites = async () => {
+    if (!account) return;
+
+    try {
+      const res = await fetch("http://localhost:8080/api/favorites", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          puuid: account.puuid,
+          gameName: account.gameName,
+          tagLine: account.tagLine,
+          region: region,
+        }),
+      });
+
+      if (res.ok) {
+        setIsFavorite(true);
+        loadFavorites(); // Refresh list
+      }
+    } catch (e) {
+      console.error("Failed to add favorite:", e);
+    }
+  };
+
+  // Remove player from favorites
+  const removeFromFavorites = async (puuid: string) => {
+    try {
+      const res = await fetch(`http://localhost:8080/api/favorites/${puuid}`, {
+        method: "DELETE",
+      });
+
+      if (res.ok) {
+        if (account?.puuid === puuid) {
+          setIsFavorite(false);
+        }
+        loadFavorites(); // Refresh list
+      }
+    } catch (e) {
+      console.error("Failed to remove favorite:", e);
+    }
+  };
+
+  // Load a favorite player (search for them)
+  const loadFavoritePlayer = (fav: FavoritePlayer) => {
+    setGameName(fav.gameName);
+    setTag(fav.tagLine);
+    setRegion(fav.region as Region);
+  };
+
+  // Load favorites when app starts
+  useEffect(() => {
+    loadFavorites();
+  }, []);
+
   const search = async () => {
     if (!canSearch) return;
 
@@ -83,6 +177,7 @@ export default function LoLTracker() {
     setMatches([]);
     setStats(null);
     setExpandedMatchId(null);
+    setIsFavorite(false);
 
     try {
       // 1) Account
@@ -121,6 +216,9 @@ export default function LoLTracker() {
         setStats(statsData);
       }
 
+      // 4) Check if this player is a favorite
+      await checkIsFavorite(accountData.puuid);
+
       setStatus("idle");
     } catch (e: any) {
       console.error("Search error:", e);
@@ -133,6 +231,35 @@ export default function LoLTracker() {
     <div style={styles.page}>
       <div style={styles.card}>
         <h1 style={styles.title}>LoL Tracker</h1>
+
+        {/* Favorites Section */}
+        {favorites.length > 0 && (
+          <div style={styles.favoritesSection}>
+            <h3 style={{ margin: "0 0 10px 0", fontSize: 14, opacity: 0.8 }}>
+              Favorite Players
+            </h3>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {favorites.map((fav) => (
+                <div key={fav.id} style={styles.favoriteChip}>
+                  <span
+                    style={{ cursor: "pointer" }}
+                    onClick={() => loadFavoritePlayer(fav)}
+                    title="Click to search"
+                  >
+                    {fav.gameName}#{fav.tagLine}
+                  </span>
+                  <button
+                    style={styles.removeButton}
+                    onClick={() => removeFromFavorites(fav.puuid)}
+                    title="Remove from favorites"
+                  >
+                    ×
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         <div style={styles.formRow}>
           <select
@@ -178,9 +305,17 @@ export default function LoLTracker() {
 
         {account && (
           <div style={styles.accountHeader}>
-            <h2 style={{ margin: 0 }}>
-              {account.gameName} <span style={{ color: "#94a3b8" }}>#{account.tagLine}</span>
-            </h2>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <h2 style={{ margin: 0 }}>
+                {account.gameName} <span style={{ color: "#94a3b8" }}>#{account.tagLine}</span>
+              </h2>
+              <button
+                style={isFavorite ? styles.favoriteButtonActive : styles.favoriteButton}
+                onClick={() => isFavorite ? removeFromFavorites(account.puuid) : addToFavorites()}
+              >
+                {isFavorite ? "★ Favorited" : "☆ Add to Favorites"}
+              </button>
+            </div>
           </div>
         )}
 
@@ -195,6 +330,7 @@ export default function LoLTracker() {
               <div style={styles.statItem}>
                 <div style={styles.statValue}>
                   {stats.winRate}%
+
                 </div>
                 <div style={styles.statLabel}>Win Rate</div>
                 <div style={{ fontSize: 11, opacity: 0.6 }}>
@@ -455,5 +591,51 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 12,
     opacity: 0.7,
     marginTop: 4,
+  },
+
+  // Favorites Styles
+  favoritesSection: {
+    background: "rgba(30,41,59,0.3)",
+    border: "1px solid rgba(148,163,184,0.1)",
+    borderRadius: 8,
+    padding: 15,
+    marginBottom: 20,
+  },
+  favoriteChip: {
+    display: "flex",
+    alignItems: "center",
+    gap: 6,
+    background: "rgba(99,102,241,0.15)",
+    border: "1px solid rgba(99,102,241,0.3)",
+    borderRadius: 20,
+    padding: "6px 12px",
+    fontSize: 13,
+  },
+  removeButton: {
+    background: "none",
+    border: "none",
+    color: "#94a3b8",
+    cursor: "pointer",
+    fontSize: 16,
+    padding: 0,
+    lineHeight: 1,
+  },
+  favoriteButton: {
+    padding: "8px 16px",
+    borderRadius: 8,
+    background: "rgba(99,102,241,0.1)",
+    border: "1px solid rgba(99,102,241,0.3)",
+    color: "#a5b4fc",
+    cursor: "pointer",
+    fontSize: 13,
+  },
+  favoriteButtonActive: {
+    padding: "8px 16px",
+    borderRadius: 8,
+    background: "rgba(99,102,241,0.3)",
+    border: "1px solid rgba(99,102,241,0.5)",
+    color: "#c7d2fe",
+    cursor: "pointer",
+    fontSize: 13,
   },
 };

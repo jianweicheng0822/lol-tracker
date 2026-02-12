@@ -8,6 +8,12 @@ export type Account = {
   tagLine: string;
 };
 
+export type MatchParticipant = {
+  summonerName: string;
+  championName: string;
+  puuid: string;
+};
+
 export type MatchSummary = {
   matchId: string;
   championName: string;
@@ -17,6 +23,16 @@ export type MatchSummary = {
   win: boolean;
   gameDurationSec: number;
   gameEndTimestamp: number;
+  championLevel: number;
+  summoner1Id: number;
+  summoner2Id: number;
+  items: number[];
+  totalMinionsKilled: number;
+  neutralMinionsKilled: number;
+  queueId: number;
+  teamTotalKills: number;
+  allies: MatchParticipant[];
+  enemies: MatchParticipant[];
 };
 
 export type PlayerStats = {

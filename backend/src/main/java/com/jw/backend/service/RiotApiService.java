@@ -220,8 +220,50 @@ public class RiotApiService {
             long duration = info.path("gameDuration").asLong(0);
             long endTs = info.path("gameEndTimestamp").asLong(0);
 
+            int championLevel = me != null ? me.path("champLevel").asInt(0) : 0;
+            int summoner1Id = me != null ? me.path("summoner1Id").asInt(0) : 0;
+            int summoner2Id = me != null ? me.path("summoner2Id").asInt(0) : 0;
+
+            int[] items = new int[7];
+            if (me != null) {
+                for (int i = 0; i < 7; i++) {
+                    items[i] = me.path("item" + i).asInt(0);
+                }
+            }
+
+            int totalMinionsKilled = me != null ? me.path("totalMinionsKilled").asInt(0) : 0;
+            int neutralMinionsKilled = me != null ? me.path("neutralMinionsKilled").asInt(0) : 0;
+            int queueId = info.path("queueId").asInt(0);
+
+            int myTeamId = me != null ? me.path("teamId").asInt(0) : 0;
+
+            int teamTotalKills = 0;
+            List<com.jw.backend.dto.MatchParticipantDto> allies = new ArrayList<>();
+            List<com.jw.backend.dto.MatchParticipantDto> enemies = new ArrayList<>();
+
+            for (JsonNode p : participants) {
+                String pPuuid = p.path("puuid").asText("");
+                String pName = p.path("riotIdGameName").asText(p.path("summonerName").asText("Unknown"));
+                String pChamp = p.path("championName").asText("Unknown");
+                int pTeam = p.path("teamId").asInt(0);
+
+                var dto = new com.jw.backend.dto.MatchParticipantDto(pName, pChamp, pPuuid);
+
+                if (pTeam == myTeamId) {
+                    teamTotalKills += p.path("kills").asInt(0);
+                    if (!pPuuid.equals(puuid)) {
+                        allies.add(dto);
+                    }
+                } else {
+                    enemies.add(dto);
+                }
+            }
+
             return new com.jw.backend.dto.MatchSummaryDto(
-                    matchId, champion, kills, deaths, assists, win, duration, endTs
+                    matchId, champion, kills, deaths, assists, win, duration, endTs,
+                    championLevel, summoner1Id, summoner2Id, items,
+                    totalMinionsKilled, neutralMinionsKilled, queueId, teamTotalKills,
+                    allies, enemies
             );
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse match detail JSON for " + matchId, e);

@@ -1,5 +1,7 @@
 package com.jw.backend.dto;
 
+import java.util.List;
+
 public record MatchSummaryDto(
         String matchId,
         String championName,
@@ -8,5 +10,15 @@ public record MatchSummaryDto(
         int assists,
         boolean win,
         long gameDurationSec,
-        long gameEndTimestamp
+        long gameEndTimestamp,
+        int championLevel,
+        int summoner1Id,
+        int summoner2Id,
+        int[] items,
+        int totalMinionsKilled,
+        int neutralMinionsKilled,
+        int queueId,
+        int teamTotalKills,
+        List<MatchParticipantDto> allies,
+        List<MatchParticipantDto> enemies
 ) {}

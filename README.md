@@ -12,6 +12,9 @@ Search for any player by their Riot ID and view their recent match history, KDA,
   - Win rate percentage
   - Average KDA
   - Average kills, deaths, and assists
+- **Favorite Players** - Save players to favorites for quick access
+  - Persistent storage (survives app restart)
+  - Click to quickly search saved players
 - **Multi-Region Support** - NA, EUW, KR, JP, BR, OCE
 
 ## Tech Stack
@@ -19,6 +22,8 @@ Search for any player by their Riot ID and view their recent match history, KDA,
 ### Backend
 - Java 21
 - Spring Boot 3.5
+- Spring Data JPA
+- H2 Database
 - Maven
 - Riot Games API
 
@@ -31,6 +36,7 @@ Search for any player by their Riot ID and view their recent match history, KDA,
 - JUnit 5
 - MockMvc
 - Mockito
+- 45 unit tests
 
 ## How to Run
 
@@ -85,6 +91,10 @@ Search for any player by their Riot ID and view their recent match history, KDA,
 | GET | `/api/matches/recent` | Get recent match IDs |
 | GET | `/api/matches/summary` | Get match summaries with KDA |
 | GET | `/api/stats` | Get aggregated player statistics |
+| GET | `/api/favorites` | Get all favorite players |
+| POST | `/api/favorites` | Add a player to favorites |
+| DELETE | `/api/favorites/{puuid}` | Remove a player from favorites |
+| GET | `/api/favorites/check/{puuid}` | Check if player is a favorite |
 
 ## Project Structure
 
@@ -92,16 +102,32 @@ Search for any player by their Riot ID and view their recent match history, KDA,
 lol-tracker/
 ├── backend/
 │   ├── src/main/java/com/jw/backend/
-│   │   ├── controller/        # REST API endpoints
+│   │   ├── *Controller.java   # REST API endpoints
 │   │   ├── service/           # Business logic
+│   │   ├── repository/        # Database access (JPA)
+│   │   ├── entity/            # Database entities
 │   │   ├── dto/               # Data transfer objects
 │   │   ├── region/            # Region enum mapping
 │   │   └── exception/         # Error handling
-│   └── src/test/              # Unit tests
+│   └── src/test/              # Unit tests (45 tests)
 └── frontend/
     └── src/
         ├── App.tsx            # Main application component
         └── main.tsx           # Entry point
+```
+
+## Architecture
+
+```
+┌─────────────┐     ┌─────────────┐     ┌─────────────┐
+│   Frontend  │ ──► │   Backend   │ ──► │  Database   │
+│   (React)   │     │(Spring Boot)│     │    (H2)     │
+└─────────────┘     └─────────────┘     └─────────────┘
+                           │
+                           ▼
+                    ┌─────────────┐
+                    │  Riot API   │
+                    └─────────────┘
 ```
 
 ## Running Tests
@@ -110,6 +136,22 @@ lol-tracker/
 cd backend
 ./mvnw test
 ```
+
+**Test Coverage:**
+- RiotRegionTest (14 tests)
+- GlobalExceptionHandlerTest (3 tests)
+- SummonerControllerTest (5 tests)
+- MatchControllerTest (12 tests)
+- FavoriteControllerTest (10 tests)
+
+## Database Console
+
+While the backend is running, you can view the H2 database:
+
+1. Go to `http://localhost:8080/h2-console`
+2. JDBC URL: `jdbc:h2:file:./data/lol-tracker-db`
+3. Username: `sa`
+4. Password: (leave empty)
 
 ## License
 

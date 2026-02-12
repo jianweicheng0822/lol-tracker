@@ -139,6 +139,58 @@ public class RiotApiService {
         cache.put(key, new CacheEntry(value, expiresAt));
 
     }
+    /**
+     * Summoner-v4 uses platform regions: na1 / euw1 / kr / ...
+     */
+    public String getSummonerByPuuid(String puuid, RiotRegion region) {
+        long ttlMs = 24L * 60 * 60 * 1000;
+
+        String baseUrl = "https://" + region.platform() + ".api.riotgames.com";
+        String cacheKey = "summoner:" + region.platform() + ":" + puuid;
+
+        String cached = getCached(cacheKey);
+        if (cached != null) return cached;
+
+        RestClient client = RestClient.builder()
+                .baseUrl(baseUrl)
+                .build();
+
+        String result = client.get()
+                .uri("/lol/summoner/v4/summoners/by-puuid/{puuid}", puuid)
+                .header("X-Riot-Token", apiKey)
+                .retrieve()
+                .body(String.class);
+
+        putCached(cacheKey, result, ttlMs);
+        return result;
+    }
+
+    /**
+     * League-v4 uses platform regions: na1 / euw1 / kr / ...
+     */
+    public String getRankedEntries(String summonerId, RiotRegion region) {
+        long ttlMs = 30L * 60 * 1000;
+
+        String baseUrl = "https://" + region.platform() + ".api.riotgames.com";
+        String cacheKey = "ranked:" + region.platform() + ":" + summonerId;
+
+        String cached = getCached(cacheKey);
+        if (cached != null) return cached;
+
+        RestClient client = RestClient.builder()
+                .baseUrl(baseUrl)
+                .build();
+
+        String result = client.get()
+                .uri("/lol/league/v4/entries/by-summoner/{summonerId}", summonerId)
+                .header("X-Riot-Token", apiKey)
+                .retrieve()
+                .body(String.class);
+
+        putCached(cacheKey, result, ttlMs);
+        return result;
+    }
+
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     // A small thread pool for parallel external calls (demo-friendly)

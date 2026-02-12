@@ -12,10 +12,14 @@ Search for any player by their Riot ID and view their recent match history, KDA,
   - Win rate percentage
   - Average KDA
   - Average kills, deaths, and assists
+- **Ranked Info** - Display ranked tier, rank, LP, and win/loss for Solo/Duo and Flex queues
+  - Tier icons from Community Dragon CDN
+  - Graceful "Unranked" display for unranked players
 - **Favorite Players** - Save players to favorites for quick access
   - Persistent storage (survives app restart)
   - Click to quickly search saved players
 - **Multi-Region Support** - NA, EUW, KR, JP, BR, OCE
+- **Client-Side Routing** - SPA navigation with React Router
 
 ## Tech Stack
 
@@ -31,6 +35,7 @@ Search for any player by their Riot ID and view their recent match history, KDA,
 - React 19
 - TypeScript
 - Vite
+- React Router
 
 ### Testing
 - JUnit 5
@@ -95,6 +100,7 @@ Search for any player by their Riot ID and view their recent match history, KDA,
 | POST | `/api/favorites` | Add a player to favorites |
 | DELETE | `/api/favorites/{puuid}` | Remove a player from favorites |
 | GET | `/api/favorites/check/{puuid}` | Check if player is a favorite |
+| GET | `/api/ranked` | Get ranked entries (Solo/Duo, Flex) |
 
 ## Project Structure
 
@@ -112,8 +118,19 @@ lol-tracker/
 │   └── src/test/              # Unit tests (45 tests)
 └── frontend/
     └── src/
-        ├── App.tsx            # Main application component
-        └── main.tsx           # Entry point
+        ├── App.tsx            # Router setup
+        ├── main.tsx           # Entry point
+        ├── api.ts             # API client functions
+        ├── types.ts           # TypeScript types
+        ├── components/        # Reusable UI components
+        │   ├── SearchBar.tsx
+        │   ├── MatchList.tsx
+        │   ├── StatsBar.tsx
+        │   ├── RankBadge.tsx
+        │   └── FavoritesList.tsx
+        └── pages/             # Route pages
+            ├── HomePage.tsx
+            └── PlayerPage.tsx
 ```
 
 ## Architecture

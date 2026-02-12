@@ -221,6 +221,6 @@ class FavoriteControllerTest {
 
         // ASSERT - Verify service was called with correct params
         verify(favoriteService, times(1))
-            .addFavorite("test-puuid", "TestPlayer", "TAG", "NA");
+            .addFavorite("test-puuid",   "TestPlayer", "TAG", "NA");
     }
 }

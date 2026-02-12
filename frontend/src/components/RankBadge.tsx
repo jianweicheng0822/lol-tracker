@@ -12,6 +12,8 @@ function tierIconUrl(tier: string): string {
   return `${TIER_ICON_BASE}/${tier.toLowerCase()}.png`;
 }
 
+const APEX_TIERS = new Set(["MASTER", "GRANDMASTER", "CHALLENGER"]);
+
 function formatTier(tier: string): string {
   return tier.charAt(0) + tier.slice(1).toLowerCase();
 }
@@ -32,7 +34,7 @@ function QueueBadge({ entry }: { entry: RankedEntry }) {
         />
         <div>
           <div style={styles.tierRow}>
-            <span style={styles.tier}>{formatTier(entry.tier)} {entry.rank}</span>
+            <span style={styles.tier}>{formatTier(entry.tier)}{APEX_TIERS.has(entry.tier) ? "" : ` ${entry.rank}`}</span>
             <span style={styles.lp}>{entry.leaguePoints} LP</span>
           </div>
           <div style={styles.record}>

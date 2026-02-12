@@ -20,16 +20,7 @@ public class RankedService {
     }
 
     public List<RankedEntryDto> getRankedInfo(String puuid, RiotRegion region) {
-        String summonerJson = riotApiService.getSummonerByPuuid(puuid, region);
-        String summonerId;
-        try {
-            JsonNode node = objectMapper.readTree(summonerJson);
-            summonerId = node.path("id").asText();
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to parse summoner JSON", e);
-        }
-
-        String rankedJson = riotApiService.getRankedEntries(summonerId, region);
+        String rankedJson = riotApiService.getRankedEntriesByPuuid(puuid, region);
         try {
             JsonNode arr = objectMapper.readTree(rankedJson);
             List<RankedEntryDto> entries = new ArrayList<>();

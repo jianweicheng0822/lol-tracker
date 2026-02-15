@@ -143,6 +143,33 @@ public class RiotApiService {
      * League-v4 uses platform regions: na1 / euw1 / kr / ...
      * Uses the by-puuid endpoint directly — no summoner ID needed.
      */
+    /**
+     * Summoner-v4 uses platform regions: na1 / euw1 / kr / ...
+     * Returns summoner data including profileIconId, summonerLevel, etc.
+     */
+    public String getSummonerByPuuid(String puuid, RiotRegion region) {
+        long ttlMs = 30L * 60 * 1000;
+
+        String baseUrl = "https://" + region.platform() + ".api.riotgames.com";
+        String cacheKey = "summoner:" + region.platform() + ":" + puuid;
+
+        String cached = getCached(cacheKey);
+        if (cached != null) return cached;
+
+        RestClient client = RestClient.builder()
+                .baseUrl(baseUrl)
+                .build();
+
+        String result = client.get()
+                .uri("/lol/summoner/v4/summoners/by-puuid/{puuid}", puuid)
+                .header("X-Riot-Token", apiKey)
+                .retrieve()
+                .body(String.class);
+
+        putCached(cacheKey, result, ttlMs);
+        return result;
+    }
+
     public String getRankedEntriesByPuuid(String puuid, RiotRegion region) {
         long ttlMs = 30L * 60 * 1000;
 

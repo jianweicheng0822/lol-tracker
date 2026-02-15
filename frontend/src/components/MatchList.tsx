@@ -5,7 +5,41 @@ type MatchListProps = {
   matches: MatchSummary[];
 };
 
-const DDRAGON = "https://ddragon.leagueoflegends.com/cdn/15.1.1/img";
+// DDragon assets are versioned per game patch (e.g. "15.3.1").
+// Using a hardcoded version breaks when new champions/items are released.
+// We fetch the latest version once from the DDragon API and cache it
+// for the lifetime of the page to keep all asset URLs up to date.
+let cachedVersion: string | null = null;
+let versionPromise: Promise<string> | null = null;
+
+function fetchDdragonVersion(): Promise<string> {
+  if (cachedVersion) return Promise.resolve(cachedVersion);
+  if (versionPromise) return versionPromise;
+
+  versionPromise = fetch("https://ddragon.leagueoflegends.com/api/versions.json")
+    .then((r) => r.json())
+    .then((versions: string[]) => {
+      cachedVersion = versions[0]; // first entry is always the latest patch
+      return cachedVersion;
+    })
+    .catch(() => {
+      versionPromise = null;
+      return "15.1.1"; // fallback if the versions API is unreachable
+    });
+
+  return versionPromise;
+}
+
+export function useDdragonVersion() {
+  const [version, setVersion] = useState(cachedVersion ?? "15.1.1");
+  useEffect(() => {
+    fetchDdragonVersion().then(setVersion);
+  }, []);
+  return version;
+}
+
+const ddragonBase = (version: string) =>
+  `https://ddragon.leagueoflegends.com/cdn/${version}/img`;
 
 // --- Keystone rune icon paths (DDragon CDN) ---
 const KEYSTONE_ICONS: Record<number, string> = {
@@ -100,11 +134,11 @@ function useAugmentIcons(needed: boolean) {
   return icons;
 }
 
-const championIconUrl = (name: string) =>
-  `${DDRAGON}/champion/${name}.png`;
+const championIconUrl = (name: string, base: string) =>
+  `${base}/champion/${name}.png`;
 
-const itemIconUrl = (id: number) =>
-  `${DDRAGON}/item/${id}.png`;
+const itemIconUrl = (id: number, base: string) =>
+  `${base}/item/${id}.png`;
 
 const SUMMONER_SPELLS: Record<number, string> = {
   1: "SummonerBoost",       // Cleanse
@@ -120,9 +154,9 @@ const SUMMONER_SPELLS: Record<number, string> = {
   32: "SummonerSnowball",   // Mark (ARAM)
 };
 
-const spellIconUrl = (id: number) => {
+const spellIconUrl = (id: number, base: string) => {
   const name = SUMMONER_SPELLS[id] || "SummonerFlash";
-  return `${DDRAGON}/spell/${name}.png`;
+  return `${base}/spell/${name}.png`;
 };
 
 const QUEUE_NAMES: Record<number, string> = {
@@ -155,9 +189,11 @@ const timeAgo = (timestamp: number) => {
 function TeamColumn({
   players,
   muted,
+  imgBase,
 }: {
   players: MatchParticipant[];
   muted?: boolean;
+  imgBase: string;
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
@@ -173,7 +209,7 @@ function TeamColumn({
           }}
         >
           <img
-            src={championIconUrl(p.championName)}
+            src={championIconUrl(p.championName, imgBase)}
             width={16}
             height={16}
             style={{ borderRadius: 3 }}
@@ -196,6 +232,8 @@ function TeamColumn({
 }
 
 export default function MatchList({ matches }: MatchListProps) {
+  const ddVersion = useDdragonVersion();
+  const imgBase = ddragonBase(ddVersion);
   const hasArena = matches.some((m) => m.queueId === 1700);
   const augmentIcons = useAugmentIcons(hasArena);
 
@@ -256,7 +294,7 @@ export default function MatchList({ matches }: MatchListProps) {
               >
                 <div style={{ position: "relative" }}>
                   <img
-                    src={championIconUrl(m.championName)}
+                    src={championIconUrl(m.championName, imgBase)}
                     width={56}
                     height={56}
                     style={{ borderRadius: "50%" }}
@@ -308,14 +346,14 @@ export default function MatchList({ matches }: MatchListProps) {
                   <div style={{ display: "flex", gap: 4 }}>
                     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                       <img
-                        src={spellIconUrl(m.summoner1Id)}
+                        src={spellIconUrl(m.summoner1Id, imgBase)}
                         width={24}
                         height={24}
                         style={{ borderRadius: 4 }}
                         onError={hideOnError}
                       />
                       <img
-                        src={spellIconUrl(m.summoner2Id)}
+                        src={spellIconUrl(m.summoner2Id, imgBase)}
                         width={24}
                         height={24}
                         style={{ borderRadius: 4 }}
@@ -464,7 +502,7 @@ export default function MatchList({ matches }: MatchListProps) {
                       {itemId > 0 && (
                         <img
                           src={itemIconUrl(
-                            itemId
+                            itemId, imgBase
                           )}
                           style={{
                             width: "100%",
@@ -489,8 +527,8 @@ export default function MatchList({ matches }: MatchListProps) {
                   paddingLeft: 16,
                 }}
               >
-                <TeamColumn players={m.allies} />
-                <TeamColumn players={m.enemies} muted />
+                <TeamColumn players={m.allies} imgBase={imgBase} />
+                <TeamColumn players={m.enemies} muted imgBase={imgBase} />
               </div>
             </div>
           );

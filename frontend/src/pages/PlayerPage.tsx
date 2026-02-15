@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import SearchBar from "../components/SearchBar";
 import StatsBar from "../components/StatsBar";
-import MatchList from "../components/MatchList";
+import MatchList, { useDdragonVersion } from "../components/MatchList";
 import RankBadge from "../components/RankBadge";
 import { fetchAccount, fetchMatchSummaries, fetchStats, fetchRanked, checkIsFavorite, addFavorite, removeFavorite } from "../api";
 import type { Region, Account, MatchSummary, PlayerStats, RankedEntry } from "../types";
@@ -16,6 +16,7 @@ export default function PlayerPage() {
   const [ranked, setRanked] = useState<RankedEntry[]>([]);
   const [isFav, setIsFav] = useState(false);
 
+  const ddVersion = useDdragonVersion();
   const [status, setStatus] = useState<"loading" | "error" | "done">("loading");
   const [errorMsg, setErrorMsg] = useState("");
 
@@ -106,12 +107,19 @@ export default function PlayerPage() {
           <>
             {/* Player header */}
             <div style={styles.header}>
-              <div>
-                <h2 style={{ margin: 0, fontSize: 28 }}>
-                  {account.gameName}
-                  <span style={{ color: "#64748b", fontWeight: 400 }}> #{account.tagLine}</span>
-                </h2>
-                <div style={{ fontSize: 13, opacity: 0.5, marginTop: 4 }}>{region}</div>
+              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+                <img
+                  src={`https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/profileicon/${account.profileIconId}.png`}
+                  alt="Profile Icon"
+                  style={{ width: 56, height: 56, borderRadius: "50%", border: "2px solid #334155" }}
+                />
+                <div>
+                  <h2 style={{ margin: 0, fontSize: 28 }}>
+                    {account.gameName}
+                    <span style={{ color: "#64748b", fontWeight: 400 }}> #{account.tagLine}</span>
+                  </h2>
+                  <div style={{ fontSize: 13, opacity: 0.5, marginTop: 4 }}>{region}</div>
+                </div>
               </div>
               <button style={isFav ? styles.favBtnActive : styles.favBtn} onClick={toggleFavorite}>
                 {isFav ? "★ Favorited" : "☆ Favorite"}

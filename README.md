@@ -12,6 +12,7 @@ Search for any player by their Riot ID and view their recent match history, KDA,
   - Win rate percentage
   - Average KDA
   - Average kills, deaths, and assists
+- **Player Avatar** - Profile icon displayed next to player name via Summoner v4 API
 - **Ranked Info** - Display ranked tier, rank, LP, and win/loss for Solo/Duo and Flex queues
   - Tier icons from Community Dragon CDN
   - Graceful "Unranked" display for unranked players
@@ -169,6 +170,11 @@ While the backend is running, you can view the H2 database:
 2. JDBC URL: `jdbc:h2:file:./data/lol-tracker-db`
 3. Username: `sa`
 4. Password: (leave empty)
+
+## Data Sources
+
+- **[DDragon CDN](https://ddragon.leagueoflegends.com)** - Champion, item, spell, and profile icons (version auto-detected at runtime)
+- **[Community Dragon](https://communitydragon.org)** - Ranked tier icons, Arena augment icons
 
 ## License
 

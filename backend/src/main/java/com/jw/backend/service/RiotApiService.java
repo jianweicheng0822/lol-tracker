@@ -235,6 +235,30 @@ public class RiotApiService {
             int neutralMinionsKilled = me != null ? me.path("neutralMinionsKilled").asInt(0) : 0;
             int queueId = info.path("queueId").asInt(0);
 
+            // Runes
+            int primaryRuneId = 0;
+            int secondaryRuneStyleId = 0;
+            if (me != null) {
+                JsonNode styles = me.path("perks").path("styles");
+                if (styles.isArray() && styles.size() > 0) {
+                    JsonNode primarySelections = styles.get(0).path("selections");
+                    if (primarySelections.isArray() && primarySelections.size() > 0) {
+                        primaryRuneId = primarySelections.get(0).path("perk").asInt(0);
+                    }
+                    if (styles.size() > 1) {
+                        secondaryRuneStyleId = styles.get(1).path("style").asInt(0);
+                    }
+                }
+            }
+
+            // Augments (Arena)
+            int[] augments = new int[4];
+            if (me != null) {
+                for (int i = 0; i < 4; i++) {
+                    augments[i] = me.path("playerAugment" + (i + 1)).asInt(0);
+                }
+            }
+
             int myTeamId = me != null ? me.path("teamId").asInt(0) : 0;
 
             int teamTotalKills = 0;
@@ -263,7 +287,8 @@ public class RiotApiService {
                     matchId, champion, kills, deaths, assists, win, duration, endTs,
                     championLevel, summoner1Id, summoner2Id, items,
                     totalMinionsKilled, neutralMinionsKilled, queueId, teamTotalKills,
-                    allies, enemies
+                    allies, enemies,
+                    primaryRuneId, secondaryRuneStyleId, augments
             );
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse match detail JSON for " + matchId, e);

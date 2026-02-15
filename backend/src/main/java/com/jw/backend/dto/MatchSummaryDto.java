@@ -20,5 +20,8 @@ public record MatchSummaryDto(
         int queueId,
         int teamTotalKills,
         List<MatchParticipantDto> allies,
-        List<MatchParticipantDto> enemies
+        List<MatchParticipantDto> enemies,
+        int primaryRuneId,
+        int secondaryRuneStyleId,
+        int[] augments
 ) {}

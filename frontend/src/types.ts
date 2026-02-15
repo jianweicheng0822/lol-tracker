@@ -33,6 +33,9 @@ export type MatchSummary = {
   teamTotalKills: number;
   allies: MatchParticipant[];
   enemies: MatchParticipant[];
+  primaryRuneId: number;
+  secondaryRuneStyleId: number;
+  augments: number[];
 };
 
 export type PlayerStats = {

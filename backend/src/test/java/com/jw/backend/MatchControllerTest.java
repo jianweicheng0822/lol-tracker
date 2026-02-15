@@ -141,8 +141,12 @@ class MatchControllerTest {
     void getMatchSummaries_withValidParams_returnsOk() throws Exception {
         // ARRANGE - create fake match summaries
         List<MatchSummaryDto> fakeSummaries = List.of(
-            new MatchSummaryDto("NA1_123", "Ahri", 10, 2, 8, true, 1800, 1700000000000L),
-            new MatchSummaryDto("NA1_456", "Zed", 5, 5, 3, false, 2100, 1700000100000L)
+            new MatchSummaryDto("NA1_123", "Ahri", 10, 2, 8, true, 1800, 1700000000000L,
+                18, 4, 14, new int[]{1001,1002,1003,0,0,0,3340}, 150, 30, 420, 30, List.of(), List.of(),
+                8005, 8200, new int[]{0,0,0,0}),
+            new MatchSummaryDto("NA1_456", "Zed", 5, 5, 3, false, 2100, 1700000100000L,
+                15, 4, 14, new int[]{2001,2002,0,0,0,0,3340}, 120, 20, 420, 25, List.of(), List.of(),
+                8112, 8300, new int[]{0,0,0,0})
         );
 
         when(riotApiService.getRecentMatchSummaries("test-puuid", RiotRegion.NA, 3))

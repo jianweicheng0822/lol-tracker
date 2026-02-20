@@ -4,6 +4,7 @@ import com.jw.backend.region.RiotRegion;
 import com.jw.backend.service.RiotApiService;
 import org.springframework.web.bind.annotation.*;
 import com.jw.backend.dto.MatchSummaryDto;
+import com.jw.backend.dto.MatchDetailDto;
 import java.util.List;
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
@@ -31,6 +32,15 @@ public class MatchController {
     ) {
         return riotApiService.getMatchDetail(matchId, region);
     }
+    @GetMapping("/full-detail")
+    public MatchDetailDto getFullMatchDetail(
+            @RequestParam String matchId,
+            @RequestParam RiotRegion region
+    ) {
+        String detailJson = riotApiService.getMatchDetail(matchId, region);
+        return riotApiService.extractFullMatchDetail(detailJson, matchId);
+    }
+
     @GetMapping("/summary")
     public List<MatchSummaryDto> getMatchSummaries(
             @RequestParam String puuid,

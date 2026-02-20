@@ -1,91 +1,27 @@
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import type { MatchSummary, MatchParticipant } from "../types";
+import {
+  useDdragonVersion,
+  ddragonBase,
+  championIconUrl,
+  itemIconUrl,
+  spellIconUrl,
+  keystoneIconUrl,
+  runeStyleIconUrl,
+  QUEUE_NAMES,
+  hideOnError,
+  formatDuration,
+  timeAgo,
+} from "../utils/ddragon";
+
+// Re-export for backwards compat with PlayerPage import
+export { useDdragonVersion } from "../utils/ddragon";
 
 type MatchListProps = {
   matches: MatchSummary[];
-};
-
-// DDragon assets are versioned per game patch (e.g. "15.3.1").
-// Using a hardcoded version breaks when new champions/items are released.
-// We fetch the latest version once from the DDragon API and cache it
-// for the lifetime of the page to keep all asset URLs up to date.
-let cachedVersion: string | null = null;
-let versionPromise: Promise<string> | null = null;
-
-function fetchDdragonVersion(): Promise<string> {
-  if (cachedVersion) return Promise.resolve(cachedVersion);
-  if (versionPromise) return versionPromise;
-
-  versionPromise = fetch("https://ddragon.leagueoflegends.com/api/versions.json")
-    .then((r) => r.json())
-    .then((versions: string[]) => {
-      cachedVersion = versions[0]; // first entry is always the latest patch
-      return cachedVersion;
-    })
-    .catch(() => {
-      versionPromise = null;
-      return "15.1.1"; // fallback if the versions API is unreachable
-    });
-
-  return versionPromise;
-}
-
-export function useDdragonVersion() {
-  const [version, setVersion] = useState(cachedVersion ?? "15.1.1");
-  useEffect(() => {
-    fetchDdragonVersion().then(setVersion);
-  }, []);
-  return version;
-}
-
-const ddragonBase = (version: string) =>
-  `https://ddragon.leagueoflegends.com/cdn/${version}/img`;
-
-// --- Keystone rune icon paths (DDragon CDN) ---
-const KEYSTONE_ICONS: Record<number, string> = {
-  // Precision
-  8005: "Styles/Precision/PressTheAttack/PressTheAttack.png",
-  8008: "Styles/Precision/LethalTempo/LethalTempoTemp.png",
-  8021: "Styles/Precision/FleetFootwork/FleetFootwork.png",
-  8010: "Styles/Precision/Conqueror/Conqueror.png",
-  // Domination
-  8112: "Styles/Domination/Electrocute/Electrocute.png",
-  8124: "Styles/Domination/Predator/Predator.png",
-  8128: "Styles/Domination/DarkHarvest/DarkHarvest.png",
-  9923: "Styles/Domination/HailOfBlades/HailOfBlades.png",
-  // Sorcery
-  8214: "Styles/Sorcery/SummonAery/SummonAery.png",
-  8229: "Styles/Sorcery/ArcaneComet/ArcaneComet.png",
-  8230: "Styles/Sorcery/PhaseRush/PhaseRush.png",
-  // Resolve
-  8437: "Styles/Resolve/GraspOfTheUndying/GraspOfTheUndying.png",
-  8439: "Styles/Resolve/VeteranAftershock/VeteranAftershock.png",
-  8465: "Styles/Resolve/Guardian/Guardian.png",
-  // Inspiration
-  8351: "Styles/Inspiration/GlacialAugment/GlacialAugment.png",
-  8360: "Styles/Inspiration/UnsealedSpellbook/UnsealedSpellbook.png",
-  8369: "Styles/Inspiration/FirstStrike/FirstStrike.png",
-};
-
-const keystoneIconUrl = (id: number) => {
-  const path = KEYSTONE_ICONS[id];
-  if (!path) return "";
-  return `https://ddragon.leagueoflegends.com/cdn/img/perk-images/${path}`;
-};
-
-// --- Rune style icons ---
-const RUNE_STYLE_ICONS: Record<number, string> = {
-  8000: "7201_Precision.png",
-  8100: "7200_Domination.png",
-  8200: "7202_Sorcery.png",
-  8300: "7203_Whimsy.png",
-  8400: "7204_Resolve.png",
-};
-
-const runeStyleIconUrl = (styleId: number) => {
-  const filename = RUNE_STYLE_ICONS[styleId];
-  if (!filename) return "";
-  return `https://ddragon.leagueoflegends.com/cdn/img/perk-images/Styles/${filename}`;
+  region?: string;
+  puuid?: string;
 };
 
 // --- Augment icons (Community Dragon) ---
@@ -134,58 +70,6 @@ function useAugmentIcons(needed: boolean) {
   return icons;
 }
 
-const championIconUrl = (name: string, base: string) =>
-  `${base}/champion/${name}.png`;
-
-const itemIconUrl = (id: number, base: string) =>
-  `${base}/item/${id}.png`;
-
-const SUMMONER_SPELLS: Record<number, string> = {
-  1: "SummonerBoost",       // Cleanse
-  3: "SummonerExhaust",
-  4: "SummonerFlash",
-  6: "SummonerHaste",       // Ghost
-  7: "SummonerHeal",
-  11: "SummonerSmite",
-  12: "SummonerTeleport",
-  13: "SummonerMana",       // Clarity
-  14: "SummonerDot",        // Ignite
-  21: "SummonerBarrier",
-  32: "SummonerSnowball",   // Mark (ARAM)
-};
-
-const spellIconUrl = (id: number, base: string) => {
-  const name = SUMMONER_SPELLS[id] || "SummonerFlash";
-  return `${base}/spell/${name}.png`;
-};
-
-const QUEUE_NAMES: Record<number, string> = {
-  420: "Ranked Solo/Duo",
-  440: "Ranked Flex",
-  450: "ARAM",
-  1700: "Arena",
-};
-
-const hideOnError = (e: React.SyntheticEvent<HTMLImageElement>) => {
-  (e.target as HTMLImageElement).style.display = "none";
-};
-
-const formatDuration = (sec: number) => {
-  const m = Math.floor(sec / 60);
-  const s = sec % 60;
-  return `${m}m ${String(s).padStart(2, "0")}s`;
-};
-
-const timeAgo = (timestamp: number) => {
-  const diff = Date.now() - timestamp;
-  const minutes = Math.floor(diff / 60000);
-  if (minutes < 60) return `${minutes}m ago`;
-  const hours = Math.floor(minutes / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-};
-
 function TeamColumn({
   players,
   muted,
@@ -231,7 +115,7 @@ function TeamColumn({
   );
 }
 
-export default function MatchList({ matches }: MatchListProps) {
+export default function MatchList({ matches, region, puuid }: MatchListProps) {
   const ddVersion = useDdragonVersion();
   const imgBase = ddragonBase(ddVersion);
   const hasArena = matches.some((m) => m.queueId === 1700);
@@ -271,9 +155,12 @@ export default function MatchList({ matches }: MatchListProps) {
           const queueName =
             QUEUE_NAMES[m.queueId] || "Normal";
 
-          return (
+          const linkTo = region && puuid
+            ? `/match/${region}/${m.matchId}?puuid=${encodeURIComponent(puuid)}`
+            : undefined;
+
+          const card = (
             <div
-              key={m.matchId}
               style={{
                 display: "flex",
                 alignItems: "center",
@@ -281,7 +168,11 @@ export default function MatchList({ matches }: MatchListProps) {
                 background: winBg,
                 padding: "14px 16px",
                 borderLeft: `4px solid ${winColor}`,
+                cursor: linkTo ? "pointer" : undefined,
+                transition: "filter 0.15s",
               }}
+              onMouseEnter={linkTo ? (e) => { (e.currentTarget as HTMLElement).style.filter = "brightness(1.15)"; } : undefined}
+              onMouseLeave={linkTo ? (e) => { (e.currentTarget as HTMLElement).style.filter = ""; } : undefined}
             >
               {/* LEFT */}
               <div
@@ -317,7 +208,6 @@ export default function MatchList({ matches }: MatchListProps) {
                 </div>
 
                 {m.queueId === 1700 ? (
-                  /* Arena: show augments in 2x2 grid */
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 26px)", gap: 3 }}>
                     {m.augments
                       .filter((a) => a > 0)
@@ -342,7 +232,6 @@ export default function MatchList({ matches }: MatchListProps) {
                       ))}
                   </div>
                 ) : (
-                  /* Other modes: spells + runes */
                   <div style={{ display: "flex", gap: 4 }}>
                     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                       <img
@@ -393,7 +282,6 @@ export default function MatchList({ matches }: MatchListProps) {
                   gap: 6,
                 }}
               >
-                {/* Meta Row */}
                 <div
                   style={{
                     display: "flex",
@@ -406,7 +294,6 @@ export default function MatchList({ matches }: MatchListProps) {
                   <span style={{ fontWeight: 600 }}>
                     {queueName}
                   </span>
-
                   <span
                     style={{
                       color: winColor,
@@ -415,19 +302,14 @@ export default function MatchList({ matches }: MatchListProps) {
                   >
                     {winText}
                   </span>
-
                   <span>
                     {timeAgo(m.gameEndTimestamp)}
                   </span>
-
                   <span>
-                    {formatDuration(
-                      m.gameDurationSec
-                    )}
+                    {formatDuration(m.gameDurationSec)}
                   </span>
                 </div>
 
-                {/* Stats Row */}
                 <div
                   style={{
                     display: "flex",
@@ -435,58 +317,28 @@ export default function MatchList({ matches }: MatchListProps) {
                     gap: 16,
                   }}
                 >
-                  <div
-                    style={{
-                      fontSize: 18,
-                      fontWeight: 800,
-                    }}
-                  >
+                  <div style={{ fontSize: 18, fontWeight: 800 }}>
                     {m.kills} /{" "}
-                    <span style={{ color: "#ef4444" }}>
-                      {m.deaths}
-                    </span>{" "}
+                    <span style={{ color: "#ef4444" }}>{m.deaths}</span>{" "}
                     / {m.assists}
                   </div>
-
                   <div
                     style={{
                       fontSize: 13,
-                      color:
-                        kda === "Perfect"
-                          ? "#f59e0b"
-                          : "#4ade80",
+                      color: kda === "Perfect" ? "#f59e0b" : "#4ade80",
                     }}
                   >
                     {kda} KDA
                   </div>
-
-                  <div
-                    style={{
-                      fontSize: 12,
-                      color: "#eab308",
-                    }}
-                  >
+                  <div style={{ fontSize: 12, color: "#eab308" }}>
                     P/Kill {killParticipation}%
                   </div>
-
-                  <div
-                    style={{
-                      fontSize: 12,
-                      color: "#94a3b8",
-                    }}
-                  >
+                  <div style={{ fontSize: 12, color: "#94a3b8" }}>
                     CS {cs}
                   </div>
                 </div>
 
-                {/* Items */}
-                <div
-                  style={{
-                    display: "flex",
-                    gap: 6,
-                    flexWrap: "wrap",
-                  }}
-                >
+                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
                   {m.items.map((itemId, i) => (
                     <div
                       key={i}
@@ -495,19 +347,13 @@ export default function MatchList({ matches }: MatchListProps) {
                         height: 32,
                         borderRadius: 6,
                         overflow: "hidden",
-                        background:
-                          "rgba(0,0,0,0.4)",
+                        background: "rgba(0,0,0,0.4)",
                       }}
                     >
                       {itemId > 0 && (
                         <img
-                          src={itemIconUrl(
-                            itemId, imgBase
-                          )}
-                          style={{
-                            width: "100%",
-                            height: "100%",
-                          }}
+                          src={itemIconUrl(itemId, imgBase)}
+                          style={{ width: "100%", height: "100%" }}
                           onError={hideOnError}
                         />
                       )}
@@ -522,8 +368,7 @@ export default function MatchList({ matches }: MatchListProps) {
                   width: 260,
                   display: "flex",
                   gap: 24,
-                  borderLeft:
-                    "1px solid rgba(255,255,255,0.1)",
+                  borderLeft: "1px solid rgba(255,255,255,0.1)",
                   paddingLeft: 16,
                 }}
               >
@@ -531,6 +376,14 @@ export default function MatchList({ matches }: MatchListProps) {
                 <TeamColumn players={m.enemies} muted imgBase={imgBase} />
               </div>
             </div>
+          );
+
+          return linkTo ? (
+            <Link key={m.matchId} to={linkTo} style={{ textDecoration: "none", color: "inherit" }}>
+              {card}
+            </Link>
+          ) : (
+            <div key={m.matchId}>{card}</div>
           );
         })}
       </div>

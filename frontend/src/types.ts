@@ -59,6 +59,57 @@ export type RankedEntry = {
   losses: number;
 };
 
+export type MatchDetailParticipant = {
+  summonerName: string;
+  championName: string;
+  puuid: string;
+  teamId: number;
+  kills: number;
+  deaths: number;
+  assists: number;
+  championLevel: number;
+  totalDamageDealtToChampions: number;
+  totalDamageTaken: number;
+  goldEarned: number;
+  items: number[];
+  totalMinionsKilled: number;
+  neutralMinionsKilled: number;
+  summoner1Id: number;
+  summoner2Id: number;
+  primaryRuneId: number;
+  secondaryRuneStyleId: number;
+  wardsPlaced: number;
+  wardsKilled: number;
+  visionWardsBoughtInGame: number;
+  doubleKills: number;
+  tripleKills: number;
+  quadraKills: number;
+  pentaKills: number;
+  win: boolean;
+};
+
+export type MatchTeam = {
+  teamId: number;
+  win: boolean;
+  bans: number[];
+  objectives: {
+    baronKills: number;
+    dragonKills: number;
+    towerKills: number;
+  };
+};
+
+export type MatchDetail = {
+  matchId: string;
+  queueId: number;
+  gameDurationSec: number;
+  gameEndTimestamp: number;
+  gameMode: string;
+  gameVersion: string;
+  teams: MatchTeam[];
+  participants: MatchDetailParticipant[];
+};
+
 export type FavoritePlayer = {
   id: number;
   puuid: string;

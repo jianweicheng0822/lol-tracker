@@ -1,3 +1,4 @@
+/** Ranked badge display — shows tier icon, rank, LP, and win/loss for each queue. */
 import type { RankedEntry } from "../types";
 
 const QUEUE_LABELS: Record<string, string> = {

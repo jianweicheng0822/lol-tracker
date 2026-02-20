@@ -1,5 +1,6 @@
 package com.jw.backend.dto;
 
+/** Detailed per-player stats for the match detail scoreboard (damage, gold, wards, multi-kills). */
 public record MatchDetailParticipantDto(
         String summonerName,
         String championName,

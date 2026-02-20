@@ -1,3 +1,4 @@
+/** Landing page with search bar and saved favorites list. */
 import { useEffect, useState } from "react";
 import SearchBar from "../components/SearchBar";
 import FavoritesList from "../components/FavoritesList";

@@ -2,6 +2,7 @@ package com.jw.backend.dto;
 
 import java.util.List;
 
+/** Match summary for the match history list — one player's perspective with KDA, items, runes, and team rosters. */
 public record MatchSummaryDto(
         String matchId,
         String championName,

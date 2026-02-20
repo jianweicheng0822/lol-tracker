@@ -1,3 +1,4 @@
+/** Clickable favorites chips — navigates to a saved player's profile on click. */
 import { useNavigate } from "react-router-dom";
 import type { FavoritePlayer } from "../types";
 import { removeFavorite } from "../api";

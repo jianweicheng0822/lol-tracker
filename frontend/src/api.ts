@@ -1,3 +1,5 @@
+/** API client — all fetch calls to the Spring Boot backend. */
+
 const BASE = "http://localhost:8080";
 
 export async function readErrorMessage(res: Response): Promise<string> {

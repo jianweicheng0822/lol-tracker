@@ -1,3 +1,7 @@
+/**
+ * Shared DDragon/Community Dragon helpers — version resolution, asset URL builders,
+ * rune/spell/queue mappings, and display utilities used across all components.
+ */
 import { useState, useEffect } from "react";
 
 // DDragon assets are versioned per game patch (e.g. "15.3.1").
@@ -36,6 +40,7 @@ export function useDdragonVersion() {
 export const ddragonBase = (version: string) =>
   `https://ddragon.leagueoflegends.com/cdn/${version}/img`;
 
+// --- Keystone rune ID → icon path mappings ---
 export const KEYSTONE_ICONS: Record<number, string> = {
   // Precision
   8005: "Styles/Precision/PressTheAttack/PressTheAttack.png",
@@ -67,6 +72,7 @@ export const keystoneIconUrl = (id: number) => {
   return `https://ddragon.leagueoflegends.com/cdn/img/perk-images/${path}`;
 };
 
+// --- Secondary rune style ID → icon filename mappings ---
 export const RUNE_STYLE_ICONS: Record<number, string> = {
   8000: "7201_Precision.png",
   8100: "7200_Domination.png",
@@ -81,6 +87,7 @@ export const runeStyleIconUrl = (styleId: number) => {
   return `https://ddragon.leagueoflegends.com/cdn/img/perk-images/Styles/${filename}`;
 };
 
+// --- Summoner spell ID → internal name mappings ---
 export const SUMMONER_SPELLS: Record<number, string> = {
   1: "SummonerBoost",
   3: "SummonerExhaust",
@@ -106,6 +113,7 @@ export const spellIconUrl = (id: number, base: string) => {
   return `${base}/spell/${name}.png`;
 };
 
+// --- Queue ID → display name mappings ---
 export const QUEUE_NAMES: Record<number, string> = {
   420: "Ranked Solo/Duo",
   440: "Ranked Flex",

@@ -1,3 +1,4 @@
+/** Player profile page — shows ranked info, aggregated stats, and match history for a player. */
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import SearchBar from "../components/SearchBar";

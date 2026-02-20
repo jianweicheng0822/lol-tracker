@@ -8,6 +8,7 @@ Search for any player by their Riot ID and view their recent match history, KDA,
 
 - **Player Search** - Search any player by Game Name and Tag (e.g., Faker#KR1)
 - **Match History** - View recent matches with champion, KDA, and win/loss
+- **Match Detail View** - Click any match to see a full scoreboard with all 10 players, damage charts, gold, CS, wards, and multi-kill badges
 - **Player Stats** - Aggregated statistics including:
   - Win rate percentage
   - Average KDA
@@ -96,6 +97,8 @@ Search for any player by their Riot ID and view their recent match history, KDA,
 | GET | `/api/summoner` | Get player account by Riot ID |
 | GET | `/api/matches/recent` | Get recent match IDs |
 | GET | `/api/matches/summary` | Get match summaries with KDA |
+| GET | `/api/matches/detail` | Get raw match detail JSON from Riot API |
+| GET | `/api/matches/full-detail` | Get parsed match detail with all participants |
 | GET | `/api/stats` | Get aggregated player statistics |
 | GET | `/api/favorites` | Get all favorite players |
 | POST | `/api/favorites` | Add a player to favorites |
@@ -123,6 +126,8 @@ lol-tracker/
         ├── main.tsx           # Entry point
         ├── api.ts             # API client functions
         ├── types.ts           # TypeScript types
+        ├── utils/
+        │   └── ddragon.ts     # DDragon CDN helpers, rune/spell mappings
         ├── components/        # Reusable UI components
         │   ├── SearchBar.tsx
         │   ├── MatchList.tsx
@@ -131,7 +136,8 @@ lol-tracker/
         │   └── FavoritesList.tsx
         └── pages/             # Route pages
             ├── HomePage.tsx
-            └── PlayerPage.tsx
+            ├── PlayerPage.tsx
+            └── MatchDetailPage.tsx
 ```
 
 ## Architecture

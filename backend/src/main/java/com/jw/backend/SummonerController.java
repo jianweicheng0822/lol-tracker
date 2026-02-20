@@ -7,6 +7,7 @@ import com.jw.backend.region.RiotRegion;
 import com.jw.backend.service.RiotApiService;
 import org.springframework.web.bind.annotation.*;
 
+/** REST controller that resolves a Riot ID to an account with profile icon. */
 @CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/summoner")

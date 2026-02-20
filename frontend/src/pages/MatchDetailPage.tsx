@@ -41,29 +41,38 @@ function TeamTable({
   participants,
   imgBase,
   highlightPuuid,
+  queueId,
 }: {
   team: MatchTeam;
   participants: MatchDetailParticipant[];
   imgBase: string;
   highlightPuuid?: string;
+  queueId: number;
 }) {
+  const isArena = queueId === 1700;
+  const isAram = queueId === 450;
+  const showWards = !isArena && !isAram;
+
+  // Arena doesn't show "Defeat" — only the winning team gets a label
+  if (isArena && !team.win) return null;
+
   const teamColor = team.win ? "#2563eb" : "#dc2626";
   const teamLabel = team.win ? "Victory" : "Defeat";
 
   const maxDamage = Math.max(...participants.map((p) => p.totalDamageDealtToChampions), 1);
+  const gridCols = showWards
+    ? "200px 90px 80px 100px 70px 70px 180px 70px"
+    : "200px 90px 80px 100px 70px 70px 180px";
 
   return (
     <div style={{ marginBottom: 24 }}>
       {/* Team header */}
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8, padding: "8px 12px", borderLeft: `4px solid ${teamColor}`, background: team.win ? "rgba(37,99,235,0.08)" : "rgba(220,38,38,0.08)", borderRadius: "0 6px 6px 0" }}>
         <span style={{ fontWeight: 700, color: teamColor, fontSize: 14 }}>{teamLabel}</span>
-        <span style={{ fontSize: 12, color: "#94a3b8" }}>
-          Baron {team.objectives.baronKills} | Dragon {team.objectives.dragonKills} | Tower {team.objectives.towerKills}
-        </span>
       </div>
 
       {/* Column headers */}
-      <div style={{ display: "grid", gridTemplateColumns: "200px 90px 80px 100px 70px 70px 180px 70px", gap: 4, padding: "4px 8px", fontSize: 10, color: "#64748b", fontWeight: 600, textTransform: "uppercase" }}>
+      <div style={{ display: "grid", gridTemplateColumns: gridCols, gap: 4, padding: "4px 8px", fontSize: 10, color: "#64748b", fontWeight: 600, textTransform: "uppercase" }}>
         <span>Champion</span>
         <span style={{ textAlign: "center" }}>KDA</span>
         <span style={{ textAlign: "center" }}>Damage</span>
@@ -71,7 +80,7 @@ function TeamTable({
         <span style={{ textAlign: "center" }}>Gold</span>
         <span style={{ textAlign: "center" }}>CS</span>
         <span style={{ textAlign: "center" }}>Items</span>
-        <span style={{ textAlign: "center" }}>Wards</span>
+        {showWards && <span style={{ textAlign: "center" }}>Wards</span>}
       </div>
 
       {/* Player rows */}
@@ -86,7 +95,7 @@ function TeamTable({
             key={p.puuid}
             style={{
               display: "grid",
-              gridTemplateColumns: "200px 90px 80px 100px 70px 70px 180px 70px",
+              gridTemplateColumns: gridCols,
               gap: 4,
               padding: "6px 8px",
               alignItems: "center",
@@ -154,9 +163,11 @@ function TeamTable({
             </div>
 
             {/* Wards */}
-            <div style={{ textAlign: "center", fontSize: 11, color: "#94a3b8" }}>
-              {p.wardsPlaced}/{p.wardsKilled}/{p.visionWardsBoughtInGame}
-            </div>
+            {showWards && (
+              <div style={{ textAlign: "center", fontSize: 11, color: "#94a3b8" }}>
+                {p.wardsPlaced}/{p.wardsKilled}/{p.visionWardsBoughtInGame}
+              </div>
+            )}
           </div>
         );
       })}
@@ -252,6 +263,7 @@ export default function MatchDetailPage() {
                   participants={teamPlayers}
                   imgBase={imgBase}
                   highlightPuuid={puuid}
+                  queueId={match.queueId}
                 />
               );
             })}

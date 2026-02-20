@@ -134,7 +134,7 @@ export default function PlayerPage() {
             {stats && <StatsBar stats={stats} />}
 
             {/* Match list */}
-            <MatchList matches={matches} region={region} puuid={account.puuid} />
+            <MatchList matches={matches} region={region} puuid={account.puuid} gameName={account.gameName} />
           </>
         )}
       </div>

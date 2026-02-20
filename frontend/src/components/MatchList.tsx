@@ -23,6 +23,7 @@ type MatchListProps = {
   matches: MatchSummary[];
   region?: string;
   puuid?: string;
+  gameName?: string;
 };
 
 // --- Augment icons (Community Dragon) ---
@@ -73,50 +74,60 @@ function useAugmentIcons(needed: boolean) {
 
 function TeamColumn({
   players,
-  muted,
   imgBase,
+  highlightPuuid,
 }: {
   players: MatchParticipant[];
-  muted?: boolean;
   imgBase: string;
+  highlightPuuid?: string;
 }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-      {players.map((p, i) => (
-        <div
-          key={i}
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 6,
-            fontSize: 11,
-            color: muted ? "#94a3b8" : "#e2e8f0",
-          }}
-        >
-          <img
-            src={championIconUrl(p.championName, imgBase)}
-            width={16}
-            height={16}
-            style={{ borderRadius: 3 }}
-            onError={hideOnError}
-          />
-          <span
+      {players.map((p, i) => {
+        const isMe = p.puuid === highlightPuuid;
+        return (
+          <div
+            key={i}
             style={{
-              maxWidth: 95,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+              fontSize: 11,
+              color: "#cbd5e1",
+              fontWeight: isMe ? 700 : 400,
+              background: isMe ? "rgba(99,102,241,0.12)" : undefined,
+              borderLeft: isMe ? "2px solid #6366f1" : "2px solid transparent",
+              borderRadius: 3,
+              padding: "1px 4px",
+              marginLeft: -4,
             }}
           >
-            {p.summonerName}
-          </span>
-        </div>
-      ))}
+            <img
+              src={championIconUrl(p.championName, imgBase)}
+              width={16}
+              height={16}
+              style={{ borderRadius: 3 }}
+              onError={hideOnError}
+            />
+            <span
+              style={{
+                maxWidth: isMe ? 70 : 95,
+                overflow: "hidden",
+                textOverflow: "ellipsis",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {p.summonerName}
+            </span>
+            {isMe && <span style={{ color: "#818cf8", fontSize: 9, flexShrink: 0 }}>(You)</span>}
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-export default function MatchList({ matches, region, puuid }: MatchListProps) {
+export default function MatchList({ matches, region, puuid, gameName }: MatchListProps) {
   const ddVersion = useDdragonVersion();
   const imgBase = ddragonBase(ddVersion);
   const hasArena = matches.some((m) => m.queueId === 1700);
@@ -373,8 +384,8 @@ export default function MatchList({ matches, region, puuid }: MatchListProps) {
                   paddingLeft: 16,
                 }}
               >
-                <TeamColumn players={m.allies} imgBase={imgBase} />
-                <TeamColumn players={m.enemies} muted imgBase={imgBase} />
+                <TeamColumn players={puuid ? [{ summonerName: gameName || m.championName, championName: m.championName, puuid }, ...m.allies] : m.allies} imgBase={imgBase} highlightPuuid={puuid} />
+                <TeamColumn players={m.enemies} imgBase={imgBase} highlightPuuid={puuid} />
               </div>
             </div>
           );

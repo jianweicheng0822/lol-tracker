@@ -1,0 +1,30 @@
+package com.jw.backend.dto;
+
+public record MatchDetailParticipantDto(
+        String summonerName,
+        String championName,
+        String puuid,
+        int teamId,
+        int kills,
+        int deaths,
+        int assists,
+        int championLevel,
+        int totalDamageDealtToChampions,
+        int totalDamageTaken,
+        int goldEarned,
+        int[] items,
+        int totalMinionsKilled,
+        int neutralMinionsKilled,
+        int summoner1Id,
+        int summoner2Id,
+        int primaryRuneId,
+        int secondaryRuneStyleId,
+        int wardsPlaced,
+        int wardsKilled,
+        int visionWardsBoughtInGame,
+        int doubleKills,
+        int tripleKills,
+        int quadraKills,
+        int pentaKills,
+        boolean win
+) {}

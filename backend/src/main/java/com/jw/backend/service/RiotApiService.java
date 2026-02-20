@@ -224,6 +224,112 @@ public class RiotApiService {
         // 3) Join results
         return futures.stream().map(CompletableFuture::join).toList();
     }
+    public com.jw.backend.dto.MatchDetailDto extractFullMatchDetail(String detailJson, String matchId) {
+        try {
+            JsonNode root = objectMapper.readTree(detailJson);
+            JsonNode info = root.path("info");
+            JsonNode participantsNode = info.path("participants");
+
+            int queueId = info.path("queueId").asInt(0);
+            long duration = info.path("gameDuration").asLong(0);
+            long endTs = info.path("gameEndTimestamp").asLong(0);
+            String gameMode = info.path("gameMode").asText("");
+            String gameVersion = info.path("gameVersion").asText("");
+
+            // Parse teams
+            List<com.jw.backend.dto.MatchDetailDto.TeamDto> teams = new ArrayList<>();
+            JsonNode teamsNode = info.path("teams");
+            if (teamsNode.isArray()) {
+                for (JsonNode t : teamsNode) {
+                    int teamId = t.path("teamId").asInt(0);
+                    boolean win = t.path("win").asBoolean(false);
+
+                    List<Integer> bans = new ArrayList<>();
+                    JsonNode bansNode = t.path("bans");
+                    if (bansNode.isArray()) {
+                        for (JsonNode b : bansNode) {
+                            bans.add(b.path("championId").asInt(0));
+                        }
+                    }
+
+                    JsonNode obj = t.path("objectives");
+                    int baronKills = obj.path("baron").path("kills").asInt(0);
+                    int dragonKills = obj.path("dragon").path("kills").asInt(0);
+                    int towerKills = obj.path("tower").path("kills").asInt(0);
+
+                    teams.add(new com.jw.backend.dto.MatchDetailDto.TeamDto(
+                            teamId, win, bans,
+                            new com.jw.backend.dto.MatchDetailDto.ObjectivesDto(baronKills, dragonKills, towerKills)
+                    ));
+                }
+            }
+
+            // Parse participants
+            List<com.jw.backend.dto.MatchDetailParticipantDto> participants = new ArrayList<>();
+            for (JsonNode p : participantsNode) {
+                String name = p.path("riotIdGameName").asText(p.path("summonerName").asText("Unknown"));
+                String champion = p.path("championName").asText("Unknown");
+                String puuid = p.path("puuid").asText("");
+                int teamId = p.path("teamId").asInt(0);
+                int kills = p.path("kills").asInt(0);
+                int deaths = p.path("deaths").asInt(0);
+                int assists = p.path("assists").asInt(0);
+                int champLevel = p.path("champLevel").asInt(0);
+                int dmgDealt = p.path("totalDamageDealtToChampions").asInt(0);
+                int dmgTaken = p.path("totalDamageTaken").asInt(0);
+                int gold = p.path("goldEarned").asInt(0);
+
+                int[] items = new int[7];
+                for (int i = 0; i < 7; i++) {
+                    items[i] = p.path("item" + i).asInt(0);
+                }
+
+                int totalMinions = p.path("totalMinionsKilled").asInt(0);
+                int neutralMinions = p.path("neutralMinionsKilled").asInt(0);
+                int spell1 = p.path("summoner1Id").asInt(0);
+                int spell2 = p.path("summoner2Id").asInt(0);
+
+                int primaryRuneId = 0;
+                int secondaryRuneStyleId = 0;
+                JsonNode styles = p.path("perks").path("styles");
+                if (styles.isArray() && styles.size() > 0) {
+                    JsonNode primarySelections = styles.get(0).path("selections");
+                    if (primarySelections.isArray() && primarySelections.size() > 0) {
+                        primaryRuneId = primarySelections.get(0).path("perk").asInt(0);
+                    }
+                    if (styles.size() > 1) {
+                        secondaryRuneStyleId = styles.get(1).path("style").asInt(0);
+                    }
+                }
+
+                int wardsPlaced = p.path("wardsPlaced").asInt(0);
+                int wardsKilled = p.path("wardsKilled").asInt(0);
+                int visionWards = p.path("visionWardsBoughtInGame").asInt(0);
+                int doubleKills = p.path("doubleKills").asInt(0);
+                int tripleKills = p.path("tripleKills").asInt(0);
+                int quadraKills = p.path("quadraKills").asInt(0);
+                int pentaKills = p.path("pentaKills").asInt(0);
+                boolean win = p.path("win").asBoolean(false);
+
+                participants.add(new com.jw.backend.dto.MatchDetailParticipantDto(
+                        name, champion, puuid, teamId,
+                        kills, deaths, assists, champLevel,
+                        dmgDealt, dmgTaken, gold, items,
+                        totalMinions, neutralMinions, spell1, spell2,
+                        primaryRuneId, secondaryRuneStyleId,
+                        wardsPlaced, wardsKilled, visionWards,
+                        doubleKills, tripleKills, quadraKills, pentaKills, win
+                ));
+            }
+
+            return new com.jw.backend.dto.MatchDetailDto(
+                    matchId, queueId, duration, endTs, gameMode, gameVersion, teams, participants
+            );
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse full match detail JSON for " + matchId, e);
+        }
+    }
+
     private com.jw.backend.dto.MatchSummaryDto extractSummaryFromMatchDetail(String detailJson, String puuid, String matchId) {
         try {
             JsonNode root = objectMapper.readTree(detailJson);

@@ -45,6 +45,14 @@ export async function fetchRanked(puuid: string, region: string) {
   return res.json();
 }
 
+export async function fetchMatchDetail(matchId: string, region: string) {
+  const res = await fetch(
+    `${BASE}/api/matches/full-detail?matchId=${encodeURIComponent(matchId)}&region=${region}`
+  );
+  if (!res.ok) throw new Error(await readErrorMessage(res));
+  return res.json();
+}
+
 export async function fetchFavorites() {
   const res = await fetch(`${BASE}/api/favorites`);
   if (!res.ok) throw new Error(await readErrorMessage(res));

@@ -72,6 +72,90 @@ function useAugmentIcons(needed: boolean) {
   return icons;
 }
 
+// --- Performance indicator ---
+function getPerformanceTag(
+  kills: number,
+  deaths: number,
+  assists: number,
+  killParticipation: number,
+  win: boolean,
+): { label: string; color: string } | null {
+  const kda = deaths === 0 ? kills + assists : (kills + assists) / deaths;
+
+  if (kda >= 5 && killParticipation >= 60)
+    return { label: "MVP", color: "#b08a2e" };
+  if (kda >= 3.5 || (kda >= 2.5 && killParticipation >= 55))
+    return { label: "Strong", color: "#2a8a66" };
+  if (kda < 1 || (deaths >= 8 && kda < 1.5))
+    return { label: "Struggled", color: "#6b7585" };
+  if (win && kda >= 1.5 && killParticipation >= 35)
+    return { label: "Balanced", color: "#5a6575" };
+
+  return null;
+}
+
+// --- Player row with hover ---
+function PlayerRow({
+  player,
+  imgBase,
+  isMe,
+}: {
+  player: MatchParticipant;
+  imgBase: string;
+  isMe: boolean;
+}) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <div
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: "flex",
+        alignItems: "center",
+        gap: 5,
+        fontSize: 11,
+        color: isMe ? "#b8c4d8" : hovered ? "#8a99ad" : "#566475",
+        fontWeight: isMe ? 600 : 400,
+        background: isMe
+          ? "rgba(99,102,241,0.07)"
+          : hovered
+            ? "rgba(255,255,255,0.03)"
+            : undefined,
+        borderLeft: isMe ? "2px solid rgba(99,102,241,0.45)" : "2px solid transparent",
+        borderRadius: 2,
+        padding: "2px 5px",
+        marginLeft: -5,
+        transition: "background 0.15s, color 0.15s",
+      }}
+    >
+      <img
+        src={championIconUrl(player.championName, imgBase)}
+        width={12}
+        height={12}
+        style={{ borderRadius: 2, flexShrink: 0 }}
+        onError={hideOnError}
+      />
+      <span
+        style={{
+          maxWidth: isMe ? 66 : 86,
+          overflow: "hidden",
+          textOverflow: "ellipsis",
+          whiteSpace: "nowrap",
+        }}
+      >
+        {player.summonerName}
+      </span>
+      {isMe && (
+        <span style={{ color: "#6b72a8", fontSize: 9, flexShrink: 0, opacity: 0.8 }}>
+          (You)
+        </span>
+      )}
+    </div>
+  );
+}
+
+// --- Team column ---
 function TeamColumn({
   players,
   imgBase,
@@ -82,47 +166,82 @@ function TeamColumn({
   highlightPuuid?: string;
 }) {
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-      {players.map((p, i) => {
-        const isMe = p.puuid === highlightPuuid;
-        return (
-          <div
-            key={i}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-              fontSize: 11,
-              color: "#cbd5e1",
-              fontWeight: isMe ? 700 : 400,
-              background: isMe ? "rgba(99,102,241,0.12)" : undefined,
-              borderLeft: isMe ? "2px solid #6366f1" : "2px solid transparent",
-              borderRadius: 3,
-              padding: "1px 4px",
-              marginLeft: -4,
-            }}
-          >
-            <img
-              src={championIconUrl(p.championName, imgBase)}
-              width={16}
-              height={16}
-              style={{ borderRadius: 3 }}
-              onError={hideOnError}
-            />
-            <span
-              style={{
-                maxWidth: isMe ? 70 : 95,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
-            >
-              {p.summonerName}
-            </span>
-            {isMe && <span style={{ color: "#818cf8", fontSize: 9, flexShrink: 0 }}>(You)</span>}
-          </div>
-        );
-      })}
+    <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
+      {players.map((p, i) => (
+        <PlayerRow
+          key={i}
+          player={p}
+          imgBase={imgBase}
+          isMe={p.puuid === highlightPuuid}
+        />
+      ))}
+    </div>
+  );
+}
+
+// --- Item icon with hover ---
+function ItemIcon({ itemId, imgBase }: { itemId: number; imgBase: string }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <div
+      style={{
+        width: 24,
+        height: 24,
+        borderRadius: 3,
+        overflow: "hidden",
+        background: "rgba(0,0,0,0.25)",
+        transition: "transform 0.15s, box-shadow 0.15s",
+        transform: hovered && itemId > 0 ? "scale(1.15)" : undefined,
+        boxShadow: hovered && itemId > 0 ? "0 2px 6px rgba(0,0,0,0.3)" : undefined,
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {itemId > 0 && (
+        <img
+          src={itemIconUrl(itemId, imgBase)}
+          style={{ width: "100%", height: "100%", display: "block" }}
+          onError={hideOnError}
+        />
+      )}
+    </div>
+  );
+}
+
+// --- Match card wrapper with hover elevation ---
+function MatchCard({
+  children,
+  linkTo,
+  winBg,
+  winColor,
+}: {
+  children: React.ReactNode;
+  linkTo?: string;
+  winBg: string;
+  winColor: string;
+}) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        alignItems: "center",
+        borderRadius: 6,
+        background: winBg,
+        padding: "8px 12px",
+        borderLeft: `3px solid ${hovered ? winColor : winColor + "cc"}`,
+        cursor: linkTo ? "pointer" : undefined,
+        transition: "box-shadow 0.2s, transform 0.2s, border-color 0.2s",
+        boxShadow: hovered
+          ? `0 6px 20px rgba(0,0,0,0.3)`
+          : "0 1px 3px rgba(0,0,0,0.08)",
+        transform: hovered ? "translateY(-1px)" : undefined,
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+    >
+      {children}
     </div>
   );
 }
@@ -137,9 +256,9 @@ export default function MatchList({ matches, region, puuid, gameName }: MatchLis
 
   return (
     <div>
-      <h3 style={{ marginBottom: 14 }}>Recent Matches</h3>
+      <h3 style={{ marginBottom: 12 }}>Recent Matches</h3>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         {matches.map((m) => {
           const kda =
             m.deaths === 0
@@ -158,11 +277,18 @@ export default function MatchList({ matches, region, puuid, gameName }: MatchLis
                 )
               : 0;
 
-          const winColor = m.win ? "#2563eb" : "#dc2626";
+          const perfTag = getPerformanceTag(
+            m.kills, m.deaths, m.assists, killParticipation, m.win,
+          );
+
+          // Softened accent colors
+          const winColor = m.win ? "#2d6ab5" : "#a83232";
+          const winTextColor = m.win ? "#4d8ad0" : "#cc5555";
           const winText = m.win ? "Victory" : "Defeat";
+          // Very subtle backgrounds — mostly neutral dark navy
           const winBg = m.win
-            ? "rgba(37,99,235,0.12)"
-            : "rgba(220,38,38,0.12)";
+            ? "linear-gradient(135deg, rgba(30,60,110,0.05) 0%, rgba(20,30,50,0.02) 100%)"
+            : "linear-gradient(135deg, rgba(110,30,30,0.05) 0%, rgba(50,20,20,0.02) 100%)";
 
           const queueName =
             QUEUE_NAMES[m.queueId] || "Normal";
@@ -172,47 +298,38 @@ export default function MatchList({ matches, region, puuid, gameName }: MatchLis
             : undefined;
 
           const card = (
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                borderRadius: 10,
-                background: winBg,
-                padding: "14px 16px",
-                borderLeft: `4px solid ${winColor}`,
-                cursor: linkTo ? "pointer" : undefined,
-                transition: "filter 0.15s",
-              }}
-              onMouseEnter={linkTo ? (e) => { (e.currentTarget as HTMLElement).style.filter = "brightness(1.15)"; } : undefined}
-              onMouseLeave={linkTo ? (e) => { (e.currentTarget as HTMLElement).style.filter = ""; } : undefined}
-            >
-              {/* LEFT */}
+            <MatchCard linkTo={linkTo} winBg={winBg} winColor={winColor}>
+              {/* LEFT — champion + spells/runes */}
               <div
                 style={{
-                  width: 140,
+                  width: 128,
                   display: "flex",
-                  gap: 10,
+                  gap: 8,
                   alignItems: "center",
+                  flexShrink: 0,
                 }}
               >
                 <div style={{ position: "relative" }}>
                   <img
                     src={championIconUrl(m.championName, imgBase)}
-                    width={56}
-                    height={56}
-                    style={{ borderRadius: "50%" }}
+                    width={44}
+                    height={44}
+                    style={{ borderRadius: "50%", border: `2px solid ${winColor}20`, display: "block" }}
                     onError={hideOnError}
                   />
                   <div
                     style={{
                       position: "absolute",
-                      bottom: -4,
+                      bottom: -2,
                       left: "50%",
                       transform: "translateX(-50%)",
                       background: "#0f172a",
-                      fontSize: 11,
-                      padding: "2px 6px",
-                      borderRadius: 6,
+                      fontSize: 9,
+                      padding: "0 4px",
+                      borderRadius: 4,
+                      fontWeight: 600,
+                      color: "#6b7a8e",
+                      lineHeight: "14px",
                     }}
                   >
                     {m.championLevel}
@@ -220,63 +337,63 @@ export default function MatchList({ matches, region, puuid, gameName }: MatchLis
                 </div>
 
                 {m.queueId === 1700 ? (
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 26px)", gap: 3 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 20px)", gap: 2 }}>
                     {m.augments
                       .filter((a) => a > 0)
                       .map((augId, i) => (
                         <div
                           key={i}
                           style={{
-                            width: 26,
-                            height: 26,
-                            borderRadius: 4,
+                            width: 20,
+                            height: 20,
+                            borderRadius: 3,
                             overflow: "hidden",
-                            background: "rgba(0,0,0,0.5)",
+                            background: "rgba(0,0,0,0.3)",
                           }}
                         >
                           <img
                             src={augmentIcons[augId] || ""}
-                            width={26}
-                            height={26}
+                            width={20}
+                            height={20}
                             onError={hideOnError}
                           />
                         </div>
                       ))}
                   </div>
                 ) : (
-                  <div style={{ display: "flex", gap: 4 }}>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                  <div style={{ display: "flex", gap: 2 }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                       <img
                         src={spellIconUrl(m.summoner1Id, imgBase)}
-                        width={24}
-                        height={24}
-                        style={{ borderRadius: 4 }}
+                        width={20}
+                        height={20}
+                        style={{ borderRadius: 3 }}
                         onError={hideOnError}
                       />
                       <img
                         src={spellIconUrl(m.summoner2Id, imgBase)}
-                        width={24}
-                        height={24}
-                        style={{ borderRadius: 4 }}
+                        width={20}
+                        height={20}
+                        style={{ borderRadius: 3 }}
                         onError={hideOnError}
                       />
                     </div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                       {m.primaryRuneId > 0 && (
                         <img
                           src={keystoneIconUrl(m.primaryRuneId)}
-                          width={24}
-                          height={24}
-                          style={{ borderRadius: 4 }}
+                          width={20}
+                          height={20}
+                          style={{ borderRadius: 3 }}
                           onError={hideOnError}
                         />
                       )}
                       {m.secondaryRuneStyleId > 0 && (
                         <img
                           src={runeStyleIconUrl(m.secondaryRuneStyleId)}
-                          width={24}
-                          height={24}
-                          style={{ borderRadius: 4 }}
+                          width={20}
+                          height={20}
+                          style={{ borderRadius: 3 }}
                           onError={hideOnError}
                         />
                       )}
@@ -285,109 +402,123 @@ export default function MatchList({ matches, region, puuid, gameName }: MatchLis
                 )}
               </div>
 
-              {/* CENTER */}
+              {/* CENTER — KDA (primary), meta (secondary), items */}
               <div
                 style={{
                   flex: 1,
                   display: "flex",
                   flexDirection: "column",
-                  gap: 6,
+                  gap: 4,
+                  minWidth: 0,
                 }}
               >
-                <div
-                  style={{
-                    display: "flex",
-                    gap: 12,
-                    fontSize: 12,
-                    color: "#94a3b8",
-                    alignItems: "center",
-                  }}
-                >
-                  <span style={{ fontWeight: 600 }}>
-                    {queueName}
-                  </span>
-                  <span
-                    style={{
-                      color: winColor,
-                      fontWeight: 600,
-                    }}
-                  >
-                    {winText}
-                  </span>
-                  <span>
-                    {timeAgo(m.gameEndTimestamp)}
-                  </span>
-                  <span>
-                    {formatDuration(m.gameDurationSec)}
-                  </span>
+                {/* Line 1: K / D / A — largest, most dominant */}
+                <div style={{ fontSize: 21, fontWeight: 800, letterSpacing: -0.5, lineHeight: 1 }}>
+                  <span style={{ color: "#6ba3d6" }}>{m.kills}</span>
+                  <span style={{ color: "#2e3844", fontWeight: 400 }}> / </span>
+                  <span style={{ color: "#d06060" }}>{m.deaths}</span>
+                  <span style={{ color: "#2e3844", fontWeight: 400 }}> / </span>
+                  <span style={{ color: "#4aab9e" }}>{m.assists}</span>
                 </div>
 
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 16,
-                  }}
-                >
-                  <div style={{ fontSize: 18, fontWeight: 800 }}>
-                    {m.kills} /{" "}
-                    <span style={{ color: "#ef4444" }}>{m.deaths}</span>{" "}
-                    / {m.assists}
-                  </div>
-                  <div
+                {/* Line 2: KDA ratio + performance badge */}
+                <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  <span
                     style={{
                       fontSize: 13,
-                      color: kda === "Perfect" ? "#f59e0b" : "#4ade80",
+                      fontWeight: 700,
+                      color: kda === "Perfect" ? "#a88520" : "#3a8a64",
                     }}
                   >
                     {kda} KDA
-                  </div>
-                  <div style={{ fontSize: 12, color: "#eab308" }}>
-                    P/Kill {killParticipation}%
-                  </div>
-                  <div style={{ fontSize: 12, color: "#94a3b8" }}>
-                    CS {cs}
-                  </div>
-                </div>
-
-                <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                  {m.items.map((itemId, i) => (
-                    <div
-                      key={i}
+                  </span>
+                  {perfTag && (
+                    <span
                       style={{
-                        width: 32,
-                        height: 32,
-                        borderRadius: 6,
-                        overflow: "hidden",
-                        background: "rgba(0,0,0,0.4)",
+                        fontSize: 8,
+                        fontWeight: 500,
+                        padding: "1px 5px",
+                        borderRadius: 3,
+                        background: perfTag.color + "0d",
+                        color: perfTag.color,
+                        letterSpacing: 0.3,
+                        textTransform: "uppercase",
+                        opacity: 0.65,
                       }}
                     >
-                      {itemId > 0 && (
-                        <img
-                          src={itemIconUrl(itemId, imgBase)}
-                          style={{ width: "100%", height: "100%" }}
-                          onError={hideOnError}
-                        />
-                      )}
-                    </div>
+                      {perfTag.label}
+                    </span>
+                  )}
+                </div>
+
+                {/* Line 3: Win/Loss label — supportive, not dominant */}
+                <span
+                  style={{
+                    fontSize: 10,
+                    fontWeight: 600,
+                    color: winTextColor,
+                    opacity: 0.55,
+                    textTransform: "uppercase",
+                    letterSpacing: 0.5,
+                  }}
+                >
+                  {winText}
+                </span>
+
+                {/* Secondary: metadata row — clearly lower hierarchy */}
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 7,
+                    fontSize: 10,
+                    color: "#3f4e5f",
+                    alignItems: "center",
+                    opacity: 0.85,
+                  }}
+                >
+                  <span style={{ fontWeight: 500, color: "#4e5e70" }}>{queueName}</span>
+                  <span>&middot;</span>
+                  <span>{formatDuration(m.gameDurationSec)}</span>
+                  <span>&middot;</span>
+                  <span>{timeAgo(m.gameEndTimestamp)}</span>
+                  <span>&middot;</span>
+                  <span>P/Kill {killParticipation}%</span>
+                  <span>&middot;</span>
+                  <span>CS {cs}</span>
+                </div>
+
+                {/* Items */}
+                <div style={{ display: "flex", gap: 2, marginTop: 1 }}>
+                  {m.items.map((itemId, i) => (
+                    <ItemIcon key={i} itemId={itemId} imgBase={imgBase} />
                   ))}
                 </div>
               </div>
 
-              {/* RIGHT */}
+              {/* RIGHT — team rosters */}
               <div
                 style={{
-                  width: 260,
+                  width: 252,
                   display: "flex",
-                  gap: 24,
-                  borderLeft: "1px solid rgba(255,255,255,0.1)",
-                  paddingLeft: 16,
+                  gap: 0,
+                  borderLeft: "1px solid rgba(255,255,255,0.04)",
+                  paddingLeft: 12,
+                  flexShrink: 0,
                 }}
               >
-                <TeamColumn players={puuid ? [{ summonerName: gameName || m.championName, championName: m.championName, puuid }, ...m.allies] : m.allies} imgBase={imgBase} highlightPuuid={puuid} />
+                <TeamColumn
+                  players={
+                    puuid
+                      ? [{ summonerName: gameName || m.championName, championName: m.championName, puuid }, ...m.allies]
+                      : m.allies
+                  }
+                  imgBase={imgBase}
+                  highlightPuuid={puuid}
+                />
+                <div style={{ width: 1, background: "rgba(255,255,255,0.05)", margin: "4px 8px" }} />
                 <TeamColumn players={m.enemies} imgBase={imgBase} highlightPuuid={puuid} />
               </div>
-            </div>
+            </MatchCard>
           );
 
           return linkTo ? (

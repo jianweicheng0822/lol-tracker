@@ -131,7 +131,7 @@ export default function PlayerPage() {
             <RankBadge entries={ranked} />
 
             {/* Stats */}
-            {stats && <StatsBar stats={stats} />}
+            {stats && <StatsBar stats={stats} matches={matches} />}
 
             {/* Match list */}
             <MatchList matches={matches} region={region} puuid={account.puuid} gameName={account.gameName} />

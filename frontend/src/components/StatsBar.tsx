@@ -1,3 +1,4 @@
+/** Aggregated player stats display — win rate, KDA, average kills/deaths/assists. */
 import type { PlayerStats } from "../types";
 
 type StatsBarProps = {

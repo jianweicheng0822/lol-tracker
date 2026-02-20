@@ -2,6 +2,7 @@ package com.jw.backend.dto;
 
 import java.util.List;
 
+/** Full match detail including teams, objectives, and all participant stats. */
 public record MatchDetailDto(
         String matchId,
         int queueId,

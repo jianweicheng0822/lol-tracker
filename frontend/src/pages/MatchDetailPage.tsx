@@ -1,3 +1,4 @@
+/** Match detail page — displays a full scoreboard for a single match with all 10 players. */
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";
 import { fetchMatchDetail } from "../api";

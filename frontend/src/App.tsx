@@ -1,3 +1,4 @@
+/** Root component — defines client-side routes for Home, Player, and Match Detail pages. */
 import { Routes, Route } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import PlayerPage from "./pages/PlayerPage";

@@ -1,3 +1,4 @@
+/** Match history list — renders match cards with champion, KDA, items, runes, and team rosters. */
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import type { MatchSummary, MatchParticipant } from "../types";

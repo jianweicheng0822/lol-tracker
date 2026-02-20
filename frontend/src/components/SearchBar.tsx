@@ -1,3 +1,4 @@
+/** Search bar for looking up players by region, game name, and tag. */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Region } from "../types";

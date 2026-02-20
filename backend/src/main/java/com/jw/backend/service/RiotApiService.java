@@ -13,6 +13,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 import java.util.concurrent.ConcurrentHashMap;
 
+/** Handles all Riot Games API calls with in-memory caching and JSON parsing. */
 @Service
 public class RiotApiService {
 
@@ -224,6 +225,7 @@ public class RiotApiService {
         // 3) Join results
         return futures.stream().map(CompletableFuture::join).toList();
     }
+    /** Parses raw Riot match JSON into a structured MatchDetailDto with teams, objectives, and per-player stats. */
     public com.jw.backend.dto.MatchDetailDto extractFullMatchDetail(String detailJson, String matchId) {
         try {
             JsonNode root = objectMapper.readTree(detailJson);
@@ -330,12 +332,14 @@ public class RiotApiService {
         }
     }
 
+    /** Extracts a single player's match summary from raw Riot match JSON, including allies/enemies split. */
     private com.jw.backend.dto.MatchSummaryDto extractSummaryFromMatchDetail(String detailJson, String puuid, String matchId) {
         try {
             JsonNode root = objectMapper.readTree(detailJson);
             JsonNode info = root.path("info");
             JsonNode participants = info.path("participants");
 
+            // Find the searched player in the participants list
             JsonNode me = null;
             for (JsonNode p : participants) {
                 if (puuid.equals(p.path("puuid").asText())) {

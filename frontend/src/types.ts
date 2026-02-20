@@ -1,7 +1,11 @@
+/** Shared TypeScript types matching the backend DTOs. */
+
+// --- Region ---
 export type Region = "NA" | "EUW" | "KR" | "JP" | "BR" | "OCE";
 
 export const REGIONS: Region[] = ["NA", "EUW", "KR", "JP", "BR", "OCE"];
 
+// --- Account ---
 export type Account = {
   puuid: string;
   gameName: string;
@@ -9,6 +13,7 @@ export type Account = {
   profileIconId: number;
 };
 
+// --- Match history ---
 export type MatchParticipant = {
   summonerName: string;
   championName: string;
@@ -39,6 +44,7 @@ export type MatchSummary = {
   augments: number[];
 };
 
+// --- Player stats ---
 export type PlayerStats = {
   totalGames: number;
   wins: number;
@@ -50,6 +56,7 @@ export type PlayerStats = {
   averageKda: number;
 };
 
+// --- Ranked ---
 export type RankedEntry = {
   queueType: string;
   tier: string;
@@ -59,6 +66,7 @@ export type RankedEntry = {
   losses: number;
 };
 
+// --- Match detail (full scoreboard) ---
 export type MatchDetailParticipant = {
   summonerName: string;
   championName: string;
@@ -110,6 +118,7 @@ export type MatchDetail = {
   participants: MatchDetailParticipant[];
 };
 
+// --- Favorites ---
 export type FavoritePlayer = {
   id: number;
   puuid: string;

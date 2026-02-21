@@ -30,6 +30,213 @@ function MultiKillBadges({ p }: { p: MatchDetailParticipant }) {
   );
 }
 
+// --- Placement colors and labels for Arena ---
+const PLACEMENT_COLORS: Record<number, string> = {
+  1: "#f59e0b", // gold
+  2: "#94a3b8", // silver
+  3: "#cd7f32", // bronze
+  4: "#64748b",
+  5: "#64748b",
+  6: "#64748b",
+  7: "#64748b",
+  8: "#64748b",
+};
+
+function placementLabel(n: number): string {
+  if (n === 1) return "1st";
+  if (n === 2) return "2nd";
+  if (n === 3) return "3rd";
+  return `${n}th`;
+}
+
+// --- Arena scoreboard: groups by subteam, sorted by placement ---
+export function ArenaScoreboard({
+  participants,
+  imgBase,
+  highlightPuuid,
+  region,
+}: {
+  participants: MatchDetailParticipant[];
+  imgBase: string;
+  highlightPuuid?: string;
+  region?: string;
+}) {
+  // Group by playerSubteamId
+  const teamMap = new Map<number, MatchDetailParticipant[]>();
+  for (const p of participants) {
+    const key = p.playerSubteamId || 0;
+    if (!teamMap.has(key)) teamMap.set(key, []);
+    teamMap.get(key)!.push(p);
+  }
+
+  // Sort teams by placement (use first member's placement)
+  const sortedTeams = [...teamMap.entries()].sort((a, b) => {
+    const pa = a[1][0]?.placement || 99;
+    const pb = b[1][0]?.placement || 99;
+    return pa - pb;
+  });
+
+  const allParticipants = participants;
+  const maxDamage = Math.max(...allParticipants.map((p) => p.totalDamageDealtToChampions), 1);
+  const gridCols = "200px 120px 80px 100px 70px 180px";
+
+  return (
+    <div>
+      {sortedTeams.map(([subteamId, players]) => {
+        const placement = players[0]?.placement || 0;
+        const plColor = PLACEMENT_COLORS[placement] || "#64748b";
+        const hasHighlight = players.some((p) => p.puuid === highlightPuuid);
+
+        return (
+          <div key={subteamId} style={{ marginBottom: 16 }}>
+            {/* Placement header */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                marginBottom: 6,
+                padding: "6px 12px",
+                borderLeft: `4px solid ${plColor}`,
+                background: hasHighlight
+                  ? `${plColor}18`
+                  : "rgba(255,255,255,0.03)",
+                borderRadius: "0 6px 6px 0",
+              }}
+            >
+              <span style={{ fontWeight: 800, color: plColor, fontSize: 14 }}>
+                {placementLabel(placement)}
+              </span>
+            </div>
+
+            {/* Column headers */}
+            <div style={{ display: "grid", gridTemplateColumns: gridCols, gap: 4, padding: "4px 8px", fontSize: 10, color: "#64748b", fontWeight: 600, textTransform: "uppercase" }}>
+              <span>Champion</span>
+              <span style={{ textAlign: "center" }}>KDA</span>
+              <span style={{ textAlign: "center" }}>Damage</span>
+              <span></span>
+              <span style={{ textAlign: "center" }}>Gold</span>
+              <span style={{ textAlign: "center" }}>Items</span>
+            </div>
+
+            {/* Player rows */}
+            {players.map((p) => (
+              <ArenaPlayerRow
+                key={p.puuid}
+                p={p}
+                imgBase={imgBase}
+                isMe={p.puuid === highlightPuuid}
+                maxDamage={maxDamage}
+                gridCols={gridCols}
+                plColor={plColor}
+                region={region}
+              />
+            ))}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+function ArenaPlayerRow({
+  p,
+  imgBase,
+  isMe,
+  maxDamage,
+  gridCols,
+  plColor,
+  region,
+}: {
+  p: MatchDetailParticipant;
+  imgBase: string;
+  isMe: boolean;
+  maxDamage: number;
+  gridCols: string;
+  plColor: string;
+  region?: string;
+}) {
+  const navigate = useNavigate();
+  const kda = p.deaths === 0 ? "Perfect" : ((p.kills + p.assists) / p.deaths).toFixed(1);
+  const dmgPct = (p.totalDamageDealtToChampions / maxDamage) * 100;
+  const canNavigate = region && p.summonerName && p.riotIdTagline;
+
+  return (
+    <div
+      style={{
+        display: "grid",
+        gridTemplateColumns: gridCols,
+        gap: 4,
+        padding: "6px 8px",
+        alignItems: "center",
+        background: isMe ? "rgba(99,102,241,0.1)" : undefined,
+        borderRadius: 4,
+        borderLeft: isMe ? "2px solid #6366f1" : "2px solid transparent",
+      }}
+    >
+      {/* Champion + name */}
+      <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+        <div style={{ position: "relative", flexShrink: 0 }}>
+          <img src={championIconUrl(p.championName, imgBase)} width={32} height={32} style={{ borderRadius: "50%" }} onError={hideOnError} />
+          <div style={{ position: "absolute", bottom: -2, right: -2, background: "#0f172a", fontSize: 9, padding: "0 3px", borderRadius: 4, fontWeight: 700 }}>{p.championLevel}</div>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <div style={{ display: "flex", gap: 3 }}>
+            <img src={spellIconUrl(p.summoner1Id, imgBase)} width={14} height={14} style={{ borderRadius: 2 }} onError={hideOnError} />
+            <img src={spellIconUrl(p.summoner2Id, imgBase)} width={14} height={14} style={{ borderRadius: 2 }} onError={hideOnError} />
+          </div>
+          <PlayerName
+            name={p.summonerName}
+            isMe={isMe}
+            canNavigate={!!canNavigate}
+            onClick={() => {
+              if (canNavigate) {
+                navigate(`/player/${region}/${encodeURIComponent(p.summonerName)}/${encodeURIComponent(p.riotIdTagline!)}`);
+              }
+            }}
+          />
+        </div>
+      </div>
+
+      {/* KDA */}
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontSize: 13, fontWeight: 700 }}>
+          {p.kills}<span style={{ color: "#64748b" }}>/</span><span style={{ color: "#ef4444" }}>{p.deaths}</span><span style={{ color: "#64748b" }}>/</span>{p.assists}
+        </div>
+        <div style={{ fontSize: 10, color: kda === "Perfect" ? "#f59e0b" : "#4ade80" }}>
+          {kda} <MultiKillBadges p={p} />
+        </div>
+      </div>
+
+      {/* Damage dealt + taken */}
+      <div style={{ textAlign: "center", fontSize: 11 }}>
+        <div>{formatNumber(p.totalDamageDealtToChampions)}</div>
+        <div style={{ color: "#64748b", fontSize: 10 }}>{formatNumber(p.totalDamageTaken)}</div>
+      </div>
+
+      {/* Damage bar */}
+      <div style={{ height: 8, background: "rgba(255,255,255,0.06)", borderRadius: 4, overflow: "hidden" }}>
+        <div style={{ height: "100%", width: `${dmgPct}%`, background: plColor, borderRadius: 4, opacity: 0.7 }} />
+      </div>
+
+      {/* Gold */}
+      <div style={{ textAlign: "center", fontSize: 12, color: "#eab308" }}>
+        {formatNumber(p.goldEarned)}
+      </div>
+
+      {/* Items */}
+      <div style={{ display: "flex", gap: 2, justifyContent: "center" }}>
+        {p.items.map((itemId, i) => (
+          <div key={i} style={{ width: 22, height: 22, borderRadius: 3, overflow: "hidden", background: "rgba(0,0,0,0.4)" }}>
+            {itemId > 0 && <img src={itemIconUrl(itemId, imgBase)} width={22} height={22} onError={hideOnError} />}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// --- Standard (non-Arena) team table ---
 export function ScoreboardTeamTable({
   team,
   participants,
@@ -46,9 +253,8 @@ export function ScoreboardTeamTable({
   region?: string;
 }) {
   const navigate = useNavigate();
-  const isArena = queueId === 1700;
   const isAram = queueId === 450;
-  const showWards = !isArena && !isAram;
+  const showWards = !isAram;
 
   const teamColor = team.win ? "#2563eb" : "#dc2626";
   const teamLabel = team.win ? "Victory" : "Defeat";

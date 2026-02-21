@@ -28,5 +28,7 @@ public record MatchDetailParticipantDto(
         int tripleKills,
         int quadraKills,
         int pentaKills,
-        boolean win
+        boolean win,
+        int placement,
+        int playerSubteamId
 ) {}

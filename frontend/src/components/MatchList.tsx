@@ -16,7 +16,7 @@ import {
   formatDuration,
   timeAgo,
 } from "../utils/ddragon";
-import { ScoreboardTeamTable } from "./ScoreboardTable";
+import { ScoreboardTeamTable, ArenaScoreboard } from "./ScoreboardTable";
 
 // Re-export for backwards compat with PlayerPage import
 export { useDdragonVersion } from "../utils/ddragon";
@@ -341,9 +341,32 @@ function InlineScoreboard({
     );
   }
 
+  const isArena = match.queueId === 1700;
+
+  if (isArena) {
+    return (
+      <div style={{ padding: "12px 0 4px" }}>
+        <ArenaScoreboard
+          participants={match.participants}
+          imgBase={imgBase}
+          highlightPuuid={puuid}
+          region={region}
+        />
+      </div>
+    );
+  }
+
+  // Sort teams so the current player's team appears first
+  const myTeamId = match.participants.find((p) => p.puuid === puuid)?.teamId;
+  const sortedTeams = [...match.teams].sort((a, b) => {
+    if (a.teamId === myTeamId) return -1;
+    if (b.teamId === myTeamId) return 1;
+    return 0;
+  });
+
   return (
     <div style={{ padding: "12px 0 4px" }}>
-      {match.teams.map((team) => {
+      {sortedTeams.map((team) => {
         const teamPlayers = match.participants.filter((p) => p.teamId === team.teamId);
         return (
           <ScoreboardTeamTable

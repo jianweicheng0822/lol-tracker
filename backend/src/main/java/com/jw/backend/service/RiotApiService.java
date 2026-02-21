@@ -313,6 +313,8 @@ public class RiotApiService {
                 int quadraKills = p.path("quadraKills").asInt(0);
                 int pentaKills = p.path("pentaKills").asInt(0);
                 boolean win = p.path("win").asBoolean(false);
+                int placement = p.path("placement").asInt(0);
+                int playerSubteamId = p.path("playerSubteamId").asInt(0);
 
                 participants.add(new com.jw.backend.dto.MatchDetailParticipantDto(
                         name, tagline, champion, puuid, teamId,
@@ -321,7 +323,8 @@ public class RiotApiService {
                         totalMinions, neutralMinions, spell1, spell2,
                         primaryRuneId, secondaryRuneStyleId,
                         wardsPlaced, wardsKilled, visionWards,
-                        doubleKills, tripleKills, quadraKills, pentaKills, win
+                        doubleKills, tripleKills, quadraKills, pentaKills, win,
+                        placement, playerSubteamId
                 ));
             }
 

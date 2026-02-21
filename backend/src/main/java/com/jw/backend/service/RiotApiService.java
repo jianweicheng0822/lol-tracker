@@ -357,6 +357,7 @@ public class RiotApiService {
             int deaths = me != null ? me.path("deaths").asInt(0) : 0;
             int assists = me != null ? me.path("assists").asInt(0) : 0;
             boolean win = me != null && me.path("win").asBoolean(false);
+            int placement = me != null ? me.path("placement").asInt(0) : 0;
 
             long duration = info.path("gameDuration").asLong(0);
             long endTs = info.path("gameEndTimestamp").asLong(0);
@@ -430,7 +431,7 @@ public class RiotApiService {
                     championLevel, summoner1Id, summoner2Id, items,
                     totalMinionsKilled, neutralMinionsKilled, queueId, teamTotalKills,
                     allies, enemies,
-                    primaryRuneId, secondaryRuneStyleId, augments
+                    primaryRuneId, secondaryRuneStyleId, augments, placement
             );
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse match detail JSON for " + matchId, e);

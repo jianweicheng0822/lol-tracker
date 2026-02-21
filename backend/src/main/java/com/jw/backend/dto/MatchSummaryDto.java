@@ -24,5 +24,6 @@ public record MatchSummaryDto(
         List<MatchParticipantDto> enemies,
         int primaryRuneId,
         int secondaryRuneStyleId,
-        int[] augments
+        int[] augments,
+        int placement
 ) {}

@@ -43,6 +43,7 @@ export type MatchSummary = {
   primaryRuneId: number;
   secondaryRuneStyleId: number;
   augments: number[];
+  placement: number;
 };
 
 // --- Player stats ---

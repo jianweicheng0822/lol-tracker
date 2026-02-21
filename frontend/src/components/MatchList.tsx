@@ -26,6 +26,9 @@ type MatchListProps = {
   region?: string;
   puuid?: string;
   gameName?: string;
+  onLoadMore?: () => void;
+  isLoadingMore?: boolean;
+  hasMore?: boolean;
 };
 
 // --- Augment icons (Community Dragon) ---
@@ -384,7 +387,7 @@ function InlineScoreboard({
   );
 }
 
-export default function MatchList({ matches, region, puuid, gameName }: MatchListProps) {
+export default function MatchList({ matches, region, puuid, gameName, onLoadMore, isLoadingMore, hasMore }: MatchListProps) {
   const ddVersion = useDdragonVersion();
   const imgBase = ddragonBase(ddVersion);
   const hasArena = matches.some((m) => m.queueId === 1700);
@@ -704,6 +707,29 @@ export default function MatchList({ matches, region, puuid, gameName }: MatchLis
           );
         })}
       </div>
+
+      {/* Load More button */}
+      {onLoadMore && hasMore && (
+        <div style={{ textAlign: "center", marginTop: 16 }}>
+          <button
+            onClick={onLoadMore}
+            disabled={isLoadingMore}
+            style={{
+              padding: "10px 32px",
+              borderRadius: 6,
+              background: isLoadingMore ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.08)",
+              border: "1px solid #334155",
+              color: isLoadingMore ? "#64748b" : "#cbd5e1",
+              cursor: isLoadingMore ? "not-allowed" : "pointer",
+              fontSize: 13,
+              fontWeight: 600,
+              transition: "background 0.15s",
+            }}
+          >
+            {isLoadingMore ? "Loading..." : "Load More"}
+          </button>
+        </div>
+      )}
     </div>
   );
 }

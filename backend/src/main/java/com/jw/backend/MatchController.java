@@ -50,9 +50,10 @@ public class MatchController {
     public List<MatchSummaryDto> getMatchSummaries(
             @RequestParam String puuid,
             @RequestParam RiotRegion region,
-            @RequestParam(defaultValue = "3") int count
+            @RequestParam(defaultValue = "3") int count,
+            @RequestParam(defaultValue = "0") int start
     ) {
         // Return parsed summaries instead of raw JSON
-        return riotApiService.getRecentMatchSummaries(puuid, region, count);
+        return riotApiService.getRecentMatchSummaries(puuid, region, count, start);
     }
 }

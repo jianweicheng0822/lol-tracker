@@ -8,7 +8,12 @@ Search for any player by their Riot ID and view their recent match history, KDA,
 
 - **Player Search** - Search any player by Game Name and Tag (e.g., Faker#KR1)
 - **Match History** - View recent matches with champion, KDA, and win/loss
-- **Match Detail View** - Click any match to see a full scoreboard with all 10 players, damage charts, gold, CS, wards, and multi-kill badges
+  - Stronger win/loss visual distinction with color-coded backgrounds (blue for victory, red for defeat)
+  - Expandable inline scoreboard via chevron toggle on each match card
+  - "Load More" pagination to browse beyond the initial 10 matches
+- **Match Detail View** - Full scoreboard with all 10 players, damage charts, gold, CS, wards, and multi-kill badges
+  - Clickable player names navigate to that player's match history
+- **Arena Mode Support** - Placement-based team grouping (1st–8th) with colored headers; placement 1st–4th counts as victory, 5th–8th as defeat
 - **Player Stats** - Aggregated statistics including:
   - Win rate percentage
   - Average KDA
@@ -131,6 +136,7 @@ lol-tracker/
         ├── components/        # Reusable UI components
         │   ├── SearchBar.tsx
         │   ├── MatchList.tsx
+        │   ├── ScoreboardTable.tsx
         │   ├── StatsBar.tsx
         │   ├── RankBadge.tsx
         │   └── FavoritesList.tsx

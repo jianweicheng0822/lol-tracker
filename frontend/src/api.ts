@@ -23,9 +23,9 @@ export async function fetchAccount(gameName: string, tag: string, region: string
   return res.json();
 }
 
-export async function fetchMatchSummaries(puuid: string, region: string, count = 10) {
+export async function fetchMatchSummaries(puuid: string, region: string, count = 10, start = 0) {
   const res = await fetch(
-    `${BASE}/api/matches/summary?puuid=${encodeURIComponent(puuid)}&region=${region}&count=${count}`
+    `${BASE}/api/matches/summary?puuid=${encodeURIComponent(puuid)}&region=${region}&count=${count}&start=${start}`
   );
   if (!res.ok) throw new Error(await readErrorMessage(res));
   return res.json();

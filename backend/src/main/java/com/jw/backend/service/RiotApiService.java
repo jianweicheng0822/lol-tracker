@@ -55,11 +55,15 @@ public class RiotApiService {
      * Returns a list of match IDs for a given PUUID.
      */
     public String getRecentMatchIds(String puuid, RiotRegion region, int count) {
+        return getRecentMatchIds(puuid, region, count, 0);
+    }
+
+    public String getRecentMatchIds(String puuid, RiotRegion region, int count, int start) {
         // Recent matches changes often -> short TTL
         long ttlMs = 30_000;
 
         String baseUrl = "https://" + region.routing() + ".api.riotgames.com";
-        String cacheKey = "matchIds:" + region.routing() + ":" + puuid + ":count=" + count;
+        String cacheKey = "matchIds:" + region.routing() + ":" + puuid + ":start=" + start + ":count=" + count;
 
         String cached = getCached(cacheKey);
         if (cached != null) return cached;
@@ -69,7 +73,7 @@ public class RiotApiService {
                 .build();
 
         String result = client.get()
-                .uri("/lol/match/v5/matches/by-puuid/{puuid}/ids?start=0&count={count}", puuid, count)
+                .uri("/lol/match/v5/matches/by-puuid/{puuid}/ids?start={start}&count={count}", puuid, start, count)
                 .header("X-Riot-Token", apiKey)
                 .retrieve()
                 .body(String.class);
@@ -199,8 +203,12 @@ public class RiotApiService {
     // A small thread pool for parallel external calls (demo-friendly)
     private final Executor riotExecutor = Executors.newFixedThreadPool(6);
     public List<com.jw.backend.dto.MatchSummaryDto> getRecentMatchSummaries(String puuid, RiotRegion region, int count) {
+        return getRecentMatchSummaries(puuid, region, count, 0);
+    }
+
+    public List<com.jw.backend.dto.MatchSummaryDto> getRecentMatchSummaries(String puuid, RiotRegion region, int count, int start) {
         // 1) Get recent match IDs (this already has caching in your code)
-        String idsJson = getRecentMatchIds(puuid, region, Math.max(count, 1));
+        String idsJson = getRecentMatchIds(puuid, region, Math.max(count, 1), start);
 
         List<String> ids = new ArrayList<>();
         try {

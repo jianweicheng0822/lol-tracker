@@ -50,8 +50,6 @@ export function ScoreboardTeamTable({
   const isAram = queueId === 450;
   const showWards = !isArena && !isAram;
 
-  if (isArena && !team.win) return null;
-
   const teamColor = team.win ? "#2563eb" : "#dc2626";
   const teamLabel = team.win ? "Victory" : "Defeat";
 

@@ -520,13 +520,13 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                             src={augmentIcons[augId] || ""}
                             width={22}
                             height={22}
-                            style={{ filter: "saturate(1.4)" }} /* Boost color vibrancy */
+                            style={{ filter: "saturate(1.4)" }} // Boost color vibrancy
                           />
                         </div>
                         ))}
                     </div>
                   ) : (
-                    {/* Summoner spells (left column) + keystone/secondary rune (right column) */}
+                    // Summoner spells (left column) + keystone/secondary rune (right column)
                     <div style={{ display: "flex", gap: 2 }}>
                       {/* Summoner spells D and F */}
                       <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>

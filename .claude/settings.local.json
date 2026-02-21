@@ -1,7 +1,5 @@
 {
   "permissions": {
-    "allow": [
-      "WebFetch(domain:www.op.gg)"
-    ]
+    "allow": []
   }
 }

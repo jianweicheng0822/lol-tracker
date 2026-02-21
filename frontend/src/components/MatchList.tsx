@@ -141,7 +141,7 @@ function PlayerRow({
         alignItems: "center",
         gap: 5,
         fontSize: 11,
-        color: isMe ? "#b8c4d8" : hovered ? "#8a99ad" : "#566475",
+        color: isMe ? "#e2e8f0" : hovered ? "#cbd5e1" : "#94a3b8",
         fontWeight: isMe ? 600 : 400,
         background: isMe
           ? "rgba(99,102,241,0.07)"
@@ -497,27 +497,28 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                   </div>
 
                   {m.queueId === 1700 ? (
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 20px)", gap: 2 }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 22px)", gap: 2 }}>
                       {m.augments
                         .filter((a) => a > 0)
                         .map((augId, i) => (
-                          <div
-                            key={i}
-                            style={{
-                              width: 20,
-                              height: 20,
-                              borderRadius: 3,
-                              overflow: "hidden",
-                              background: "rgba(0,0,0,0.3)",
-                            }}
-                          >
-                            <img
-                              src={augmentIcons[augId] || ""}
-                              width={20}
-                              height={20}
-                              onError={hideOnError}
-                            />
-                          </div>
+                       <div
+                         style={{
+                           width: 22,
+                           height: 22,
+                           borderRadius: 4,
+                           overflow: "hidden",
+                           background: "rgba(30,41,59,0.6)",
+                           border: "1px solid rgba(255,255,255,0.15)",
+                           boxShadow: "0 0 6px rgba(255,255,255,0.15)",
+                         }}
+                       >
+                          <img
+                            src={augmentIcons[augId] || ""}
+                            width={22}
+                            height={22}
+                            style={{ filter: "saturate(1.4)" }}
+                          />
+                        </div>
                         ))}
                     </div>
                   ) : (
@@ -527,14 +528,14 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                           src={spellIconUrl(m.summoner1Id, imgBase)}
                           width={20}
                           height={20}
-                          style={{ borderRadius: 3 }}
+                          style={{ borderRadius: 3, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)" }}
                           onError={hideOnError}
                         />
                         <img
                           src={spellIconUrl(m.summoner2Id, imgBase)}
                           width={20}
                           height={20}
-                          style={{ borderRadius: 3 }}
+                          style={{ borderRadius: 3, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)" }}
                           onError={hideOnError}
                         />
                       </div>
@@ -544,7 +545,7 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                             src={keystoneIconUrl(m.primaryRuneId)}
                             width={20}
                             height={20}
-                            style={{ borderRadius: 3 }}
+                            style={{ borderRadius: 3, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)" }}
                             onError={hideOnError}
                           />
                         )}
@@ -553,7 +554,7 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                             src={runeStyleIconUrl(m.secondaryRuneStyleId)}
                             width={20}
                             height={20}
-                            style={{ borderRadius: 3 }}
+                            style={{ borderRadius: 3, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)" }}
                             onError={hideOnError}
                           />
                         )}

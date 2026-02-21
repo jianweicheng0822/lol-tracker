@@ -270,6 +270,7 @@ public class RiotApiService {
             List<com.jw.backend.dto.MatchDetailParticipantDto> participants = new ArrayList<>();
             for (JsonNode p : participantsNode) {
                 String name = p.path("riotIdGameName").asText(p.path("summonerName").asText("Unknown"));
+                String tagline = p.path("riotIdTagline").asText("");
                 String champion = p.path("championName").asText("Unknown");
                 String puuid = p.path("puuid").asText("");
                 int teamId = p.path("teamId").asInt(0);
@@ -314,7 +315,7 @@ public class RiotApiService {
                 boolean win = p.path("win").asBoolean(false);
 
                 participants.add(new com.jw.backend.dto.MatchDetailParticipantDto(
-                        name, champion, puuid, teamId,
+                        name, tagline, champion, puuid, teamId,
                         kills, deaths, assists, champLevel,
                         dmgDealt, dmgTaken, gold, items,
                         totalMinions, neutralMinions, spell1, spell2,
@@ -405,10 +406,11 @@ public class RiotApiService {
             for (JsonNode p : participants) {
                 String pPuuid = p.path("puuid").asText("");
                 String pName = p.path("riotIdGameName").asText(p.path("summonerName").asText("Unknown"));
+                String pTagline = p.path("riotIdTagline").asText("");
                 String pChamp = p.path("championName").asText("Unknown");
                 int pTeam = p.path("teamId").asInt(0);
 
-                var dto = new com.jw.backend.dto.MatchParticipantDto(pName, pChamp, pPuuid);
+                var dto = new com.jw.backend.dto.MatchParticipantDto(pName, pTagline, pChamp, pPuuid);
 
                 if (pTeam == myTeamId) {
                     teamTotalKills += p.path("kills").asInt(0);

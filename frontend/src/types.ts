@@ -16,6 +16,7 @@ export type Account = {
 // --- Match history ---
 export type MatchParticipant = {
   summonerName: string;
+  riotIdTagline?: string;
   championName: string;
   puuid: string;
 };
@@ -69,6 +70,7 @@ export type RankedEntry = {
 // --- Match detail (full scoreboard) ---
 export type MatchDetailParticipant = {
   summonerName: string;
+  riotIdTagline?: string;
   championName: string;
   puuid: string;
   teamId: number;

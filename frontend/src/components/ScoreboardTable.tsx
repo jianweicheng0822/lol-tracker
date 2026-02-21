@@ -1,4 +1,13 @@
-/** Shared scoreboard table used in both inline expansion and match detail page. */
+/**
+ * Shared scoreboard table used in both inline expansion (MatchList chevron)
+ * and the standalone match detail page.
+ *
+ * Exports two components:
+ *   - ArenaScoreboard  — groups 16 players into 8 duo-teams sorted by placement (1st–8th)
+ *   - ScoreboardTeamTable — standard 5v5 team table with Victory/Defeat headers
+ *
+ * Both support clickable player names that navigate to /player/:region/:name/:tag.
+ */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { MatchDetailParticipant, MatchTeam } from "../types";
@@ -11,11 +20,13 @@ import {
   hideOnError,
 } from "../utils/ddragon";
 
+/** Abbreviate large numbers: 12345 → "12.3k" */
 function formatNumber(n: number) {
   if (n >= 1000) return (n / 1000).toFixed(1) + "k";
   return String(n);
 }
 
+/** Renders the highest multi-kill badge (Penta > Quadra > Triple > Double). */
 function MultiKillBadges({ p }: { p: MatchDetailParticipant }) {
   const badges: { label: string; color: string }[] = [];
   if (p.pentaKills > 0) badges.push({ label: "PENTA", color: "#f59e0b" });
@@ -30,7 +41,8 @@ function MultiKillBadges({ p }: { p: MatchDetailParticipant }) {
   );
 }
 
-// --- Placement colors and labels for Arena ---
+// --- Placement colors and labels for Arena mode ---
+// 1st = gold, 2nd = silver, 3rd = bronze, 4th–8th = neutral gray
 const PLACEMENT_COLORS: Record<number, string> = {
   1: "#f59e0b", // gold
   2: "#94a3b8", // silver
@@ -42,6 +54,7 @@ const PLACEMENT_COLORS: Record<number, string> = {
   8: "#64748b",
 };
 
+/** Convert placement number to ordinal string: 1 → "1st", 2 → "2nd", etc. */
 function placementLabel(n: number): string {
   if (n === 1) return "1st";
   if (n === 2) return "2nd";
@@ -49,7 +62,11 @@ function placementLabel(n: number): string {
   return `${n}th`;
 }
 
-// --- Arena scoreboard: groups by subteam, sorted by placement ---
+/**
+ * Arena scoreboard — groups all 16 participants into duo-teams by playerSubteamId,
+ * sorted by placement (1st–8th). Each team gets a color-coded header and its
+ * own column headers / player rows. The current player's team is highlighted.
+ */
 export function ArenaScoreboard({
   participants,
   imgBase,
@@ -139,6 +156,7 @@ export function ArenaScoreboard({
   );
 }
 
+/** Single player row inside an Arena team group — shows champion, KDA, damage, gold, items. */
 function ArenaPlayerRow({
   p,
   imgBase,
@@ -236,7 +254,11 @@ function ArenaPlayerRow({
   );
 }
 
-// --- Standard (non-Arena) team table ---
+/**
+ * Standard team table for non-Arena modes (Summoner's Rift, ARAM, etc.).
+ * Shows a Victory/Defeat header, then column headers and one row per player
+ * with KDA, damage bar, gold, CS, items, and wards (hidden for ARAM).
+ */
 export function ScoreboardTeamTable({
   team,
   participants,
@@ -383,6 +405,7 @@ export function ScoreboardTeamTable({
   );
 }
 
+/** Clickable player name — navigates to player's match history on click (if tagline is available). */
 function PlayerName({
   name,
   isMe,

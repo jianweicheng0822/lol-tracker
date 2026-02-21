@@ -23,6 +23,7 @@ export async function fetchAccount(gameName: string, tag: string, region: string
   return res.json();
 }
 
+/** Fetches paginated match summaries. `start` is the offset index for pagination (e.g., 0, 10, 20...). */
 export async function fetchMatchSummaries(puuid: string, region: string, count = 10, start = 0) {
   const res = await fetch(
     `${BASE}/api/matches/summary?puuid=${encodeURIComponent(puuid)}&region=${region}&count=${count}&start=${start}`

@@ -1,4 +1,8 @@
-/** Player profile page — shows ranked info, aggregated stats, and match history for a player. */
+/**
+ * Player profile page — shows ranked info, aggregated stats, and match history for a player.
+ * Fetches account, matches, stats, ranked, and favorite status in parallel on mount.
+ * Supports "Load More" pagination to fetch additional match batches beyond the initial 10.
+ */
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import SearchBar from "../components/SearchBar";
@@ -69,6 +73,7 @@ export default function PlayerPage() {
     return () => { cancelled = true; };
   }, [region, gameName, tag]);
 
+  /** Fetches the next 10 matches starting at the current offset and appends to the list. */
   const loadMore = async () => {
     if (!account || !region || isLoadingMore || !hasMore) return;
     setIsLoadingMore(true);

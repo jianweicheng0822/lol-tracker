@@ -420,12 +420,16 @@ export default function MatchList({ matches, region, puuid, gameName }: MatchLis
             m.kills, m.deaths, m.assists, killParticipation, m.win,
           );
 
+          // Arena: placement 1-4 = victory, 5-8 = defeat
+          const isArena = m.queueId === 1700;
+          const isWin = isArena ? (m.placement >= 1 && m.placement <= 4) : m.win;
+
           // Stronger accent colors
-          const winColor = m.win ? "#2d6ab5" : "#a83232";
-          const winTextColor = m.win ? "#4d8ad0" : "#cc5555";
-          const winText = m.win ? "Victory" : "Defeat";
+          const winColor = isWin ? "#2d6ab5" : "#a83232";
+          const winTextColor = isWin ? "#4d8ad0" : "#cc5555";
+          const winText = isWin ? "Victory" : "Defeat";
           // More visible backgrounds
-          const winBg = m.win
+          const winBg = isWin
             ? "linear-gradient(135deg, rgba(30,60,110,0.18) 0%, rgba(20,40,80,0.08) 100%)"
             : "linear-gradient(135deg, rgba(110,30,30,0.18) 0%, rgba(80,20,20,0.08) 100%)";
 

@@ -16,6 +16,8 @@ export default function PlayerPage() {
   const [stats, setStats] = useState<PlayerStats | null>(null);
   const [ranked, setRanked] = useState<RankedEntry[]>([]);
   const [isFav, setIsFav] = useState(false);
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
   const ddVersion = useDdragonVersion();
   const [status, setStatus] = useState<"loading" | "error" | "done">("loading");
@@ -34,6 +36,7 @@ export default function PlayerPage() {
       setStats(null);
       setRanked([]);
       setIsFav(false);
+      setHasMore(true);
 
       try {
         const acc = await fetchAccount(gameName, tag, region);
@@ -48,7 +51,9 @@ export default function PlayerPage() {
         ]);
 
         if (cancelled) return;
-        setMatches(Array.isArray(matchData) ? matchData : []);
+        const matchList = Array.isArray(matchData) ? matchData : [];
+        setMatches(matchList);
+        setHasMore(matchList.length >= 10);
         setStats(statsData);
         setRanked(Array.isArray(rankedData) ? rankedData : []);
         setIsFav(favStatus);
@@ -63,6 +68,21 @@ export default function PlayerPage() {
     load();
     return () => { cancelled = true; };
   }, [region, gameName, tag]);
+
+  const loadMore = async () => {
+    if (!account || !region || isLoadingMore || !hasMore) return;
+    setIsLoadingMore(true);
+    try {
+      const newMatches = await fetchMatchSummaries(account.puuid, region, 10, matches.length);
+      const list = Array.isArray(newMatches) ? newMatches : [];
+      setMatches((prev) => [...prev, ...list]);
+      if (list.length < 10) setHasMore(false);
+    } catch (e) {
+      console.error("Failed to load more matches:", e);
+    } finally {
+      setIsLoadingMore(false);
+    }
+  };
 
   const toggleFavorite = async () => {
     if (!account || !region) return;
@@ -134,7 +154,7 @@ export default function PlayerPage() {
             {stats && <StatsBar stats={stats} matches={matches} />}
 
             {/* Match list */}
-            <MatchList matches={matches} region={region} puuid={account.puuid} gameName={account.gameName} />
+            <MatchList matches={matches} region={region} puuid={account.puuid} gameName={account.gameName} onLoadMore={loadMore} isLoadingMore={isLoadingMore} hasMore={hasMore} />
           </>
         )}
       </div>

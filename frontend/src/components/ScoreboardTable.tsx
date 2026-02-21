@@ -41,17 +41,17 @@ function MultiKillBadges({ p }: { p: MatchDetailParticipant }) {
   );
 }
 
-// --- Placement colors and labels for Arena mode ---
-// 1st = gold, 2nd = silver, 3rd = bronze, 4th–8th = neutral gray
+// --- Placement accent colors for Arena scoreboard headers ---
+// 1st = gold, 2nd–4th = blue (victory zone), 5th–8th = muted gray (defeat zone)
 const PLACEMENT_COLORS: Record<number, string> = {
-  1: "#f59e0b", // gold
-  2: "#94a3b8", // silver
-  3: "#cd7f32", // bronze
-  4: "#64748b",
-  5: "#64748b",
-  6: "#64748b",
-  7: "#64748b",
-  8: "#64748b",
+  1: "#c9952c", // gold — 1st place accent
+  2: "#2563eb", // blue
+  3: "#2563eb", // blue
+  4: "#2563eb", // blue
+  5: "#a83232", // red
+  6: "#a83232", // red
+  7: "#a83232", // red
+  8: "#a83232", // red
 };
 
 /** Convert placement number to ordinal string: 1 → "1st", 2 → "2nd", etc. */
@@ -103,6 +103,14 @@ export function ArenaScoreboard({
         const placement = players[0]?.placement || 0;
         const plColor = PLACEMENT_COLORS[placement] || "#64748b";
         const hasHighlight = players.some((p) => p.puuid === highlightPuuid);
+        const isFirst = placement === 1;
+
+        // 1st place gets a subtle warm gold background; others use their accent at low opacity
+        const headerBg = isFirst
+          ? "rgba(201,149,44,0.12)"
+          : hasHighlight
+            ? `${plColor}18`
+            : "rgba(255,255,255,0.03)";
 
         return (
           <div key={subteamId} style={{ marginBottom: 16 }}>
@@ -115,9 +123,7 @@ export function ArenaScoreboard({
                 marginBottom: 6,
                 padding: "6px 12px",
                 borderLeft: `4px solid ${plColor}`,
-                background: hasHighlight
-                  ? `${plColor}18`
-                  : "rgba(255,255,255,0.03)",
+                background: headerBg,
                 borderRadius: "0 6px 6px 0",
               }}
             >

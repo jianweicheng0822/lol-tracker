@@ -10,7 +10,7 @@ import {
   formatDuration,
   timeAgo,
 } from "../utils/ddragon";
-import { ScoreboardTeamTable } from "../components/ScoreboardTable";
+import { ScoreboardTeamTable, ArenaScoreboard } from "../components/ScoreboardTable";
 
 export default function MatchDetailPage() {
   const { region, matchId } = useParams<{ region: string; matchId: string }>();
@@ -91,20 +91,29 @@ export default function MatchDetailPage() {
             </div>
 
             {/* Scoreboard */}
-            {match.teams.map((team) => {
-              const teamPlayers = match.participants.filter((p) => p.teamId === team.teamId);
-              return (
-                <ScoreboardTeamTable
-                  key={team.teamId}
-                  team={team}
-                  participants={teamPlayers}
-                  imgBase={imgBase}
-                  highlightPuuid={puuid}
-                  queueId={match.queueId}
-                  region={region}
-                />
-              );
-            })}
+            {match.queueId === 1700 ? (
+              <ArenaScoreboard
+                participants={match.participants}
+                imgBase={imgBase}
+                highlightPuuid={puuid}
+                region={region}
+              />
+            ) : (
+              match.teams.map((team) => {
+                const teamPlayers = match.participants.filter((p) => p.teamId === team.teamId);
+                return (
+                  <ScoreboardTeamTable
+                    key={team.teamId}
+                    team={team}
+                    participants={teamPlayers}
+                    imgBase={imgBase}
+                    highlightPuuid={puuid}
+                    queueId={match.queueId}
+                    region={region}
+                  />
+                );
+              })
+            )}
           </>
         )}
       </div>

@@ -96,6 +96,8 @@ export type MatchDetailParticipant = {
   quadraKills: number;
   pentaKills: number;
   win: boolean;
+  placement: number;
+  playerSubteamId: number;
 };
 
 export type MatchTeam = {

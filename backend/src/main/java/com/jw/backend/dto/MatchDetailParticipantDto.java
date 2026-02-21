@@ -3,7 +3,7 @@ package com.jw.backend.dto;
 /** Detailed per-player stats for the match detail scoreboard (damage, gold, wards, multi-kills). */
 public record MatchDetailParticipantDto(
         String summonerName,
-        String riotIdTagline,
+        String riotIdTagline, // Tag portion of Riot ID (e.g., "NA1") for player profile navigation
         String championName,
         String puuid,
         int teamId,
@@ -29,6 +29,6 @@ public record MatchDetailParticipantDto(
         int quadraKills,
         int pentaKills,
         boolean win,
-        int placement,
-        int playerSubteamId
+        int placement, // Arena placement (1–8); 0 for non-Arena modes
+        int playerSubteamId // Arena duo-team grouping ID; 0 for non-Arena modes
 ) {}

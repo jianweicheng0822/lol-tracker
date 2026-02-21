@@ -24,6 +24,6 @@ public record MatchSummaryDto(
         List<MatchParticipantDto> enemies,
         int primaryRuneId,
         int secondaryRuneStyleId,
-        int[] augments,
-        int placement
+        int[] augments, // Arena augment IDs (4 slots)
+        int placement // Arena placement (1–8); used for win/loss logic (1–4 = win)
 ) {}

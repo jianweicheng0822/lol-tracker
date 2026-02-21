@@ -1,4 +1,10 @@
-/** Match history list — renders match cards with champion, KDA, items, runes, and team rosters. */
+/**
+ * Match history list — renders match cards with champion, KDA, items, runes, and team rosters.
+ *
+ * Each card has a chevron toggle that expands an inline scoreboard (fetched on demand).
+ * Arena matches use placement-based win/loss (1st–4th = victory, 5th–8th = defeat).
+ * Supports "Load More" pagination via onLoadMore callback from the parent page.
+ */
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import type { MatchSummary, MatchParticipant, MatchDetail } from "../types";
@@ -31,11 +37,12 @@ type MatchListProps = {
   hasMore?: boolean;
 };
 
-// --- Augment icons (Community Dragon) ---
+// --- Augment icons for Arena mode (fetched from Community Dragon CDN) ---
 type AugmentEntry = { id: number; augmentSmallIconPath: string };
 let augmentCache: Record<number, string> | null = null;
 let augmentFetchPromise: Promise<Record<number, string>> | null = null;
 
+/** Fetches Arena augment icon URLs from Community Dragon. Cached globally after first load. */
 function fetchAugmentIcons(): Promise<Record<number, string>> {
   if (augmentCache) return Promise.resolve(augmentCache);
   if (augmentFetchPromise) return augmentFetchPromise;
@@ -66,6 +73,7 @@ function fetchAugmentIcons(): Promise<Record<number, string>> {
   return augmentFetchPromise;
 }
 
+/** React hook that loads augment icons only when Arena matches are present. */
 function useAugmentIcons(needed: boolean) {
   const [icons, setIcons] = useState<Record<number, string>>(
     augmentCache ?? {}
@@ -77,7 +85,10 @@ function useAugmentIcons(needed: boolean) {
   return icons;
 }
 
-// --- Performance indicator ---
+/**
+ * Returns a performance badge (MVP, Strong, Balanced, Struggled) based on
+ * KDA ratio and kill participation. Returns null if no badge applies.
+ */
 function getPerformanceTag(
   kills: number,
   deaths: number,
@@ -99,7 +110,7 @@ function getPerformanceTag(
   return null;
 }
 
-// --- Player row with hover ---
+/** Single player row in the match card sidebar — shows champion icon + name. Clickable if tagline is available. */
 function PlayerRow({
   player,
   imgBase,
@@ -172,7 +183,7 @@ function PlayerRow({
   );
 }
 
-// --- Team column ---
+/** Vertical list of PlayerRows for one team (allies or enemies) in the match card sidebar. */
 function TeamColumn({
   players,
   imgBase,
@@ -199,7 +210,7 @@ function TeamColumn({
   );
 }
 
-// --- Item icon with hover ---
+/** Single item slot — shows icon with scale-up hover effect, or empty dark square if itemId is 0. */
 function ItemIcon({ itemId, imgBase }: { itemId: number; imgBase: string }) {
   const [hovered, setHovered] = useState(false);
   return (
@@ -228,7 +239,7 @@ function ItemIcon({ itemId, imgBase }: { itemId: number; imgBase: string }) {
   );
 }
 
-// --- Match card wrapper with hover elevation ---
+/** Match card container — applies win/loss background gradient, left border accent, and hover elevation. */
 function MatchCard({
   children,
   winBg,
@@ -263,7 +274,7 @@ function MatchCard({
   );
 }
 
-// --- Chevron toggle button ---
+/** Toggle button (▼/▲) on the right side of each match card to expand/collapse the inline scoreboard. */
 function ChevronButton({
   expanded,
   onClick,
@@ -297,7 +308,11 @@ function ChevronButton({
   );
 }
 
-// --- Inline scoreboard (expanded) ---
+/**
+ * Inline scoreboard shown when a match card is expanded. Fetches full match detail
+ * on mount, then renders ArenaScoreboard (for Arena) or ScoreboardTeamTable (for standard modes).
+ * The current player's team is shown first in standard modes.
+ */
 function InlineScoreboard({
   matchId,
   region,

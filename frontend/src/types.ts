@@ -16,7 +16,7 @@ export type Account = {
 // --- Match history ---
 export type MatchParticipant = {
   summonerName: string;
-  riotIdTagline?: string;
+  riotIdTagline?: string; // Tag portion of Riot ID (e.g., "NA1") — used for clickable player links
   championName: string;
   puuid: string;
 };
@@ -42,8 +42,8 @@ export type MatchSummary = {
   enemies: MatchParticipant[];
   primaryRuneId: number;
   secondaryRuneStyleId: number;
-  augments: number[];
-  placement: number;
+  augments: number[]; // Arena augment IDs (4 slots)
+  placement: number; // Arena placement (1–8); 0 for non-Arena modes
 };
 
 // --- Player stats ---
@@ -97,8 +97,8 @@ export type MatchDetailParticipant = {
   quadraKills: number;
   pentaKills: number;
   win: boolean;
-  placement: number;
-  playerSubteamId: number;
+  placement: number; // Arena placement (1–8); 0 for non-Arena modes
+  playerSubteamId: number; // Arena duo-team ID — groups two players together
 };
 
 export type MatchTeam = {

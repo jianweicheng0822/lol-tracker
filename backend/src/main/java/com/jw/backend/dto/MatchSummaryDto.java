@@ -25,5 +25,7 @@ public record MatchSummaryDto(
         int primaryRuneId,
         int secondaryRuneStyleId,
         int[] augments, // Arena augment IDs (4 slots)
-        int placement // Arena placement (1–8); used for win/loss logic (1–4 = win)
+        int placement, // Arena placement (1–8); used for win/loss logic (1–4 = win)
+        int totalDamageDealtToChampions,
+        int goldEarned
 ) {}

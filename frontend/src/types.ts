@@ -44,6 +44,8 @@ export type MatchSummary = {
   secondaryRuneStyleId: number;
   augments: number[]; // Arena augment IDs (4 slots)
   placement: number; // Arena placement (1–8); 0 for non-Arena modes
+  totalDamageDealtToChampions: number;
+  goldEarned: number;
 };
 
 // --- Player stats ---
@@ -121,6 +123,45 @@ export type MatchDetail = {
   gameVersion: string;
   teams: MatchTeam[];
   participants: MatchDetailParticipant[];
+};
+
+// --- Dashboard tabs ---
+export type TabId = "overview" | "performance" | "champions" | "match-history";
+
+// --- Trend / stats types ---
+export type ChampionStats = {
+  championName: string;
+  games: number;
+  wins: number;
+  winRate: number;
+  avgKills: number;
+  avgDeaths: number;
+  avgAssists: number;
+  avgKda: number;
+  avgDamage: number;
+  avgCs: number;
+};
+
+export type MatchTrendPoint = {
+  matchId: string;
+  gameEndTimestamp: number;
+  win: boolean;
+  kills: number;
+  deaths: number;
+  assists: number;
+  totalDamageDealtToChampions: number;
+  goldEarned: number;
+  cs: number;
+  championName: string;
+  queueId: number;
+};
+
+export type LpSnapshot = {
+  queueType: string;
+  tier: string;
+  rankDivision: string;
+  leaguePoints: number;
+  capturedAt: number;
 };
 
 // --- Favorites ---

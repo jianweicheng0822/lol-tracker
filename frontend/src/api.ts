@@ -83,3 +83,27 @@ export async function removeFavorite(puuid: string) {
   const res = await fetch(`${BASE}/api/favorites/${puuid}`, { method: "DELETE" });
   if (!res.ok) throw new Error(await readErrorMessage(res));
 }
+
+export async function fetchChampionStats(puuid: string) {
+  const res = await fetch(
+    `${BASE}/api/trends/champions?puuid=${encodeURIComponent(puuid)}`
+  );
+  if (!res.ok) throw new Error(await readErrorMessage(res));
+  return res.json();
+}
+
+export async function fetchMatchTrends(puuid: string) {
+  const res = await fetch(
+    `${BASE}/api/trends/matches?puuid=${encodeURIComponent(puuid)}`
+  );
+  if (!res.ok) throw new Error(await readErrorMessage(res));
+  return res.json();
+}
+
+export async function fetchLpHistory(puuid: string, queueType = "RANKED_SOLO_5x5") {
+  const res = await fetch(
+    `${BASE}/api/trends/lp?puuid=${encodeURIComponent(puuid)}&queueType=${encodeURIComponent(queueType)}`
+  );
+  if (!res.ok) throw new Error(await readErrorMessage(res));
+  return res.json();
+}

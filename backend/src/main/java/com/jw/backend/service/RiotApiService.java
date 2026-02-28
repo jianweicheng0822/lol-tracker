@@ -409,6 +409,9 @@ public class RiotApiService {
                 }
             }
 
+            int totalDamageDealtToChampions = me != null ? me.path("totalDamageDealtToChampions").asInt(0) : 0;
+            int goldEarned = me != null ? me.path("goldEarned").asInt(0) : 0;
+
             int myTeamId = me != null ? me.path("teamId").asInt(0) : 0;
 
             int teamTotalKills = 0;
@@ -439,7 +442,8 @@ public class RiotApiService {
                     championLevel, summoner1Id, summoner2Id, items,
                     totalMinionsKilled, neutralMinionsKilled, queueId, teamTotalKills,
                     allies, enemies,
-                    primaryRuneId, secondaryRuneStyleId, augments, placement
+                    primaryRuneId, secondaryRuneStyleId, augments, placement,
+                    totalDamageDealtToChampions, goldEarned
             );
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse match detail JSON for " + matchId, e);

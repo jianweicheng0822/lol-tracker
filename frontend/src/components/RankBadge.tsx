@@ -1,5 +1,6 @@
 /** Ranked badge display — shows tier icon, rank, LP, and win/loss for each queue. */
 import type { RankedEntry } from "../types";
+import { hideOnError } from "../utils/ddragon";
 
 const QUEUE_LABELS: Record<string, string> = {
   RANKED_SOLO_5x5: "Solo/Duo",
@@ -9,8 +10,12 @@ const QUEUE_LABELS: Record<string, string> = {
 const TIER_ICON_BASE =
   "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-mini-crests";
 
+/* Emerald tier only has an SVG on Community Dragon, all others have PNGs. */
+const SVG_ONLY_TIERS = new Set(["EMERALD"]);
+
 function tierIconUrl(tier: string): string {
-  return `${TIER_ICON_BASE}/${tier.toLowerCase()}.png`;
+  const ext = SVG_ONLY_TIERS.has(tier.toUpperCase()) ? "svg" : "png";
+  return `${TIER_ICON_BASE}/${tier.toLowerCase()}.${ext}`;
 }
 
 const APEX_TIERS = new Set(["MASTER", "GRANDMASTER", "CHALLENGER"]);
@@ -32,6 +37,7 @@ function QueueBadge({ entry }: { entry: RankedEntry }) {
           src={tierIconUrl(entry.tier)}
           alt={entry.tier}
           style={styles.tierIcon}
+          onError={hideOnError}
         />
         <div>
           <div style={styles.tierRow}>
@@ -60,6 +66,7 @@ export default function RankBadge({ entries }: { entries: RankedEntry[] }) {
               src={`${TIER_ICON_BASE}/unranked.png`}
               alt="Unranked"
               style={styles.tierIcon}
+              onError={hideOnError}
             />
             <div style={styles.tier}>Unranked</div>
           </div>

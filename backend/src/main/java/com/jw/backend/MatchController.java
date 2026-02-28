@@ -1,6 +1,7 @@
 package com.jw.backend;
 
 import com.jw.backend.region.RiotRegion;
+import com.jw.backend.service.MatchHistoryService;
 import com.jw.backend.service.RiotApiService;
 import org.springframework.web.bind.annotation.*;
 import com.jw.backend.dto.MatchSummaryDto;
@@ -13,9 +14,11 @@ import java.util.List;
 public class MatchController {
 
     private final RiotApiService riotApiService;
+    private final MatchHistoryService matchHistoryService;
 
-    public MatchController(RiotApiService riotApiService) {
+    public MatchController(RiotApiService riotApiService, MatchHistoryService matchHistoryService) {
         this.riotApiService = riotApiService;
+        this.matchHistoryService = matchHistoryService;
     }
 
     /** Returns recent match IDs for a player. */
@@ -53,7 +56,11 @@ public class MatchController {
             @RequestParam(defaultValue = "3") int count,
             @RequestParam(defaultValue = "0") int start
     ) {
-        // Return parsed summaries instead of raw JSON
-        return riotApiService.getRecentMatchSummaries(puuid, region, count, start);
+        List<MatchSummaryDto> summaries = riotApiService.getRecentMatchSummaries(puuid, region, count, start);
+
+        // Persist match records for trend tracking
+        matchHistoryService.persistMatchRecords(puuid, region.name(), summaries);
+
+        return summaries;
     }
 }

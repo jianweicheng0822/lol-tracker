@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jw.backend.region.RiotRegion;
+import com.jw.backend.service.LpTrackingService;
 import com.jw.backend.service.RiotApiService;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,10 +15,12 @@ import org.springframework.web.bind.annotation.*;
 public class SummonerController {
 
     private final RiotApiService riotApiService;
+    private final LpTrackingService lpTrackingService;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
-    public SummonerController(RiotApiService riotApiService) {
+    public SummonerController(RiotApiService riotApiService, LpTrackingService lpTrackingService) {
         this.riotApiService = riotApiService;
+        this.lpTrackingService = lpTrackingService;
     }
 
     @GetMapping
@@ -39,6 +42,10 @@ public class SummonerController {
             int profileIconId = summonerNode.path("profileIconId").asInt(0);
 
             accountNode.put("profileIconId", profileIconId);
+
+            // Capture LP snapshot for trend tracking
+            lpTrackingService.captureSnapshot(puuid, region);
+
             return objectMapper.writeValueAsString(accountNode);
         } catch (Exception e) {
             throw new RuntimeException("Failed to enrich account data", e);

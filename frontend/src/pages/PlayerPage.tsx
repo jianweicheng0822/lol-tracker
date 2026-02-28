@@ -1,19 +1,25 @@
 /**
- * Player profile page — shows ranked info, aggregated stats, and match history for a player.
+ * Player profile page — tabbed dashboard with ranked info, stats, match history, and trends.
  * Fetches account, matches, stats, ranked, and favorite status in parallel on mount.
- * Supports "Load More" pagination to fetch additional match batches beyond the initial 10.
+ * Supports tabbed navigation via URL search params (?tab=overview).
  */
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import SearchBar from "../components/SearchBar";
-import StatsBar from "../components/StatsBar";
-import MatchList, { useDdragonVersion } from "../components/MatchList";
-import RankBadge from "../components/RankBadge";
+import ProfileHeader from "../components/ProfileHeader";
+import TabBar from "../components/TabBar";
+import OverviewTab from "../components/tabs/OverviewTab";
+import PerformanceTab from "../components/tabs/PerformanceTab";
+import ChampionsTab from "../components/tabs/ChampionsTab";
+import MatchHistoryTab from "../components/tabs/MatchHistoryTab";
+import { useDdragonVersion } from "../components/MatchList";
+import { useTabNavigation } from "../hooks/useTabNavigation";
 import { fetchAccount, fetchMatchSummaries, fetchStats, fetchRanked, checkIsFavorite, addFavorite, removeFavorite } from "../api";
 import type { Region, Account, MatchSummary, PlayerStats, RankedEntry } from "../types";
 
 export default function PlayerPage() {
   const { region, gameName, tag } = useParams<{ region: string; gameName: string; tag: string }>();
+  const [activeTab, setTab] = useTabNavigation();
 
   const [account, setAccount] = useState<Account | null>(null);
   const [matches, setMatches] = useState<MatchSummary[]>([]);
@@ -27,53 +33,55 @@ export default function PlayerPage() {
   const [status, setStatus] = useState<"loading" | "error" | "done">("loading");
   const [errorMsg, setErrorMsg] = useState("");
 
-  useEffect(() => {
+  const load = async (cancelled = { current: false }) => {
     if (!region || !gameName || !tag) return;
 
-    let cancelled = false;
+    setStatus("loading");
+    setErrorMsg("");
+    setAccount(null);
+    setMatches([]);
+    setStats(null);
+    setRanked([]);
+    setIsFav(false);
+    setHasMore(true);
 
-    const load = async () => {
-      setStatus("loading");
-      setErrorMsg("");
-      setAccount(null);
-      setMatches([]);
-      setStats(null);
-      setRanked([]);
-      setIsFav(false);
-      setHasMore(true);
+    try {
+      const acc = await fetchAccount(gameName, tag, region);
+      if (cancelled.current) return;
+      setAccount(acc);
 
-      try {
-        const acc = await fetchAccount(gameName, tag, region);
-        if (cancelled) return;
-        setAccount(acc);
+      const [matchData, statsData, rankedData, favStatus] = await Promise.all([
+        fetchMatchSummaries(acc.puuid, region, 10),
+        fetchStats(acc.puuid, region, 10),
+        fetchRanked(acc.puuid, region).catch((e) => { console.error("Ranked fetch failed:", e); return []; }),
+        checkIsFavorite(acc.puuid),
+      ]);
 
-        const [matchData, statsData, rankedData, favStatus] = await Promise.all([
-          fetchMatchSummaries(acc.puuid, region, 10),
-          fetchStats(acc.puuid, region, 10),
-          fetchRanked(acc.puuid, region).catch((e) => { console.error("Ranked fetch failed:", e); return []; }),
-          checkIsFavorite(acc.puuid),
-        ]);
+      if (cancelled.current) return;
+      const matchList = Array.isArray(matchData) ? matchData : [];
+      setMatches(matchList);
+      setHasMore(matchList.length >= 10);
+      setStats(statsData);
+      setRanked(Array.isArray(rankedData) ? rankedData : []);
+      setIsFav(favStatus);
+      setStatus("done");
+    } catch (e: any) {
+      if (cancelled.current) return;
+      setStatus("error");
+      setErrorMsg(e?.message || "Something went wrong.");
+    }
+  };
 
-        if (cancelled) return;
-        const matchList = Array.isArray(matchData) ? matchData : [];
-        setMatches(matchList);
-        setHasMore(matchList.length >= 10);
-        setStats(statsData);
-        setRanked(Array.isArray(rankedData) ? rankedData : []);
-        setIsFav(favStatus);
-        setStatus("done");
-      } catch (e: any) {
-        if (cancelled) return;
-        setStatus("error");
-        setErrorMsg(e?.message || "Something went wrong.");
-      }
-    };
-
-    load();
-    return () => { cancelled = true; };
+  useEffect(() => {
+    const cancelled = { current: false };
+    load(cancelled);
+    return () => { cancelled.current = true; };
   }, [region, gameName, tag]);
 
-  /** Fetches the next 10 matches starting at the current offset and appends to the list. */
+  const handleRefresh = () => {
+    load();
+  };
+
   const loadMore = async () => {
     if (!account || !region || isLoadingMore || !hasMore) return;
     setIsLoadingMore(true);
@@ -131,35 +139,36 @@ export default function PlayerPage() {
 
         {status === "done" && account && (
           <>
-            {/* Player header */}
-            <div style={styles.header}>
-              <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
-                <img
-                  src={`https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/profileicon/${account.profileIconId}.png`}
-                  alt="Profile Icon"
-                  style={{ width: 56, height: 56, borderRadius: "50%", border: "2px solid #334155" }}
-                />
-                <div>
-                  <h2 style={{ margin: 0, fontSize: 28 }}>
-                    {account.gameName}
-                    <span style={{ color: "#64748b", fontWeight: 400 }}> #{account.tagLine}</span>
-                  </h2>
-                  <div style={{ fontSize: 13, opacity: 0.5, marginTop: 4 }}>{region}</div>
-                </div>
-              </div>
-              <button style={isFav ? styles.favBtnActive : styles.favBtn} onClick={toggleFavorite}>
-                {isFav ? "★ Favorited" : "☆ Favorite"}
-              </button>
-            </div>
+            <ProfileHeader
+              account={account}
+              region={region!}
+              isFav={isFav}
+              onToggleFavorite={toggleFavorite}
+              onRefresh={handleRefresh}
+            />
 
-            {/* Ranked info */}
-            <RankBadge entries={ranked} />
+            <TabBar activeTab={activeTab} onTabChange={setTab} />
 
-            {/* Stats */}
-            {stats && <StatsBar stats={stats} matches={matches} />}
-
-            {/* Match list */}
-            <MatchList matches={matches} region={region} puuid={account.puuid} gameName={account.gameName} onLoadMore={loadMore} isLoadingMore={isLoadingMore} hasMore={hasMore} />
+            {activeTab === "overview" && (
+              <OverviewTab stats={stats} matches={matches} ranked={ranked} />
+            )}
+            {activeTab === "performance" && (
+              <PerformanceTab puuid={account.puuid} />
+            )}
+            {activeTab === "champions" && (
+              <ChampionsTab puuid={account.puuid} />
+            )}
+            {activeTab === "match-history" && (
+              <MatchHistoryTab
+                matches={matches}
+                region={region!}
+                puuid={account.puuid}
+                gameName={account.gameName}
+                onLoadMore={loadMore}
+                isLoadingMore={isLoadingMore}
+                hasMore={hasMore}
+              />
+            )}
           </>
         )}
       </div>
@@ -190,37 +199,9 @@ const styles: Record<string, React.CSSProperties> = {
     flexShrink: 0,
   },
   content: {
-    maxWidth: 800,
+    maxWidth: 1060,
     margin: "0 auto",
     padding: "30px 20px",
-  },
-  header: {
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "space-between",
-    marginBottom: 24,
-    paddingBottom: 16,
-    borderBottom: "1px solid #334155",
-  },
-  favBtn: {
-    padding: "8px 16px",
-    borderRadius: 8,
-    background: "rgba(99,102,241,0.1)",
-    border: "1px solid rgba(99,102,241,0.3)",
-    color: "#a5b4fc",
-    cursor: "pointer",
-    fontSize: 13,
-    fontWeight: 600,
-  },
-  favBtnActive: {
-    padding: "8px 16px",
-    borderRadius: 8,
-    background: "rgba(99,102,241,0.25)",
-    border: "1px solid rgba(99,102,241,0.5)",
-    color: "#c7d2fe",
-    cursor: "pointer",
-    fontSize: 13,
-    fontWeight: 600,
   },
   loadingBox: {
     textAlign: "center",

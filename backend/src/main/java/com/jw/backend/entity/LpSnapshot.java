@@ -2,32 +2,50 @@ package com.jw.backend.entity;
 
 import jakarta.persistence.*;
 
+/**
+ * JPA entity representing a point-in-time snapshot of a player's LP (League Points).
+ * Persisted to the "lp_snapshots" table for LP progression charts.
+ *
+ * A new snapshot is saved only when the player's rank/LP changes compared to the
+ * most recent snapshot, avoiding duplicate entries for unchanged ranks.
+ */
 @Entity
 @Table(name = "lp_snapshots")
 public class LpSnapshot {
 
+    // =====================================================
+    // Primary Key
+    // =====================================================
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // =====================================================
+    // Player and queue identification
+    // =====================================================
     @Column(nullable = false)
-    private String puuid;
-
-    @Column(nullable = false)
-    private String queueType;
-
-    @Column(nullable = false)
-    private String tier;
+    private String puuid;       // Riot universal player identifier
 
     @Column(nullable = false)
-    private String rankDivision;
+    private String queueType;   // Queue type string (e.g., "RANKED_SOLO_5x5", "RANKED_FLEX_SR")
 
-    private int leaguePoints;
+    // =====================================================
+    // Rank data at the time of capture
+    // =====================================================
+    @Column(nullable = false)
+    private String tier;         // Rank tier (e.g., "GOLD", "PLATINUM", "DIAMOND")
 
-    private long capturedAt;
+    @Column(nullable = false)
+    private String rankDivision; // Division within tier (e.g., "I", "II", "III", "IV")
 
+    private int leaguePoints;    // LP within the current division (0–100 for non-apex tiers)
+
+    private long capturedAt;     // Epoch ms — when this snapshot was taken
+
+    // Default constructor required by JPA
     public LpSnapshot() {}
 
+    /** Creates a new snapshot with capturedAt set to the current time. */
     public LpSnapshot(String puuid, String queueType, String tier, String rankDivision, int leaguePoints) {
         this.puuid = puuid;
         this.queueType = queueType;

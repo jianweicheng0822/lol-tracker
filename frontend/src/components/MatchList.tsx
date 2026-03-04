@@ -23,6 +23,7 @@ import {
   timeAgo,
 } from "../utils/ddragon";
 import { ScoreboardTeamTable, ArenaScoreboard } from "./ScoreboardTable";
+import AiChatModal from "./AiChatModal";
 
 // Re-export for backwards compat with PlayerPage import
 export { useDdragonVersion } from "../utils/ddragon";
@@ -275,6 +276,34 @@ function MatchCard({
   );
 }
 
+/** AI analysis button — sparkle icon styled to match ChevronButton. */
+function AiButton({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: hovered ? "rgba(79,70,229,0.2)" : "rgba(255,255,255,0.04)",
+        border: "1px solid rgba(255,255,255,0.08)",
+        borderRadius: 4,
+        color: hovered ? "#a5b4fc" : "#64748b",
+        cursor: "pointer",
+        padding: "4px 8px",
+        fontSize: 12,
+        lineHeight: 1,
+        transition: "all 0.15s",
+        flexShrink: 0,
+        marginLeft: 4,
+      }}
+      title="Analyze with AI"
+    >
+      ✦
+    </button>
+  );
+}
+
 /** Toggle button (▼/▲) on the right side of each match card to expand/collapse the inline scoreboard. */
 function ChevronButton({
   expanded,
@@ -409,6 +438,7 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
   const hasArena = matches.some((m) => m.queueId === 1700);
   const augmentIcons = useAugmentIcons(hasArena);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [aiMatch, setAiMatch] = useState<MatchSummary | null>(null);
 
   if (!matches.length) return null;
 
@@ -696,13 +726,21 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                   </div>
 
                   {region && puuid && (
-                    <ChevronButton
-                      expanded={isExpanded}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setExpandedId(isExpanded ? null : m.matchId);
-                      }}
-                    />
+                    <>
+                      <AiButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setAiMatch(m);
+                        }}
+                      />
+                      <ChevronButton
+                        expanded={isExpanded}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setExpandedId(isExpanded ? null : m.matchId);
+                        }}
+                      />
+                    </>
                   )}
                 </div>
               </MatchCard>
@@ -753,6 +791,10 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
             {isLoadingMore ? "Loading..." : "Load More"}
           </button>
         </div>
+      )}
+
+      {aiMatch && (
+        <AiChatModal match={aiMatch} onClose={() => setAiMatch(null)} />
       )}
     </div>
   );

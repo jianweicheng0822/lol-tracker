@@ -1,3 +1,8 @@
+/**
+ * Match History tab — thin wrapper around the existing MatchList component.
+ * Passes through all match data, pagination callbacks, and player context.
+ * The MatchList component handles rendering, inline scoreboard expansion, and load-more.
+ */
 import MatchList from "../MatchList";
 import type { MatchSummary } from "../../types";
 

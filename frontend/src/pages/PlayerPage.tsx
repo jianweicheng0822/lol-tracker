@@ -18,7 +18,9 @@ import { fetchAccount, fetchMatchSummaries, fetchStats, fetchRanked, checkIsFavo
 import type { Region, Account, MatchSummary, PlayerStats, RankedEntry } from "../types";
 
 export default function PlayerPage() {
+  // Extract player identifiers from the URL route params (/player/:region/:gameName/:tag)
   const { region, gameName, tag } = useParams<{ region: string; gameName: string; tag: string }>();
+  // Tab state synced with URL search params (?tab=overview) for browser back/forward support
   const [activeTab, setTab] = useTabNavigation();
 
   const [account, setAccount] = useState<Account | null>(null);
@@ -33,6 +35,7 @@ export default function PlayerPage() {
   const [status, setStatus] = useState<"loading" | "error" | "done">("loading");
   const [errorMsg, setErrorMsg] = useState("");
 
+  /** Fetches all player data in parallel. Called on mount and on manual refresh. */
   const load = async (cancelled = { current: false }) => {
     if (!region || !gameName || !tag) return;
 
@@ -78,10 +81,12 @@ export default function PlayerPage() {
     return () => { cancelled.current = true; };
   }, [region, gameName, tag]);
 
+  /** Re-fetches all data when the refresh button is clicked in ProfileHeader. */
   const handleRefresh = () => {
     load();
   };
 
+  /** Fetches the next 10 matches starting at the current offset and appends to the list. */
   const loadMore = async () => {
     if (!account || !region || isLoadingMore || !hasMore) return;
     setIsLoadingMore(true);
@@ -97,6 +102,7 @@ export default function PlayerPage() {
     }
   };
 
+  /** Toggles the player's favorite status via the backend API. */
   const toggleFavorite = async () => {
     if (!account || !region) return;
     try {
@@ -149,6 +155,7 @@ export default function PlayerPage() {
 
             <TabBar activeTab={activeTab} onTabChange={setTab} />
 
+            {/* Conditionally render the active tab's content */}
             {activeTab === "overview" && (
               <OverviewTab stats={stats} matches={matches} ranked={ranked} />
             )}
@@ -176,6 +183,7 @@ export default function PlayerPage() {
   );
 }
 
+// --- Styles: dark slate theme, wider content area (1060px) for 2-column tab layouts ---
 const styles: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "100vh",

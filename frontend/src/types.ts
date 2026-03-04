@@ -126,9 +126,12 @@ export type MatchDetail = {
 };
 
 // --- Dashboard tabs ---
+/** Valid tab IDs for the player dashboard — used by useTabNavigation hook and TabBar component. */
 export type TabId = "overview" | "performance" | "champions" | "match-history";
 
-// --- Trend / stats types ---
+// --- Trend / stats types (from /api/trends endpoints) ---
+
+/** Per-champion aggregated stats — returned by GET /api/trends/champions. */
 export type ChampionStats = {
   championName: string;
   games: number;
@@ -142,6 +145,7 @@ export type ChampionStats = {
   avgCs: number;
 };
 
+/** Single match data point for performance trend charts — returned by GET /api/trends/matches. */
 export type MatchTrendPoint = {
   matchId: string;
   gameEndTimestamp: number;
@@ -156,6 +160,7 @@ export type MatchTrendPoint = {
   queueId: number;
 };
 
+/** Point-in-time LP snapshot for LP progression charts — returned by GET /api/trends/lp. */
 export type LpSnapshot = {
   queueType: string;
   tier: string;

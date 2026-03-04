@@ -1,6 +1,8 @@
 /** API client — all fetch calls to the Spring Boot backend. */
 
-const BASE = "http://localhost:8080";
+/** In dev, Vite sets MODE="development" → calls localhost:8080 directly.
+ *  In production, the React build is served by Spring Boot on the same origin → empty base. */
+const BASE = import.meta.env.DEV ? "http://localhost:8080" : "";
 
 export async function readErrorMessage(res: Response): Promise<string> {
   try {
@@ -84,6 +86,9 @@ export async function removeFavorite(puuid: string) {
   if (!res.ok) throw new Error(await readErrorMessage(res));
 }
 
+// --- Trend endpoints (from local database, not Riot API directly) ---
+
+/** Fetches per-champion aggregated stats for the Champions tab grid. */
 export async function fetchChampionStats(puuid: string) {
   const res = await fetch(
     `${BASE}/api/trends/champions?puuid=${encodeURIComponent(puuid)}`
@@ -92,6 +97,7 @@ export async function fetchChampionStats(puuid: string) {
   return res.json();
 }
 
+/** Fetches per-match trend data points for Performance tab charts (KDA, damage, win rate). */
 export async function fetchMatchTrends(puuid: string) {
   const res = await fetch(
     `${BASE}/api/trends/matches?puuid=${encodeURIComponent(puuid)}`
@@ -100,10 +106,88 @@ export async function fetchMatchTrends(puuid: string) {
   return res.json();
 }
 
+/** Fetches LP progression history for the Performance tab LP chart. Defaults to Solo/Duo queue. */
 export async function fetchLpHistory(puuid: string, queueType = "RANKED_SOLO_5x5") {
   const res = await fetch(
     `${BASE}/api/trends/lp?puuid=${encodeURIComponent(puuid)}&queueType=${encodeURIComponent(queueType)}`
   );
   if (!res.ok) throw new Error(await readErrorMessage(res));
   return res.json();
+}
+
+// --- AI match analysis (streaming) ---
+// Architecture: Frontend sends structured match data → Backend constructs prompt → OpenAI.
+// The API key stays on the server; the frontend only receives streamed analysis tokens.
+
+/** Structured match data sent to the backend for AI analysis (no prompt text — backend builds it). */
+export type AiMatchData = {
+  champion: string;
+  role: string;
+  rank: string;
+  kills: number;
+  deaths: number;
+  assists: number;
+  cs: number;
+  gold: number;
+  damage: number;
+  visionScore: number;
+  gameDurationSec: number;
+  win: boolean;
+  items: string[];
+  teamComp: string[];
+  enemyComp: string[];
+};
+
+/** Single message in the conversation history (role: "user" or "assistant"). */
+export type AiChatMessage = { role: string; content: string };
+
+/**
+ * Streams AI match analysis from the backend SSE endpoint.
+ * Reads the response body incrementally and calls `onToken` for each content chunk,
+ * enabling real-time rendering in the chat modal. Returns the full accumulated response.
+ */
+export async function analyzeMatchStream(
+  matchData: AiMatchData,
+  messages: AiChatMessage[],
+  onToken: (token: string) => void,
+): Promise<string> {
+  const res = await fetch(`${BASE}/api/analyze/stream`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ matchData, messages }),
+  });
+
+  if (!res.ok) throw new Error(await readErrorMessage(res));
+
+  const reader = res.body?.getReader();
+  if (!reader) throw new Error("Streaming not supported");
+
+  const decoder = new TextDecoder();
+  let full = "";
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    const chunk = decoder.decode(value, { stream: true });
+    // SSE format: each event is "data:<content>" separated by newlines
+    for (const line of chunk.split("\n")) {
+      const trimmed = line.trim();
+      if (!trimmed || trimmed === "data:") continue;
+
+      let content = trimmed.startsWith("data:") ? trimmed.slice(5) : trimmed;
+
+      // Spring SSE may serialize Flux<String> values as JSON strings
+      if (content.startsWith('"') && content.endsWith('"')) {
+        try { content = JSON.parse(content); } catch { /* use as-is */ }
+      }
+
+      if (content) {
+        full += content;
+        onToken(content);
+      }
+    }
+  }
+
+  return full;
 }

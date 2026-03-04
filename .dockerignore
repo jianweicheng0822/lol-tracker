@@ -1,0 +1,20 @@
+# Dependencies and build outputs (rebuilt inside Docker)
+frontend/node_modules
+frontend/dist
+backend/target
+backend/data
+
+# Environment files with secrets (injected at runtime, never baked into image)
+.env
+backend/.env
+
+# IDE and OS files
+.idea
+.vscode
+*.iml
+.DS_Store
+Thumbs.db
+
+# Git
+.git
+.gitignore

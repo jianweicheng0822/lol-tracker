@@ -3,7 +3,8 @@
  * Always visible above the tab bar on the player dashboard.
  * Extracted from PlayerPage to keep the tabbed layout clean.
  */
-import type { Account, Region } from "../types";
+import type { Account } from "../types";
+// DDragon version hook is re-exported through MatchList to avoid a circular dependency
 import { useDdragonVersion } from "./MatchList";
 
 type Props = {

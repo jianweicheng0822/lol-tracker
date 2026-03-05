@@ -12,7 +12,6 @@ import OverviewTab from "../components/tabs/OverviewTab";
 import PerformanceTab from "../components/tabs/PerformanceTab";
 import ChampionsTab from "../components/tabs/ChampionsTab";
 import MatchHistoryTab from "../components/tabs/MatchHistoryTab";
-import { useDdragonVersion } from "../components/MatchList";
 import { useTabNavigation } from "../hooks/useTabNavigation";
 import { fetchAccount, fetchMatchSummaries, fetchStats, fetchRanked, checkIsFavorite, addFavorite, removeFavorite } from "../api";
 import type { Region, Account, MatchSummary, PlayerStats, RankedEntry } from "../types";
@@ -31,7 +30,6 @@ export default function PlayerPage() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
-  const ddVersion = useDdragonVersion();
   const [status, setStatus] = useState<"loading" | "error" | "done">("loading");
   const [errorMsg, setErrorMsg] = useState("");
 

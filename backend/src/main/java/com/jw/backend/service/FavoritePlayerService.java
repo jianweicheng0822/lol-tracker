@@ -8,8 +8,10 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * Service for managing favorite players.
- * Contains business logic between Controller and Repository.
+ * Manages the user's list of favorite players (add, remove, check, list).
+ *
+ * Favorites are persisted in the H2 database via {@link FavoritePlayerRepository} and survive
+ * app restarts. Duplicate detection is based on the player's PUUID.
  */
 @Service
 public class FavoritePlayerService {

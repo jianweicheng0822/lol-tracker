@@ -25,7 +25,7 @@ import {
 import { ScoreboardTeamTable, ArenaScoreboard } from "./ScoreboardTable";
 import AiChatModal from "./AiChatModal";
 
-// Re-export for backwards compat with PlayerPage import
+// Re-exported so ProfileHeader can import from MatchList without a direct ddragon dependency
 export { useDdragonVersion } from "../utils/ddragon";
 
 type MatchListProps = {

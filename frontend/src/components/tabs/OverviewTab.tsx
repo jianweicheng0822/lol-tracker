@@ -36,7 +36,7 @@ export default function OverviewTab({ stats, matches, ranked }: Props) {
         <div style={styles.card}>
           <div style={styles.cardTitle}>Recent {recent10.length} Games</div>
           <div style={styles.recentBar}>
-            {recent10.map((m, i) => (
+            {recent10.map((m) => (
               <div
                 key={m.matchId}
                 title={`${m.championName} — ${m.win ? "Win" : "Loss"}`}

@@ -33,8 +33,8 @@ public class RiotApiService {
         String baseUrl = "https://" + region.routing() + ".api.riotgames.com";
         String cacheKey = "account:" + region.routing() + ":" + gameName.toLowerCase() + "#" + tagLine.toLowerCase();
 
+        // Check in-memory cache before making an external API call
         String cached = getCached(cacheKey);
-        System.out.println("CACHE HIT: " + cacheKey);
         if (cached != null) return cached;
 
         RestClient client = RestClient.builder()
@@ -108,6 +108,9 @@ public class RiotApiService {
         putCached(cacheKey, result, ttlMs);
         return result;
     }
+    // --- In-memory TTL cache ---
+    // Each API method sets its own TTL: account data caches for 24h, match IDs for 30s, etc.
+
     private static final class CacheEntry {
         private final String value;
         private final long expiresAtMs;
@@ -144,10 +147,6 @@ public class RiotApiService {
         cache.put(key, new CacheEntry(value, expiresAt));
 
     }
-    /**
-     * League-v4 uses platform regions: na1 / euw1 / kr / ...
-     * Uses the by-puuid endpoint directly — no summoner ID needed.
-     */
     /**
      * Summoner-v4 uses platform regions: na1 / euw1 / kr / ...
      * Returns summoner data including profileIconId, summonerLevel, etc.

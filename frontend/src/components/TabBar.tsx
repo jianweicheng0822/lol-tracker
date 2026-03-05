@@ -22,7 +22,7 @@ const TABS: { id: TabId; label: string }[] = [
 ];
 
 /** Single tab button with hover state tracking for interactive styling. */
-function Tab({ id, label, active, onClick }: { id: TabId; label: string; active: boolean; onClick: () => void }) {
+function Tab({ label, active, onClick }: { id: TabId; label: string; active: boolean; onClick: () => void }) {
   const [hovered, setHovered] = useState(false);
 
   return (

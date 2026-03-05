@@ -64,7 +64,7 @@ export default function PerformanceTab({ puuid }: Props) {
 
   // Rolling 10-game win rate — null until 10 games are accumulated
   const wrValues = rollingWinRate(trends.map((t) => t.win), 10);
-  const wrChartData = trends.map((t, i) => ({
+  const wrChartData = trends.map((_t, i) => ({
     idx: i + 1,
     winRate: wrValues[i],
   }));
@@ -135,7 +135,7 @@ export default function PerformanceTab({ puuid }: Props) {
               <YAxis tick={{ fill: "#64748b", fontSize: 10 }} />
               <Tooltip
                 contentStyle={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 6, fontSize: 12, color: "#e2e8f0" }}
-                formatter={(v: any, name: string) => [Number(v).toFixed(2), name === "ma" ? "5-game avg" : "KDA"]}
+                formatter={(v: any, name?: string) => [Number(v).toFixed(2), name === "ma" ? "5-game avg" : "KDA"]}
               />
               <Line type="monotone" dataKey="kda" stroke="#6366f1" strokeWidth={1} dot={false} />
               <Line type="monotone" dataKey="ma" stroke="#f59e0b" strokeWidth={2} dot={false} connectNulls />
@@ -154,7 +154,7 @@ export default function PerformanceTab({ puuid }: Props) {
               <YAxis tick={{ fill: "#64748b", fontSize: 10 }} />
               <Tooltip
                 contentStyle={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 6, fontSize: 12, color: "#e2e8f0" }}
-                formatter={(v: any, name: string) => [Number(v).toLocaleString(), name === "ma" ? "5-game avg" : "Damage"]}
+                formatter={(v: any, name?: string) => [Number(v).toLocaleString(), name === "ma" ? "5-game avg" : "Damage"]}
               />
               <Line type="monotone" dataKey="damage" stroke="#ef4444" strokeWidth={1} dot={false} />
               <Line type="monotone" dataKey="ma" stroke="#f59e0b" strokeWidth={2} dot={false} connectNulls />

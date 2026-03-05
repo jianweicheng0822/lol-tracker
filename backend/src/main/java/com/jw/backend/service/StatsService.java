@@ -8,7 +8,10 @@ import org.springframework.stereotype.Service;
 import java.util.List;
 
 /**
- * Service that calculates player statistics from match history.
+ * Computes aggregated player statistics (win rate, KDA averages) from recent match history.
+ *
+ * Fetches match summaries via {@link RiotApiService} and reduces them into a single
+ * {@link com.jw.backend.dto.PlayerStatsDto} used by the Overview tab on the frontend.
  */
 @Service
 public class StatsService {

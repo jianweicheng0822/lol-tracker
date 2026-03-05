@@ -42,7 +42,11 @@ public class TrendsController {
         return matchHistoryService.getMatchTrends(puuid);
     }
 
-    /** Returns LP progression snapshots for a specific queue (defaults to Solo/Duo). */
+    /**
+     * Returns LP progression snapshots for a specific queue (defaults to Solo/Duo).
+     * The default "RANKED_SOLO_5x5" matches the Riot API queue type identifier
+     * for Solo/Duo ranked, which is the most commonly tracked queue.
+     */
     @GetMapping("/lp")
     public List<LpSnapshotDto> getLpHistory(
             @RequestParam String puuid,

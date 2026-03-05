@@ -1,220 +1,62 @@
 # LoL Tracker
 
-A League of Legends match history and statistics tracker built with Spring Boot and React.
+A full-stack League of Legends match history and performance analytics dashboard with AI-powered coaching.
 
-Search for any player by their Riot ID and view their recent match history, KDA, and performance stats.
+Search any player by Riot ID, explore their ranked stats, match history, champion performance, and LP trends — all in a polished dark-themed UI with real-time AI match analysis.
 
 ## Features
 
-- **Tabbed Dashboard** - Professional player profile with 4 tabs:
-  - **Overview** - At-a-glance summary with rank badges, win rate donut, KDA, recent games W/L strip
-  - **Performance** - Trend charts powered by Recharts: LP progression, rolling win rate, KDA trend, damage/game
-  - **Champions** - Grid of champion cards with per-champion win rate, KDA, damage, and CS stats
-  - **Match History** - Full match history with expandable inline scoreboards
-- **AI Match Analysis** - GPT-powered coaching assistant for any match (see [details below](#ai-match-analysis))
-- **URL-Driven Tabs** - Tab state persisted in URL params (`?tab=performance`), supporting browser back/forward navigation
-- **Player Search** - Search any player by Game Name and Tag (e.g., Faker#KR1)
-- **Match History** - View recent matches with champion, KDA, and win/loss
-  - Stronger win/loss visual distinction with color-coded backgrounds (blue for victory, red for defeat)
-  - Expandable inline scoreboard via chevron toggle on each match card
-  - "Load More" pagination to browse beyond the initial 10 matches
-- **Match Detail View** - Full scoreboard with all 10 players, damage charts, gold, CS, wards, and multi-kill badges
-  - Clickable player names navigate to that player's match history
-- **Arena Mode Support** - Placement-based team grouping (1st–8th) with colored headers; placement 1st–4th counts as victory, 5th–8th as defeat
-- **Player Stats** - Aggregated statistics including:
-  - Win rate percentage
-  - Average KDA
-  - Average kills, deaths, and assists
-- **Player Avatar** - Profile icon displayed next to player name via Summoner v4 API
-- **Ranked Info** - Display ranked tier, rank, LP, and win/loss for Solo/Duo and Flex queues
-  - Tier icons from Community Dragon CDN
-  - Graceful "Unranked" display for unranked players
-- **LP Tracking** - Automatic LP snapshot capture on profile view; tracks rank changes over time for progression charts
-- **Match Persistence** - Match records saved to local database for historical trend analysis without re-fetching from Riot API
-- **Favorite Players** - Save players to favorites for quick access
-  - Persistent storage (survives app restart)
-  - Click to quickly search saved players
-- **Multi-Region Support** - NA, EUW, KR, JP, BR, OCE
-- **Client-Side Routing** - SPA navigation with React Router
+### Player Dashboard
+- **Tabbed profile** with Overview, Performance, Champions, and Match History views
+- **URL-driven tabs** (`?tab=performance`) with full browser back/forward support
+- **Ranked display** with tier icons, LP, and win/loss for Solo/Duo and Flex queues
+- **Favorite players** saved to database for quick access across sessions
 
-## AI Match Analysis
+### Match History
+- Match cards with champion icon, KDA, items, runes, summoner spells, and team rosters
+- **Expandable inline scoreboards** with full 10-player stats, damage, gold, CS, and vision
+- **Arena mode** support with placement-based results and augment icons
+- Clickable player names for cross-navigation between profiles
+- "Load More" pagination beyond the initial 10 matches
 
-An integrated AI coaching assistant that analyzes individual match performance using OpenAI's GPT-4o-mini model.
+### Performance Analytics
+- **LP progression** chart tracking rank changes over time
+- **Rolling win rate** trend (10-game window) with 50% reference line
+- **KDA and damage trends** with 5-game moving average overlays
+- **Per-champion stats** grid with win rate, KDA, damage, and CS breakdowns
 
-### How It Works
-
-Click the sparkle (✦) button on any match card to open a ChatGPT-style modal where you can ask questions about your performance, get build advice, identify mistakes, and receive actionable improvement tips.
-
-### Architecture
-
-```
-Frontend (structured match data + messages)
-    → Backend POST /api/analyze/stream (constructs system prompt, calls OpenAI)
-        → OpenAI Chat Completions API (streaming)
-    ← Streams tokens back via SSE (text/event-stream)
-← Frontend renders tokens incrementally in chat UI
-```
-
-### Security
-
-- The OpenAI API key is stored server-side only (loaded from environment variable via `.env`)
-- The frontend sends **structured match data** (KDA, items, team comps) — not prompt text
-- The backend constructs the system prompt, preventing client-side prompt injection
-- No API keys are ever exposed in network requests visible to the browser
-
-### Design Decisions
-
-- **Streaming over synchronous** — SSE streaming provides responsive UX where tokens appear as they're generated, rather than waiting for the full response
-- **Backend prompt construction** — The system prompt is built server-side from structured data, keeping prompt engineering confidential and secure
-- **Conversation history** — Full chat history is sent with each request to maintain multi-turn context, enabling natural follow-up questions
-- **WebFlux coexistence** — `spring-boot-starter-webflux` is added alongside `spring-boot-starter-web` solely for `WebClient` streaming support; the app remains Servlet-based
-
-### Technologies
-
-- **OpenAI GPT-4o-mini** — Cost-effective model with strong analytical capabilities
-- **Spring WebFlux WebClient** — Non-blocking HTTP client for streaming OpenAI responses
-- **Server-Sent Events (SSE)** — Lightweight streaming protocol for real-time token delivery
-- **React state management** — Local component state for conversation history (resets on modal close)
+### AI Match Analysis
+- Click the sparkle button on any match card to open a chat modal
+- Ask questions about your performance, get build advice, and receive coaching tips
+- Streaming responses via SSE for responsive UX
+- System prompt constructed server-side from structured match data (no prompt injection)
 
 ## Tech Stack
 
 ### Backend
-- Java 21
-- Spring Boot 3.5
-- Spring Data JPA
-- Spring WebFlux (WebClient for OpenAI streaming)
-- H2 Database
-- Maven
-- Riot Games API
-- OpenAI API
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| Java | 21 | Runtime |
+| Spring Boot | 3.5.10 | Web framework |
+| Spring Data JPA | — | Database access |
+| Spring WebFlux | — | WebClient for OpenAI streaming |
+| H2 Database | — | Embedded SQL database |
+| Maven | — | Build tool |
 
 ### Frontend
-- React 19
-- TypeScript
-- Vite
-- React Router
-- Recharts (trend charts)
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| React | 19.2 | UI framework |
+| TypeScript | 5.9 | Type safety |
+| Vite | 7.2 | Dev server and bundler |
+| React Router | 7.13 | Client-side routing |
+| Recharts | 3.7 | Trend charts |
 
-### Testing
-- JUnit 5
-- MockMvc
-- Mockito
-- 45 unit tests
-
-## How to Run
-
-### Prerequisites
-- Java 21+
-- Node.js 18+
-- Riot API Key ([Get one here](https://developer.riotgames.com))
-- OpenAI API Key ([Get one here](https://platform.openai.com/api-keys))
-
-### Backend
-
-1. Navigate to backend folder:
-   ```bash
-   cd backend
-   ```
-
-2. Create a `.env` file with your API keys:
-   ```
-   RIOT_API_KEY=your-riot-api-key
-   OPENAI_API_KEY=your-openai-api-key
-   ```
-
-3. Run the application:
-   ```bash
-   ./mvnw spring-boot:run
-   ```
-
-4. Backend runs on `http://localhost:8080`
-
-### Frontend
-
-1. Navigate to frontend folder:
-   ```bash
-   cd frontend
-   ```
-
-2. Install dependencies:
-   ```bash
-   npm install
-   ```
-
-3. Start development server:
-   ```bash
-   npm run dev
-   ```
-
-4. Frontend runs on `http://localhost:5173`
-
-## API Endpoints
-
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/summoner` | Get player account by Riot ID |
-| GET | `/api/matches/recent` | Get recent match IDs |
-| GET | `/api/matches/summary` | Get match summaries with KDA |
-| GET | `/api/matches/detail` | Get raw match detail JSON from Riot API |
-| GET | `/api/matches/full-detail` | Get parsed match detail with all participants |
-| GET | `/api/stats` | Get aggregated player statistics |
-| GET | `/api/favorites` | Get all favorite players |
-| POST | `/api/favorites` | Add a player to favorites |
-| DELETE | `/api/favorites/{puuid}` | Remove a player from favorites |
-| GET | `/api/favorites/check/{puuid}` | Check if player is a favorite |
-| GET | `/api/ranked` | Get ranked entries (Solo/Duo, Flex) |
-| GET | `/api/trends/champions` | Get per-champion aggregated stats |
-| GET | `/api/trends/matches` | Get per-match trend data points |
-| GET | `/api/trends/lp` | Get LP progression history |
-| POST | `/api/analyze` | AI match analysis (synchronous) |
-| POST | `/api/analyze/stream` | AI match analysis (SSE streaming) |
-
-## Project Structure
-
-```
-lol-tracker/
-├── backend/
-│   ├── src/main/java/com/jw/backend/
-│   │   ├── *Controller.java   # REST API endpoints
-│   │   ├── service/           # Business logic
-│   │   ├── repository/        # Database access (JPA)
-│   │   ├── entity/            # Database entities
-│   │   ├── dto/               # Data transfer objects
-│   │   ├── region/            # Region enum mapping
-│   │   └── exception/         # Error handling
-│   └── src/test/              # Unit tests (45 tests)
-└── frontend/
-    └── src/
-        ├── App.tsx            # Router setup
-        ├── main.tsx           # Entry point
-        ├── api.ts             # API client functions
-        ├── types.ts           # TypeScript types
-        ├── hooks/
-        │   └── useTabNavigation.ts  # URL-driven tab state via ?tab= search params
-        ├── utils/
-        │   ├── ddragon.ts     # DDragon CDN helpers, rune/spell mappings
-        │   ├── lp.ts          # LP conversion (tier+rank+LP → absolute number)
-        │   └── trends.ts      # Moving average and rolling win rate helpers
-        ├── components/        # Reusable UI components
-        │   ├── SearchBar.tsx
-        │   ├── MatchList.tsx
-        │   ├── AiChatModal.tsx    # AI analysis chat modal (streaming)
-        │   ├── ScoreboardTable.tsx
-        │   ├── StatsBar.tsx
-        │   ├── RankBadge.tsx
-        │   ├── ProfileHeader.tsx   # Player icon, name, region, refresh/fav buttons
-        │   ├── TabBar.tsx          # 4-tab navigation bar
-        │   ├── FavoritesList.tsx
-        │   └── tabs/               # Tab content components
-        │       ├── OverviewTab.tsx      # Rank + stats + recent games summary
-        │       ├── PerformanceTab.tsx   # Recharts trend charts (LP, KDA, WR, damage)
-        │       ├── ChampionsTab.tsx     # Champion stats grid
-        │       └── MatchHistoryTab.tsx  # Wrapper around MatchList
-        └── pages/             # Route pages
-            ├── HomePage.tsx
-            ├── PlayerPage.tsx       # Tabbed dashboard (refactored from linear layout)
-            └── MatchDetailPage.tsx
-```
+### External APIs
+- **[Riot Games API](https://developer.riotgames.com)** — Account, match, ranked, and summoner data
+- **[OpenAI API](https://platform.openai.com)** — GPT-4o-mini for AI match analysis
+- **[DDragon CDN](https://ddragon.leagueoflegends.com)** — Champion, item, spell, and profile icons
+- **[Community Dragon](https://communitydragon.org)** — Ranked tier icons, Arena augment icons
 
 ## Architecture
 
@@ -231,42 +73,150 @@ lol-tracker/
                └──────────┘ └──────────┘
 ```
 
-## Running Tests
+## Getting Started
+
+### Prerequisites
+- Java 21+
+- Node.js 18+
+- [Riot API Key](https://developer.riotgames.com)
+- [OpenAI API Key](https://platform.openai.com/api-keys)
+
+### Environment Variables
+
+Create a `backend/.env` file:
+
+```env
+RIOT_API_KEY=your-riot-api-key
+OPENAI_API_KEY=your-openai-api-key
+```
+
+### Backend
+
+```bash
+cd backend
+./mvnw spring-boot:run
+```
+
+Runs on `http://localhost:8080`
+
+### Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Runs on `http://localhost:5173`
+
+## Docker Deployment
+
+A multi-stage `Dockerfile` at the project root builds both frontend and backend into a single image:
+
+```bash
+docker build -t lol-tracker .
+docker run -p 8080:8080 \
+  -e RIOT_API_KEY=your-riot-api-key \
+  -e OPENAI_API_KEY=your-openai-api-key \
+  lol-tracker
+```
+
+The image uses a 3-stage build: Node for the React frontend, Maven for the Spring Boot backend (with frontend assets baked into static resources), and a minimal JRE runtime.
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/summoner` | Resolve Riot ID to account with profile icon |
+| GET | `/api/matches/recent` | Get recent match IDs |
+| GET | `/api/matches/summary` | Get match summaries with KDA and team rosters |
+| GET | `/api/matches/detail` | Get raw match detail JSON from Riot API |
+| GET | `/api/matches/full-detail` | Get parsed match detail with all participants |
+| GET | `/api/stats` | Get aggregated player statistics |
+| GET | `/api/ranked` | Get ranked entries (Solo/Duo, Flex) |
+| GET | `/api/favorites` | List all favorite players |
+| POST | `/api/favorites` | Add a player to favorites |
+| DELETE | `/api/favorites/{puuid}` | Remove a player from favorites |
+| GET | `/api/favorites/check/{puuid}` | Check if a player is favorited |
+| GET | `/api/trends/champions` | Per-champion aggregated stats |
+| GET | `/api/trends/matches` | Per-match trend data points |
+| GET | `/api/trends/lp` | LP progression history |
+| POST | `/api/analyze` | AI match analysis (synchronous) |
+| POST | `/api/analyze/stream` | AI match analysis (SSE streaming) |
+
+## Project Structure
+
+```
+lol-tracker/
+├── Dockerfile                    # Multi-stage production build
+├── backend/
+│   ├── src/main/java/com/jw/backend/
+│   │   ├── *Controller.java      # REST API endpoints
+│   │   ├── service/              # Business logic (Riot API, stats, LP tracking)
+│   │   ├── repository/           # JPA data access
+│   │   ├── entity/               # Database entities
+│   │   ├── dto/                  # Data transfer objects
+│   │   ├── region/               # Region enum mapping
+│   │   └── exception/            # Global error handling
+│   └── src/test/                 # Unit tests (45 tests)
+└── frontend/
+    └── src/
+        ├── api.ts                # API client functions
+        ├── types.ts              # TypeScript type definitions
+        ├── hooks/
+        │   └── useTabNavigation.ts
+        ├── utils/
+        │   ├── ddragon.ts        # DDragon CDN helpers and icon URL builders
+        │   ├── lp.ts             # LP → absolute number conversion
+        │   └── trends.ts         # Moving average and rolling win rate
+        ├── components/
+        │   ├── MatchList.tsx      # Match cards with expandable scoreboards
+        │   ├── AiChatModal.tsx    # AI analysis chat (streaming)
+        │   ├── ScoreboardTable.tsx
+        │   ├── ProfileHeader.tsx  # Player icon, name, refresh/favorite
+        │   ├── TabBar.tsx         # Tab navigation bar
+        │   └── tabs/
+        │       ├── OverviewTab.tsx
+        │       ├── PerformanceTab.tsx
+        │       ├── ChampionsTab.tsx
+        │       └── MatchHistoryTab.tsx
+        └── pages/
+            ├── HomePage.tsx
+            ├── PlayerPage.tsx     # Tabbed dashboard
+            └── MatchDetailPage.tsx
+```
+
+## Testing
 
 ```bash
 cd backend
 ./mvnw test
 ```
 
-**Test Coverage:**
-- RiotRegionTest (14 tests)
-- GlobalExceptionHandlerTest (3 tests)
-- SummonerControllerTest (5 tests)
-- MatchControllerTest (12 tests)
-- FavoriteControllerTest (10 tests)
+**45 unit tests** across 5 test classes:
+- `RiotRegionTest` (14 tests) — Region enum mapping
+- `GlobalExceptionHandlerTest` (3 tests) — Error response formatting
+- `SummonerControllerTest` (5 tests) — Account lookup endpoint
+- `MatchControllerTest` (12 tests) — Match data endpoints
+- `FavoriteControllerTest` (10 tests) — Favorites CRUD
 
-## Database Console
+## Database
 
-While the backend is running, you can view the H2 database:
+H2 console available at `http://localhost:8080/h2-console` while the backend is running.
 
-1. Go to `http://localhost:8080/h2-console`
-2. JDBC URL: `jdbc:h2:file:./data/lol-tracker-db`
-3. Username: `sa`
-4. Password: (leave empty)
+| Setting | Value |
+|---------|-------|
+| JDBC URL | `jdbc:h2:file:./data/lol-tracker-db` |
+| Username | `sa` |
+| Password | *(empty)* |
 
-### Database Tables
+**Tables:**
 
-| Table | Description |
-|-------|-------------|
-| `favorite_players` | Saved favorite players with Riot ID and region |
-| `match_records` | Per-player match history for trend analysis (unique per puuid + matchId) |
-| `lp_snapshots` | LP progression snapshots captured on profile view (only saved on rank changes) |
-
-## Data Sources
-
-- **[DDragon CDN](https://ddragon.leagueoflegends.com)** - Champion, item, spell, and profile icons (version auto-detected at runtime)
-- **[Community Dragon](https://communitydragon.org)** - Ranked tier icons, Arena augment icons
-- **[OpenAI API](https://platform.openai.com)** - GPT-4o-mini for AI match analysis
+| Table | Purpose |
+|-------|---------|
+| `favorite_players` | Saved players with Riot ID and region |
+| `match_records` | Per-player match history for trend analysis |
+| `lp_snapshots` | LP progression snapshots (saved only on rank changes) |
 
 ## License
 

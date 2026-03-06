@@ -4,6 +4,24 @@ A full-stack League of Legends match history and performance analytics dashboard
 
 Search any player by Riot ID, explore their ranked stats, match history, champion performance, and LP trends — all in a polished dark-themed UI with real-time AI match analysis.
 
+## Demo
+
+**Live Demo:** [http://your-aws-address](http://your-aws-address)
+
+## Screenshots
+
+| Home | Overview |
+|------|----------|
+| ![Home](screenshots/home.png) | ![Overview](screenshots/overview.png) |
+
+| Performance | Champions |
+|-------------|-----------|
+| ![Performance](screenshots/performance.png) | ![Champions](screenshots/champions.png) |
+
+| Match History | AI Analysis |
+|---------------|-------------|
+| ![Match History](screenshots/match-history.png) | ![AI Analysis](screenshots/ai-analysis.png) |
+
 ## Features
 
 ### Player Dashboard

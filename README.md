@@ -6,7 +6,7 @@ Search any player by Riot ID, explore their ranked stats, match history, champio
 
 ## Demo
 
-**Live Demo:** [http://your-aws-address](http://your-aws-address)
+**Live Demo:** [http://54.170.131.128](http://54.170.131.128)
 
 ## Screenshots
 

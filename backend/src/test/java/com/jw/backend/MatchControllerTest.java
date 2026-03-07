@@ -2,6 +2,7 @@ package com.jw.backend;
 
 import com.jw.backend.dto.MatchSummaryDto;
 import com.jw.backend.region.RiotRegion;
+import com.jw.backend.service.MatchHistoryService;
 import com.jw.backend.service.RiotApiService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,18 +16,17 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-// =====================================================
-// @WebMvcTest - Only loads MatchController for testing
-// =====================================================
 @WebMvcTest(MatchController.class)
 class MatchControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
-    // Fake RiotApiService - we don't call the real Riot API
     @MockitoBean
     private RiotApiService riotApiService;
+
+    @MockitoBean
+    private MatchHistoryService matchHistoryService;
 
     // =====================================================
     // TESTS FOR: GET /api/matches/recent

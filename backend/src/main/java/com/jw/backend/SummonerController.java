@@ -9,18 +9,19 @@ import com.jw.backend.service.RiotApiService;
 import org.springframework.web.bind.annotation.*;
 
 /** REST controller that resolves a Riot ID to an account with profile icon. */
-@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/summoner")
 public class SummonerController {
 
     private final RiotApiService riotApiService;
     private final LpTrackingService lpTrackingService;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
-    public SummonerController(RiotApiService riotApiService, LpTrackingService lpTrackingService) {
+    public SummonerController(RiotApiService riotApiService, LpTrackingService lpTrackingService,
+                              ObjectMapper objectMapper) {
         this.riotApiService = riotApiService;
         this.lpTrackingService = lpTrackingService;
+        this.objectMapper = objectMapper;
     }
 
     @GetMapping

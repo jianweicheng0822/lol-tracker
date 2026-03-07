@@ -19,7 +19,6 @@ import reactor.core.publisher.Flux;
  *   POST /api/analyze        — synchronous, returns complete response
  *   POST /api/analyze/stream — SSE stream, returns tokens incrementally for real-time UI
  */
-@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/analyze")
 public class AiAnalyzeController {

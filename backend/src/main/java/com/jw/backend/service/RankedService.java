@@ -14,10 +14,11 @@ import java.util.List;
 public class RankedService {
 
     private final RiotApiService riotApiService;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
-    public RankedService(RiotApiService riotApiService) {
+    public RankedService(RiotApiService riotApiService, ObjectMapper objectMapper) {
         this.riotApiService = riotApiService;
+        this.objectMapper = objectMapper;
     }
 
     /** Returns parsed ranked entries (tier, rank, LP, wins/losses) for a player. */

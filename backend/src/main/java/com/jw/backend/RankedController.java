@@ -8,7 +8,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /** REST controller for ranked league data (Solo/Duo, Flex). */
-@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/ranked")
 public class RankedController {

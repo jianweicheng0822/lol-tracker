@@ -23,11 +23,13 @@ public class LpTrackingService {
 
     private final LpSnapshotRepository lpSnapshotRepository;
     private final RiotApiService riotApiService;
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
 
-    public LpTrackingService(LpSnapshotRepository lpSnapshotRepository, RiotApiService riotApiService) {
+    public LpTrackingService(LpSnapshotRepository lpSnapshotRepository, RiotApiService riotApiService,
+                             ObjectMapper objectMapper) {
         this.lpSnapshotRepository = lpSnapshotRepository;
         this.riotApiService = riotApiService;
+        this.objectMapper = objectMapper;
     }
 
     /**

@@ -18,9 +18,20 @@ import java.util.concurrent.ConcurrentHashMap;
 public class RiotApiService {
 
     private final String apiKey;
+    private final ObjectMapper objectMapper;
 
-    public RiotApiService(@Value("${riot.api.key}") String apiKey) {
+    /** Pre-built RestClient instances keyed by base URL to avoid rebuilding on every request. */
+    private final ConcurrentHashMap<String, RestClient> clientCache = new ConcurrentHashMap<>();
+
+    public RiotApiService(@Value("${riot.api.key}") String apiKey, ObjectMapper objectMapper) {
         this.apiKey = apiKey;
+        this.objectMapper = objectMapper;
+    }
+
+    /** Returns a cached RestClient for the given base URL, creating one if needed. */
+    private RestClient getClient(String baseUrl) {
+        return clientCache.computeIfAbsent(baseUrl, url ->
+                RestClient.builder().baseUrl(url).build());
     }
 
     /**
@@ -37,11 +48,7 @@ public class RiotApiService {
         String cached = getCached(cacheKey);
         if (cached != null) return cached;
 
-        RestClient client = RestClient.builder()
-                .baseUrl(baseUrl)
-                .build();
-
-        String result = client.get()
+        String result = getClient(baseUrl).get()
                 .uri("/riot/account/v1/accounts/by-riot-id/{gameName}/{tagLine}", gameName, tagLine)
                 .header("X-Riot-Token", apiKey)
                 .retrieve()
@@ -68,11 +75,7 @@ public class RiotApiService {
         String cached = getCached(cacheKey);
         if (cached != null) return cached;
 
-        RestClient client = RestClient.builder()
-                .baseUrl(baseUrl)
-                .build();
-
-        String result = client.get()
+        String result = getClient(baseUrl).get()
                 .uri("/lol/match/v5/matches/by-puuid/{puuid}/ids?start={start}&count={count}", puuid, start, count)
                 .header("X-Riot-Token", apiKey)
                 .retrieve()
@@ -95,11 +98,7 @@ public class RiotApiService {
         String cached = getCached(cacheKey);
         if (cached != null) return cached;
 
-        RestClient client = RestClient.builder()
-                .baseUrl(baseUrl)
-                .build();
-
-        String result = client.get()
+        String result = getClient(baseUrl).get()
                 .uri("/lol/match/v5/matches/{matchId}", matchId)
                 .header("X-Riot-Token", apiKey)
                 .retrieve()
@@ -138,14 +137,14 @@ public class RiotApiService {
     }
 
     private void putCached(String key, String value, long ttlMs) {
-        // Simple safety cap: avoid unbounded memory growth in a demo project.
+        // Safety cap: evict expired entries instead of clearing the entire cache
         if (cache.size() > 1000) {
-            cache.clear();
+            long now = System.currentTimeMillis();
+            cache.entrySet().removeIf(e -> e.getValue().isExpired(now));
         }
 
         long expiresAt = System.currentTimeMillis() + ttlMs;
         cache.put(key, new CacheEntry(value, expiresAt));
-
     }
     /**
      * Summoner-v4 uses platform regions: na1 / euw1 / kr / ...
@@ -160,11 +159,7 @@ public class RiotApiService {
         String cached = getCached(cacheKey);
         if (cached != null) return cached;
 
-        RestClient client = RestClient.builder()
-                .baseUrl(baseUrl)
-                .build();
-
-        String result = client.get()
+        String result = getClient(baseUrl).get()
                 .uri("/lol/summoner/v4/summoners/by-puuid/{puuid}", puuid)
                 .header("X-Riot-Token", apiKey)
                 .retrieve()
@@ -183,11 +178,7 @@ public class RiotApiService {
         String cached = getCached(cacheKey);
         if (cached != null) return cached;
 
-        RestClient client = RestClient.builder()
-                .baseUrl(baseUrl)
-                .build();
-
-        String result = client.get()
+        String result = getClient(baseUrl).get()
                 .uri("/lol/league/v4/entries/by-puuid/{puuid}", puuid)
                 .header("X-Riot-Token", apiKey)
                 .retrieve()
@@ -196,8 +187,6 @@ public class RiotApiService {
         putCached(cacheKey, result, ttlMs);
         return result;
     }
-
-    private final ObjectMapper objectMapper = new ObjectMapper();
 
     // A small thread pool for parallel external calls (demo-friendly)
     private final Executor riotExecutor = Executors.newFixedThreadPool(6);

@@ -7,8 +7,8 @@ import org.springframework.web.bind.annotation.*;
 import com.jw.backend.dto.MatchSummaryDto;
 import com.jw.backend.dto.MatchDetailDto;
 import java.util.List;
+
 /** REST controller for match history and match detail endpoints. */
-@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/matches")
 public class MatchController {

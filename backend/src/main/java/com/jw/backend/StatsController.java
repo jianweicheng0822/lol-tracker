@@ -5,7 +5,6 @@ import com.jw.backend.region.RiotRegion;
 import com.jw.backend.service.StatsService;
 import org.springframework.web.bind.annotation.*;
 
-@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/stats")
 public class StatsController {

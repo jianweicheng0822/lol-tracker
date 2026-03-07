@@ -204,6 +204,15 @@ lol-tracker/
             └── MatchDetailPage.tsx
 ```
 
+## CI/CD
+
+GitHub Actions workflow (`.github/workflows/ci-cd.yml`) runs automatically:
+
+- **Pull requests to `master`** — runs frontend lint/build and backend tests
+- **Push to `master`** — runs CI checks, then builds a Docker image, pushes to GHCR, and deploys to EC2 via SSH
+
+Required GitHub Secrets for deployment: `EC2_HOST`, `EC2_USER`, `EC2_SSH_KEY`, `RIOT_API_KEY`, `OPENAI_API_KEY`.
+
 ## Testing
 
 ```bash
@@ -220,7 +229,7 @@ cd backend
 
 ## Database
 
-H2 console available at `http://localhost:8080/h2-console` while the backend is running.
+H2 console is disabled by default. Enable it for local debugging with `-Dspring.h2.console.enabled=true`.
 
 | Setting | Value |
 |---------|-------|

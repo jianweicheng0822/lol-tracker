@@ -17,7 +17,6 @@ import java.util.List;
  * Data is populated automatically as users browse match histories and player profiles —
  * match records and LP snapshots are captured by MatchController and SummonerController.
  */
-@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/trends")
 public class TrendsController {

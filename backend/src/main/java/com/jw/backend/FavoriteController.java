@@ -11,7 +11,6 @@ import java.util.Map;
 /**
  * REST Controller for favorite players.
  */
-@CrossOrigin(origins = "http://localhost:5173")
 @RestController
 @RequestMapping("/api/favorites")
 public class FavoriteController {

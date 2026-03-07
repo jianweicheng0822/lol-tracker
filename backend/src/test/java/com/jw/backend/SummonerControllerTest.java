@@ -1,6 +1,7 @@
 package com.jw.backend;
 
 import com.jw.backend.region.RiotRegion;
+import com.jw.backend.service.LpTrackingService;
 import com.jw.backend.service.RiotApiService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,57 +13,45 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-// =====================================================
-// @WebMvcTest - VERY IMPORTANT!
-// This tells Spring to only load SummonerController
-// Without this, the test won't work!
-// =====================================================
 @WebMvcTest(SummonerController.class)
 class SummonerControllerTest {
 
-    // =====================================================
-    // @Autowired MockMvc
-    // MockMvc lets us simulate HTTP requests
-    // We don't need a real server running
-    // =====================================================
     @Autowired
     private MockMvc mockMvc;
 
-    // =====================================================
-    // @MockitoBean (replaces old @MockBean in Spring Boot 3.4+)
-    // Creates a FAKE RiotApiService
-    // The controller will use this fake instead of the real one
-    // This way we don't call the real Riot API during tests
-    // =====================================================
     @MockitoBean
     private RiotApiService riotApiService;
+
+    @MockitoBean
+    private LpTrackingService lpTrackingService;
 
     // =====================================================
     // TEST 1: Valid request returns 200 OK with JSON
     // =====================================================
     @Test
     void getSummoner_withValidParams_returnsOk() throws Exception {
-        // ARRANGE - Tell the mock what to return when called
-        // This is FAKE data - we're not calling the real Riot API
-        String fakeResponse = "{\"puuid\":\"abc123\",\"gameName\":\"Faker\",\"tagLine\":\"KR1\"}";
+        // ARRANGE - Mock both Riot API calls that SummonerController chains together:
+        // 1. Account-v1 returns puuid + gameName + tagLine
+        // 2. Summoner-v4 returns profileIconId (looked up by puuid from step 1)
+        String fakeAccountJson = "{\"puuid\":\"abc123\",\"gameName\":\"Faker\",\"tagLine\":\"KR1\"}";
+        String fakeSummonerJson = "{\"profileIconId\":4567}";
 
-        // when(X).thenReturn(Y) means:
-        // "When someone calls X, return Y instead of doing the real thing"
         when(riotApiService.getAccountByRiotId("Faker", "KR1", RiotRegion.KR))
-            .thenReturn(fakeResponse);
+            .thenReturn(fakeAccountJson);
+        when(riotApiService.getSummonerByPuuid("abc123", RiotRegion.KR))
+            .thenReturn(fakeSummonerJson);
 
-        // ACT & ASSERT - Make the HTTP request and check the response
+        // ACT & ASSERT — the controller merges both responses into one JSON
         mockMvc.perform(
-                // Create a GET request to /api/summoner
                 get("/api/summoner")
-                    .param("gameName", "Faker")   // ?gameName=Faker
-                    .param("tag", "KR1")          // &tag=KR1
-                    .param("region", "KR")        // &region=KR
+                    .param("gameName", "Faker")
+                    .param("tag", "KR1")
+                    .param("region", "KR")
             )
-            // Check that status code is 200 OK
             .andExpect(status().isOk())
-            // Check that response body matches our fake JSON
-            .andExpect(content().json(fakeResponse));
+            .andExpect(jsonPath("$.puuid").value("abc123"))
+            .andExpect(jsonPath("$.gameName").value("Faker"))
+            .andExpect(jsonPath("$.profileIconId").value(4567));
     }
 
     // =====================================================
@@ -110,17 +99,15 @@ class SummonerControllerTest {
             .andExpect(status().isBadRequest());
     }
 
-    // =====================================================
-    // TEST 5: Verify service is called with correct params
-    // =====================================================
     @Test
     void getSummoner_callsServiceWithCorrectParameters() throws Exception {
-        // ARRANGE - Set up mock to return something (we don't care what)
-        // anyString() and any() are "matchers" - they match any value
+        // ARRANGE - Mock the full call chain so the controller completes successfully
         when(riotApiService.getAccountByRiotId(anyString(), anyString(), any()))
-            .thenReturn("{}");
+            .thenReturn("{\"puuid\":\"test-puuid\"}");
+        when(riotApiService.getSummonerByPuuid(anyString(), any()))
+            .thenReturn("{\"profileIconId\":0}");
 
-        // ACT - Make the request
+        // ACT
         mockMvc.perform(
                 get("/api/summoner")
                     .param("gameName", "Faker")
@@ -128,10 +115,10 @@ class SummonerControllerTest {
                     .param("region", "KR")
             );
 
-        // ASSERT - Verify the service was called exactly once with these params
-        // verify() checks: "Was this method called?"
-        // times(1) means: "Exactly 1 time"
+        // ASSERT — verify both Riot API calls were made with correct params
         verify(riotApiService, times(1))
             .getAccountByRiotId("Faker", "KR1", RiotRegion.KR);
+        verify(riotApiService, times(1))
+            .getSummonerByPuuid("test-puuid", RiotRegion.KR);
     }
 }

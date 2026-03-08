@@ -91,9 +91,10 @@ Search any player by Riot ID, explore their ranked stats, match history, champio
                └──────────┘ └──────────┘
 ```
 
-## Getting Started
+## Local Development Setup
 
 ### Prerequisites
+
 - Java 21+
 - Node.js 18+
 - [Riot API Key](https://developer.riotgames.com)
@@ -108,16 +109,16 @@ RIOT_API_KEY=your-riot-api-key
 OPENAI_API_KEY=your-openai-api-key
 ```
 
-### Backend
+### Running the Backend
 
 ```bash
 cd backend
 ./mvnw spring-boot:run
 ```
 
-Runs on `http://localhost:8080`
+The Spring Boot server starts at **http://localhost:8080**.
 
-### Frontend
+### Running the Frontend
 
 ```bash
 cd frontend
@@ -125,21 +126,60 @@ npm install
 npm run dev
 ```
 
-Runs on `http://localhost:5173`
+The Vite dev server starts at **http://localhost:5173** and proxies API requests to the backend.
 
-## Docker Deployment
+### Local Development URLs
 
-A multi-stage `Dockerfile` at the project root builds both frontend and backend into a single image:
+| Service  | URL                     | Purpose                        |
+|----------|-------------------------|--------------------------------|
+| Frontend | `http://localhost:5173`  | React dev server (hot reload)  |
+| Backend  | `http://localhost:8080`  | Spring Boot API server         |
+
+## Production Deployment
+
+### Docker Build
+
+The project uses a **multi-stage Dockerfile** at the repository root to produce a single optimized image:
+
+1. **Stage 1 — Frontend build:** Node.js 20 Alpine compiles the React app to static assets
+2. **Stage 2 — Backend build:** Maven 3.9 + Java 21 compiles the Spring Boot application and copies the frontend build into `src/main/resources/static`
+3. **Stage 3 — Runtime:** Eclipse Temurin JRE 21 Alpine runs the final JAR with minimal image size
 
 ```bash
 docker build -t lol-tracker .
+```
+
+### Running the Container
+
+Pass API keys as environment variables at runtime — they are never baked into the image:
+
+```bash
 docker run -p 8080:8080 \
   -e RIOT_API_KEY=your-riot-api-key \
   -e OPENAI_API_KEY=your-openai-api-key \
   lol-tracker
 ```
 
-The image uses a 3-stage build: Node for the React frontend, Maven for the Spring Boot backend (with frontend assets baked into static resources), and a minimal JRE runtime.
+The application serves both the API and the React frontend on **port 8080**.
+
+### AWS EC2 Deployment
+
+The project is deployed to an **AWS EC2** instance with automated CI/CD via GitHub Actions (`.github/workflows/ci-cd.yml`):
+
+1. **On pull request to `master`** — runs frontend lint/build and backend tests
+2. **On push to `master`** — runs CI checks, builds a Docker image, pushes it to **GitHub Container Registry (GHCR)**, and deploys to EC2 via SSH
+
+The deployment step SSHs into the EC2 instance, pulls the latest image from GHCR, stops the old container, and starts a new one with the required environment variables.
+
+**Required GitHub Secrets:**
+
+| Secret         | Purpose                          |
+|----------------|----------------------------------|
+| `EC2_HOST`     | EC2 instance public IP/hostname  |
+| `EC2_USER`     | SSH username (e.g., `ec2-user`)  |
+| `EC2_SSH_KEY`  | Private key for SSH access       |
+| `RIOT_API_KEY` | Riot Games API key               |
+| `OPENAI_API_KEY` | OpenAI API key                 |
 
 ## API Endpoints
 
@@ -203,15 +243,6 @@ lol-tracker/
             ├── PlayerPage.tsx     # Tabbed dashboard
             └── MatchDetailPage.tsx
 ```
-
-## CI/CD
-
-GitHub Actions workflow (`.github/workflows/ci-cd.yml`) runs automatically:
-
-- **Pull requests to `master`** — runs frontend lint/build and backend tests
-- **Push to `master`** — runs CI checks, then builds a Docker image, pushes to GHCR, and deploys to EC2 via SSH
-
-Required GitHub Secrets for deployment: `EC2_HOST`, `EC2_USER`, `EC2_SSH_KEY`, `RIOT_API_KEY`, `OPENAI_API_KEY`.
 
 ## Testing
 

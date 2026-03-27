@@ -37,6 +37,8 @@ Full-stack League of Legends analytics dashboard with AI-powered match coaching.
 
 **AI Match Analysis** — Click the sparkle button on any match to open a chat modal. Streaming responses via SSE for real-time coaching. System prompt constructed server-side from structured match data
 
+**Subscription Tiers** — FREE/PRO system using HttpSession identity. FREE users get 20 matches and 5 requests/minute rate limiting. PRO users get 100 matches, unlimited requests, and AI analysis access. One-click upgrade via `/api/upgrade`
+
 ## Tech Stack
 
 ### Backend
@@ -88,13 +90,16 @@ Full-stack League of Legends analytics dashboard with AI-powered match coaching.
 │  · Trends         · StatsService                               │
 │  · Favorite       · LpTrackingService                          │
 │  · AiAnalyze      · AiAnalyzeService ───────► OpenAI API      │
+│  · Subscription   · SubscriptionService                        │
 │  · Health         · MatchHistoryService                        │
+│                   · RateLimitService                            │
 │                   · FavoritePlayerService                       │
 │  GlobalExceptionHandler                                        │
 │                   Repositories (JPA)                            │
 │                   · match_records                               │
 │                   · lp_snapshots ────────────► H2 Database      │
 │                   · favorite_players           (file-based)     │
+│                   · app_users                                   │
 │                                                                │
 └── Deployment ──────────────────────────────────────────────────┘
   GitHub Actions: Push → Build & Test → GHCR → AWS EC2
@@ -170,8 +175,10 @@ Automated via GitHub Actions (`.github/workflows/ci-cd.yml`):
 | Trends | GET | `/api/trends/champions` | Per-champion aggregated stats |
 | | GET | `/api/trends/matches` | Per-match trend data points |
 | | GET | `/api/trends/lp` | LP progression history |
-| AI | POST | `/api/analyze` | AI match analysis (sync) |
-| | POST | `/api/analyze/stream` | AI match analysis (SSE streaming) |
+| AI | POST | `/api/analyze` | AI match analysis (sync, PRO only) |
+| | POST | `/api/analyze/stream` | AI match analysis (SSE streaming, PRO only) |
+| Subscription | GET | `/api/tier` | Get current user's subscription tier |
+| | GET | `/api/upgrade` | Upgrade current user to PRO |
 
 ## Project Structure
 
@@ -209,7 +216,7 @@ cd backend
 
 ## Database
 
-H2 embedded file-based database with three tables: `favorite_players`, `match_records`, and `lp_snapshots`. Console can be enabled for debugging with `-Dspring.h2.console.enabled=true`.
+H2 embedded file-based database with four tables: `favorite_players`, `match_records`, `lp_snapshots`, and `app_users`. Console can be enabled for debugging with `-Dspring.h2.console.enabled=true`.
 
 ## License
 

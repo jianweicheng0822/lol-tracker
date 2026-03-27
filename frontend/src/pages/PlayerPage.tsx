@@ -3,7 +3,7 @@
  * Fetches account, matches, stats, ranked, and favorite status in parallel on mount.
  * Supports tabbed navigation via URL search params (?tab=overview).
  */
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import SearchBar from "../components/SearchBar";
 import ProfileHeader from "../components/ProfileHeader";
@@ -34,7 +34,7 @@ export default function PlayerPage() {
   const [errorMsg, setErrorMsg] = useState("");
 
   /** Fetches all player data in parallel. Called on mount and on manual refresh. */
-  const load = async (cancelled = { current: false }) => {
+  const load = useCallback(async (cancelled = { current: false }) => {
     if (!region || !gameName || !tag) return;
 
     setStatus("loading");
@@ -66,18 +66,18 @@ export default function PlayerPage() {
       setRanked(Array.isArray(rankedData) ? rankedData : []);
       setIsFav(favStatus);
       setStatus("done");
-    } catch (e: any) {
+    } catch (e: unknown) {
       if (cancelled.current) return;
       setStatus("error");
-      setErrorMsg(e?.message || "Something went wrong.");
+      setErrorMsg(e instanceof Error ? e.message : "Something went wrong.");
     }
-  };
+  }, [region, gameName, tag]);
 
   useEffect(() => {
     const cancelled = { current: false };
     load(cancelled);
     return () => { cancelled.current = true; };
-  }, [region, gameName, tag]);
+  }, [load]);
 
   /** Re-fetches all data when the refresh button is clicked in ProfileHeader. */
   const handleRefresh = () => {

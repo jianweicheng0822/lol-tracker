@@ -13,6 +13,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine,
 } from "recharts";
+import type { Payload } from "recharts/types/component/DefaultTooltipContent";
 import { fetchMatchTrends, fetchLpHistory } from "../../api";
 import { toAbsoluteLp } from "../../utils/lp";
 import { movingAverage, rollingWinRate } from "../../utils/trends";
@@ -28,8 +29,6 @@ export default function PerformanceTab({ puuid }: Props) {
   // Lazy fetch — only loads when the Performance tab is first activated
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-
     // Fetch match trends and LP history in parallel
     Promise.all([
       fetchMatchTrends(puuid).catch(() => []),
@@ -98,7 +97,7 @@ export default function PerformanceTab({ puuid }: Props) {
               <YAxis tick={{ fill: "#64748b", fontSize: 10 }} />
               <Tooltip
                 contentStyle={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 6, fontSize: 12, color: "#e2e8f0" }}
-                formatter={(_: any, __: any, props: any) => [props.payload.label, "LP"]}
+                formatter={(_v, _name, props: Payload<number, string>) => [(props.payload as Record<string, string>).label, "LP"]}
               />
               <Line type="monotone" dataKey="lp" stroke="#a78bfa" strokeWidth={2} dot={false} />
             </LineChart>
@@ -116,7 +115,7 @@ export default function PerformanceTab({ puuid }: Props) {
               <YAxis domain={[0, 100]} tick={{ fill: "#64748b", fontSize: 10 }} />
               <Tooltip
                 contentStyle={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 6, fontSize: 12, color: "#e2e8f0" }}
-                formatter={(v: any) => [v !== null ? `${v}%` : "—", "Win Rate"]}
+                formatter={(v) => [v != null ? `${v}%` : "—", "Win Rate"]}
               />
               <ReferenceLine y={50} stroke="#475569" strokeDasharray="3 3" />
               <Line type="monotone" dataKey="winRate" stroke="#4ade80" strokeWidth={2} dot={false} connectNulls />
@@ -135,7 +134,7 @@ export default function PerformanceTab({ puuid }: Props) {
               <YAxis tick={{ fill: "#64748b", fontSize: 10 }} />
               <Tooltip
                 contentStyle={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 6, fontSize: 12, color: "#e2e8f0" }}
-                formatter={(v: any, name?: string) => [Number(v).toFixed(2), name === "ma" ? "5-game avg" : "KDA"]}
+                formatter={(v, name) => [Number(v ?? 0).toFixed(2), name === "ma" ? "5-game avg" : "KDA"]}
               />
               <Line type="monotone" dataKey="kda" stroke="#6366f1" strokeWidth={1} dot={false} />
               <Line type="monotone" dataKey="ma" stroke="#f59e0b" strokeWidth={2} dot={false} connectNulls />
@@ -154,7 +153,7 @@ export default function PerformanceTab({ puuid }: Props) {
               <YAxis tick={{ fill: "#64748b", fontSize: 10 }} />
               <Tooltip
                 contentStyle={{ background: "#1e293b", border: "1px solid #334155", borderRadius: 6, fontSize: 12, color: "#e2e8f0" }}
-                formatter={(v: any, name?: string) => [Number(v).toLocaleString(), name === "ma" ? "5-game avg" : "Damage"]}
+                formatter={(v, name) => [Number(v ?? 0).toLocaleString(), name === "ma" ? "5-game avg" : "Damage"]}
               />
               <Line type="monotone" dataKey="damage" stroke="#ef4444" strokeWidth={1} dot={false} />
               <Line type="monotone" dataKey="ma" stroke="#f59e0b" strokeWidth={2} dot={false} connectNulls />

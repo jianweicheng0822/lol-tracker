@@ -75,9 +75,11 @@ jobs:
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
           envs: IMAGE,RIOT_KEY,OPENAI_KEY,GH_TOKEN,GH_ACTOR
+          script_stop: false
           script: |
             echo "$GH_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
             docker pull "$IMAGE"
-            docker stop lol-tracker || true
-            docker rm lol-tracker || true
+            docker stop lol-tracker 2>/dev/null; docker rm lol-tracker 2>/dev/null; true
+            PORT_CONTAINER=$(docker ps -q --filter publish=80)
+            if [ -n "$PORT_CONTAINER" ]; then docker stop "$PORT_CONTAINER"; docker rm "$PORT_CONTAINER"; fi
             docker run -d --name lol-tracker -p 80:8080 -e "RIOT_API_KEY=$RIOT_KEY" -e "OPENAI_API_KEY=$OPENAI_KEY" --restart unless-stopped "$IMAGE"

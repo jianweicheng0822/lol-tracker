@@ -86,6 +86,18 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(400).body(body);
     }
 
+    @ExceptionHandler(RateLimitException.class)
+    public ResponseEntity<ApiErrorResponse> handleRateLimit(RateLimitException ex, HttpServletRequest req) {
+        ApiErrorResponse body = new ApiErrorResponse(
+                Instant.now(),
+                429,
+                "Too Many Requests",
+                ex.getMessage(),
+                req.getRequestURI()
+        );
+        return ResponseEntity.status(429).body(body);
+    }
+
     // =====================================================
     // Catch-all for any other unexpected exceptions
     // Returns 500 Internal Server Error

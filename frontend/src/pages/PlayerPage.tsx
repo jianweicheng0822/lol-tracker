@@ -13,7 +13,7 @@ import PerformanceTab from "../components/tabs/PerformanceTab";
 import ChampionsTab from "../components/tabs/ChampionsTab";
 import MatchHistoryTab from "../components/tabs/MatchHistoryTab";
 import { useTabNavigation } from "../hooks/useTabNavigation";
-import { fetchAccount, fetchMatchSummaries, fetchStats, fetchRanked, checkIsFavorite, addFavorite, removeFavorite } from "../api";
+import { fetchAccount, fetchMatchSummaries, fetchStats, fetchRanked, checkIsFavorite, addFavorite, removeFavorite, fetchTier, upgradeTier } from "../api";
 import type { Region, Account, MatchSummary, PlayerStats, RankedEntry } from "../types";
 
 export default function PlayerPage() {
@@ -27,6 +27,7 @@ export default function PlayerPage() {
   const [stats, setStats] = useState<PlayerStats | null>(null);
   const [ranked, setRanked] = useState<RankedEntry[]>([]);
   const [isFav, setIsFav] = useState(false);
+  const [tier, setTier] = useState(0);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
@@ -47,12 +48,17 @@ export default function PlayerPage() {
     setHasMore(true);
 
     try {
-      const acc = await fetchAccount(gameName, tag, region);
+      const [acc, tierData] = await Promise.all([
+        fetchAccount(gameName, tag, region),
+        fetchTier().catch(() => ({ tier: 0 })),
+      ]);
       if (cancelled.current) return;
       setAccount(acc);
+      setTier(tierData.tier);
 
+      const matchCount = tierData.tier === 1 ? 10 : 10;
       const [matchData, statsData, rankedData, favStatus] = await Promise.all([
-        fetchMatchSummaries(acc.puuid, region, 10),
+        fetchMatchSummaries(acc.puuid, region, matchCount),
         fetchStats(acc.puuid, region, 10),
         fetchRanked(acc.puuid, region).catch((e) => { console.error("Ranked fetch failed:", e); return []; }),
         checkIsFavorite(acc.puuid),
@@ -164,15 +170,26 @@ export default function PlayerPage() {
               <ChampionsTab puuid={account.puuid} />
             )}
             {activeTab === "match-history" && (
-              <MatchHistoryTab
-                matches={matches}
-                region={region!}
-                puuid={account.puuid}
-                gameName={account.gameName}
-                onLoadMore={loadMore}
-                isLoadingMore={isLoadingMore}
-                hasMore={hasMore}
-              />
+              <>
+                {tier === 0 && (
+                  <div style={styles.upgradeBanner}>
+                    FREE tier: 20 matches max, no AI analysis.{" "}
+                    <button style={styles.upgradeBtn} onClick={async () => { const d = await upgradeTier(); setTier(d.tier); }}>
+                      Upgrade to PRO
+                    </button>
+                  </div>
+                )}
+                <MatchHistoryTab
+                  matches={matches}
+                  region={region!}
+                  puuid={account.puuid}
+                  gameName={account.gameName}
+                  onLoadMore={loadMore}
+                  isLoadingMore={isLoadingMore}
+                  hasMore={hasMore}
+                  tier={tier}
+                />
+              </>
             )}
           </>
         )}
@@ -220,5 +237,26 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#fecaca",
     padding: 15,
     borderRadius: 8,
+  },
+  upgradeBanner: {
+    background: "#1e3a5f",
+    color: "#93c5fd",
+    padding: "10px 16px",
+    borderRadius: 8,
+    marginBottom: 12,
+    fontSize: 14,
+    display: "flex",
+    alignItems: "center",
+    gap: 10,
+  },
+  upgradeBtn: {
+    background: "#3b82f6",
+    color: "#fff",
+    border: "none",
+    borderRadius: 6,
+    padding: "6px 14px",
+    cursor: "pointer",
+    fontWeight: 600,
+    fontSize: 13,
   },
 };

@@ -1,8 +1,12 @@
 package com.jw.backend;
 
+import com.jw.backend.entity.AppUser;
 import com.jw.backend.region.RiotRegion;
 import com.jw.backend.service.MatchHistoryService;
+import com.jw.backend.service.RateLimitService;
 import com.jw.backend.service.RiotApiService;
+import com.jw.backend.service.SubscriptionService;
+import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.*;
 import com.jw.backend.dto.MatchSummaryDto;
 import com.jw.backend.dto.MatchDetailDto;
@@ -14,10 +18,15 @@ public class MatchController {
 
     private final RiotApiService riotApiService;
     private final MatchHistoryService matchHistoryService;
+    private final SubscriptionService subscriptionService;
+    private final RateLimitService rateLimitService;
 
-    public MatchController(RiotApiService riotApiService, MatchHistoryService matchHistoryService) {
+    public MatchController(RiotApiService riotApiService, MatchHistoryService matchHistoryService,
+                           SubscriptionService subscriptionService, RateLimitService rateLimitService) {
         this.riotApiService = riotApiService;
         this.matchHistoryService = matchHistoryService;
+        this.subscriptionService = subscriptionService;
+        this.rateLimitService = rateLimitService;
     }
 
     @GetMapping("/recent")
@@ -49,8 +58,15 @@ public class MatchController {
             @RequestParam String puuid,
             @RequestParam RiotRegion region,
             @RequestParam(defaultValue = "3") int count,
-            @RequestParam(defaultValue = "0") int start
+            @RequestParam(defaultValue = "0") int start,
+            HttpSession session
     ) {
+        AppUser user = subscriptionService.getOrCreateUser(session);
+        rateLimitService.checkRateLimit(session, user.getTier());
+
+        int maxCount = subscriptionService.getMaxMatchCount(session);
+        if (count > maxCount) count = maxCount;
+
         List<MatchSummaryDto> summaries = riotApiService.getRecentMatchSummaries(puuid, region, count, start);
 
         // Persist match records for trend tracking

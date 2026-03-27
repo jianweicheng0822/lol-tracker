@@ -2,6 +2,9 @@
  *  In production, the React build is served by Spring Boot on the same origin → empty base. */
 const BASE = import.meta.env.DEV ? "http://localhost:8080" : "";
 
+/** Default fetch options — includes session cookie for subscription tracking. */
+const FETCH_OPTS: RequestInit = { credentials: "include" };
+
 export async function readErrorMessage(res: Response): Promise<string> {
   try {
     const type = res.headers.get("content-type") || "";
@@ -17,7 +20,8 @@ export async function readErrorMessage(res: Response): Promise<string> {
 
 export async function fetchAccount(gameName: string, tag: string, region: string) {
   const res = await fetch(
-    `${BASE}/api/summoner?gameName=${encodeURIComponent(gameName)}&tag=${encodeURIComponent(tag)}&region=${region}`
+    `${BASE}/api/summoner?gameName=${encodeURIComponent(gameName)}&tag=${encodeURIComponent(tag)}&region=${region}`,
+    FETCH_OPTS
   );
   if (!res.ok) throw new Error(await readErrorMessage(res));
   return res.json();
@@ -26,7 +30,8 @@ export async function fetchAccount(gameName: string, tag: string, region: string
 /** Fetches paginated match summaries. `start` is the offset index for pagination (e.g., 0, 10, 20...). */
 export async function fetchMatchSummaries(puuid: string, region: string, count = 10, start = 0) {
   const res = await fetch(
-    `${BASE}/api/matches/summary?puuid=${encodeURIComponent(puuid)}&region=${region}&count=${count}&start=${start}`
+    `${BASE}/api/matches/summary?puuid=${encodeURIComponent(puuid)}&region=${region}&count=${count}&start=${start}`,
+    FETCH_OPTS
   );
   if (!res.ok) throw new Error(await readErrorMessage(res));
   return res.json();
@@ -34,7 +39,8 @@ export async function fetchMatchSummaries(puuid: string, region: string, count =
 
 export async function fetchStats(puuid: string, region: string, count = 10) {
   const res = await fetch(
-    `${BASE}/api/stats?puuid=${encodeURIComponent(puuid)}&region=${region}&count=${count}`
+    `${BASE}/api/stats?puuid=${encodeURIComponent(puuid)}&region=${region}&count=${count}`,
+    FETCH_OPTS
   );
   if (!res.ok) throw new Error(await readErrorMessage(res));
   return res.json();
@@ -42,7 +48,8 @@ export async function fetchStats(puuid: string, region: string, count = 10) {
 
 export async function fetchRanked(puuid: string, region: string) {
   const res = await fetch(
-    `${BASE}/api/ranked?puuid=${encodeURIComponent(puuid)}&region=${region}`
+    `${BASE}/api/ranked?puuid=${encodeURIComponent(puuid)}&region=${region}`,
+    FETCH_OPTS
   );
   if (!res.ok) throw new Error(await readErrorMessage(res));
   return res.json();
@@ -50,20 +57,21 @@ export async function fetchRanked(puuid: string, region: string) {
 
 export async function fetchMatchDetail(matchId: string, region: string) {
   const res = await fetch(
-    `${BASE}/api/matches/full-detail?matchId=${encodeURIComponent(matchId)}&region=${region}`
+    `${BASE}/api/matches/full-detail?matchId=${encodeURIComponent(matchId)}&region=${region}`,
+    FETCH_OPTS
   );
   if (!res.ok) throw new Error(await readErrorMessage(res));
   return res.json();
 }
 
 export async function fetchFavorites() {
-  const res = await fetch(`${BASE}/api/favorites`);
+  const res = await fetch(`${BASE}/api/favorites`, FETCH_OPTS);
   if (!res.ok) throw new Error(await readErrorMessage(res));
   return res.json();
 }
 
 export async function checkIsFavorite(puuid: string): Promise<boolean> {
-  const res = await fetch(`${BASE}/api/favorites/check/${puuid}`);
+  const res = await fetch(`${BASE}/api/favorites/check/${puuid}`, FETCH_OPTS);
   if (!res.ok) return false;
   const data = await res.json();
   return data.isFavorite;
@@ -73,6 +81,7 @@ export async function addFavorite(puuid: string, gameName: string, tagLine: stri
   const res = await fetch(`${BASE}/api/favorites`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify({ puuid, gameName, tagLine, region }),
   });
   if (!res.ok) throw new Error(await readErrorMessage(res));
@@ -80,7 +89,7 @@ export async function addFavorite(puuid: string, gameName: string, tagLine: stri
 }
 
 export async function removeFavorite(puuid: string) {
-  const res = await fetch(`${BASE}/api/favorites/${puuid}`, { method: "DELETE" });
+  const res = await fetch(`${BASE}/api/favorites/${puuid}`, { method: "DELETE", credentials: "include" });
   if (!res.ok) throw new Error(await readErrorMessage(res));
 }
 
@@ -89,7 +98,8 @@ export async function removeFavorite(puuid: string) {
 /** Fetches per-champion aggregated stats for the Champions tab grid. */
 export async function fetchChampionStats(puuid: string) {
   const res = await fetch(
-    `${BASE}/api/trends/champions?puuid=${encodeURIComponent(puuid)}`
+    `${BASE}/api/trends/champions?puuid=${encodeURIComponent(puuid)}`,
+    FETCH_OPTS
   );
   if (!res.ok) throw new Error(await readErrorMessage(res));
   return res.json();
@@ -98,7 +108,8 @@ export async function fetchChampionStats(puuid: string) {
 /** Fetches per-match trend data points for Performance tab charts (KDA, damage, win rate). */
 export async function fetchMatchTrends(puuid: string) {
   const res = await fetch(
-    `${BASE}/api/trends/matches?puuid=${encodeURIComponent(puuid)}`
+    `${BASE}/api/trends/matches?puuid=${encodeURIComponent(puuid)}`,
+    FETCH_OPTS
   );
   if (!res.ok) throw new Error(await readErrorMessage(res));
   return res.json();
@@ -107,8 +118,23 @@ export async function fetchMatchTrends(puuid: string) {
 /** Fetches LP progression history for the Performance tab LP chart. Defaults to Solo/Duo queue. */
 export async function fetchLpHistory(puuid: string, queueType = "RANKED_SOLO_5x5") {
   const res = await fetch(
-    `${BASE}/api/trends/lp?puuid=${encodeURIComponent(puuid)}&queueType=${encodeURIComponent(queueType)}`
+    `${BASE}/api/trends/lp?puuid=${encodeURIComponent(puuid)}&queueType=${encodeURIComponent(queueType)}`,
+    FETCH_OPTS
   );
+  if (!res.ok) throw new Error(await readErrorMessage(res));
+  return res.json();
+}
+
+// --- Subscription tier ---
+
+export async function fetchTier(): Promise<{ tier: number }> {
+  const res = await fetch(`${BASE}/api/tier`, FETCH_OPTS);
+  if (!res.ok) throw new Error(await readErrorMessage(res));
+  return res.json();
+}
+
+export async function upgradeTier(): Promise<{ tier: number }> {
+  const res = await fetch(`${BASE}/api/upgrade`, FETCH_OPTS);
   if (!res.ok) throw new Error(await readErrorMessage(res));
   return res.json();
 }
@@ -152,6 +178,7 @@ export async function analyzeMatchStream(
   const res = await fetch(`${BASE}/api/analyze/stream`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
+    credentials: "include",
     body: JSON.stringify({ matchData, messages }),
   });
 

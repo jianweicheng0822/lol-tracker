@@ -3,6 +3,9 @@ package com.jw.backend;
 import com.jw.backend.dto.AiChatRequest;
 import com.jw.backend.dto.AiChatResponse;
 import com.jw.backend.service.AiAnalyzeService;
+import com.jw.backend.service.SubscriptionService;
+import jakarta.servlet.http.HttpSession;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -24,14 +27,19 @@ import reactor.core.publisher.Flux;
 public class AiAnalyzeController {
 
     private final AiAnalyzeService aiAnalyzeService;
+    private final SubscriptionService subscriptionService;
 
-    public AiAnalyzeController(AiAnalyzeService aiAnalyzeService) {
+    public AiAnalyzeController(AiAnalyzeService aiAnalyzeService, SubscriptionService subscriptionService) {
         this.aiAnalyzeService = aiAnalyzeService;
+        this.subscriptionService = subscriptionService;
     }
 
     /** Synchronous analysis — waits for the full AI response before returning. */
     @PostMapping
-    public ResponseEntity<AiChatResponse> analyze(@RequestBody AiChatRequest request) {
+    public ResponseEntity<AiChatResponse> analyze(@RequestBody AiChatRequest request, HttpSession session) {
+        if (!subscriptionService.hasAiAccess(session)) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
         if (request.matchData() == null || request.messages() == null) {
             return ResponseEntity.badRequest().build();
         }
@@ -40,7 +48,10 @@ public class AiAnalyzeController {
 
     /** Streaming analysis — returns tokens via Server-Sent Events for responsive UI rendering. */
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> analyzeStream(@RequestBody AiChatRequest request) {
+    public Flux<String> analyzeStream(@RequestBody AiChatRequest request, HttpSession session) {
+        if (!subscriptionService.hasAiAccess(session)) {
+            return Flux.just("[Error: AI analysis requires PRO subscription]");
+        }
         if (request.matchData() == null || request.messages() == null) {
             return Flux.just("[Error: matchData and messages are required]");
         }

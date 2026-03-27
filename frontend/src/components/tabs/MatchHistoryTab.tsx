@@ -14,9 +14,10 @@ type Props = {
   onLoadMore: () => void;
   isLoadingMore: boolean;
   hasMore: boolean;
+  tier?: number;
 };
 
-export default function MatchHistoryTab({ matches, region, puuid, gameName, onLoadMore, isLoadingMore, hasMore }: Props) {
+export default function MatchHistoryTab({ matches, region, puuid, gameName, onLoadMore, isLoadingMore, hasMore, tier }: Props) {
   return (
     <MatchList
       matches={matches}
@@ -26,6 +27,7 @@ export default function MatchHistoryTab({ matches, region, puuid, gameName, onLo
       onLoadMore={onLoadMore}
       isLoadingMore={isLoadingMore}
       hasMore={hasMore}
+      tier={tier}
     />
   );
 }

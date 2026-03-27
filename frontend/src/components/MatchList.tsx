@@ -34,6 +34,7 @@ type MatchListProps = {
   onLoadMore?: () => void;
   isLoadingMore?: boolean;
   hasMore?: boolean;
+  tier?: number;
 };
 
 // --- Augment icons for Arena mode (fetched from Community Dragon CDN) ---
@@ -429,7 +430,7 @@ function InlineScoreboard({
   );
 }
 
-export default function MatchList({ matches, region, puuid, gameName, onLoadMore, isLoadingMore, hasMore }: MatchListProps) {
+export default function MatchList({ matches, region, puuid, gameName, onLoadMore, isLoadingMore, hasMore, tier = 0 }: MatchListProps) {
   const ddVersion = useDdragonVersion();
   const imgBase = ddragonBase(ddVersion);
   const hasArena = matches.some((m) => m.queueId === 1700);
@@ -724,12 +725,14 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
 
                   {region && puuid && (
                     <>
-                      <AiButton
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setAiMatch(m);
-                        }}
-                      />
+                      {tier === 1 && (
+                        <AiButton
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setAiMatch(m);
+                          }}
+                        />
+                      )}
                       <ChevronButton
                         expanded={isExpanded}
                         onClick={(e) => {

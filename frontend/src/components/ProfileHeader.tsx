@@ -4,8 +4,7 @@
  * Extracted from PlayerPage to keep the tabbed layout clean.
  */
 import type { Account } from "../types";
-// DDragon version hook is re-exported through MatchList to avoid a circular dependency
-import { useDdragonVersion } from "./MatchList";
+import { useDdragonVersion } from "../utils/ddragon";
 
 type Props = {
   account: Account;

@@ -23,8 +23,6 @@ export default function ChampionsTab({ puuid }: Props) {
   // Lazy fetch — only loads when the Champions tab is first activated
   useEffect(() => {
     let cancelled = false;
-    setLoading(true);
-
     fetchChampionStats(puuid)
       .then((data) => {
         if (cancelled) return;

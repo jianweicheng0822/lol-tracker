@@ -86,10 +86,10 @@ function ChampionRow({ champ, imgBase }: { champ: ChampionPerf; imgBase: string 
 }
 
 export default function StatsBar({ stats, matches }: StatsBarProps) {
-  if (stats.totalGames === 0) return null;
-
   const ddVersion = useDdragonVersion();
   const imgBase = ddragonBase(ddVersion);
+
+  if (stats.totalGames === 0) return null;
 
   const kdaColor =
     stats.averageKda >= 3 ? "#3a9e72" : stats.averageKda >= 2 ? "#c9981a" : "#b05050";

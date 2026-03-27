@@ -25,8 +25,6 @@ import {
 import { ScoreboardTeamTable, ArenaScoreboard } from "./ScoreboardTable";
 import AiChatModal from "./AiChatModal";
 
-// Re-exported so ProfileHeader can import from MatchList without a direct ddragon dependency
-export { useDdragonVersion } from "../utils/ddragon";
 
 type MatchListProps = {
   matches: MatchSummary[];
@@ -359,7 +357,6 @@ function InlineScoreboard({
 
   useEffect(() => {
     let cancelled = false;
-    setStatus("loading");
     fetchMatchDetail(matchId, region)
       .then((data) => {
         if (!cancelled) {

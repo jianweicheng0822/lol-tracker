@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import SearchBar from "../components/SearchBar";
 import FavoritesList from "../components/FavoritesList";
 import { fetchFavorites } from "../api";
@@ -7,18 +7,15 @@ import type { FavoritePlayer } from "../types";
 export default function HomePage() {
   const [favorites, setFavorites] = useState<FavoritePlayer[]>([]);
 
-  const loadFavorites = async () => {
-    try {
-      const data = await fetchFavorites();
-      setFavorites(data);
-    } catch (e) {
-      console.error("Failed to load favorites:", e);
-    }
-  };
+  const loadFavorites = useCallback(() => {
+    fetchFavorites()
+      .then(data => setFavorites(data))
+      .catch(e => console.error("Failed to load favorites:", e));
+  }, []);
 
   useEffect(() => {
     loadFavorites();
-  }, []);
+  }, [loadFavorites]);
 
   return (
     <div style={styles.page}>

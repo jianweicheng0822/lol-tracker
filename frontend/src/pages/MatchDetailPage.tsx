@@ -41,9 +41,9 @@ export default function MatchDetailPage() {
         if (cancelled) return;
         setMatch(data);
         setStatus("done");
-      } catch (e: any) {
+      } catch (e: unknown) {
         if (cancelled) return;
-        setErrorMsg(e?.message || "Failed to load match.");
+        setErrorMsg(e instanceof Error ? e.message : "Failed to load match.");
         setStatus("error");
       }
     };

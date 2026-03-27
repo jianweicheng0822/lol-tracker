@@ -149,7 +149,7 @@ class MatchControllerTest {
                 8112, 8300, new int[]{0,0,0,0}, 0, 12000, 9500)
         );
 
-        when(riotApiService.getRecentMatchSummaries("test-puuid", RiotRegion.NA, 3))
+        when(riotApiService.getRecentMatchSummaries("test-puuid", RiotRegion.NA, 3, 0))
             .thenReturn(fakeSummaries);
 
         // ACT & ASSERT
@@ -177,8 +177,8 @@ class MatchControllerTest {
 
     @Test
     void getMatchSummaries_usesDefaultCount_whenCountNotProvided() throws Exception {
-        // ARRANGE - default count is 3
-        when(riotApiService.getRecentMatchSummaries("test-puuid", RiotRegion.NA, 3))
+        // ARRANGE - default count is 3, default start is 0
+        when(riotApiService.getRecentMatchSummaries("test-puuid", RiotRegion.NA, 3, 0))
             .thenReturn(List.of());
 
         // ACT - no count parameter provided
@@ -190,9 +190,9 @@ class MatchControllerTest {
             )
             .andExpect(status().isOk());
 
-        // ASSERT - verify service was called with default count (3)
+        // ASSERT - verify service was called with default count (3) and start (0)
         verify(riotApiService, times(1))
-            .getRecentMatchSummaries("test-puuid", RiotRegion.NA, 3);
+            .getRecentMatchSummaries("test-puuid", RiotRegion.NA, 3, 0);
     }
 
     @Test

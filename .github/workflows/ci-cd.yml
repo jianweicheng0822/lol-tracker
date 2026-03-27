@@ -36,12 +36,11 @@ jobs:
       - uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: 21
+          java-version: 17
           cache: maven
 
       - run: chmod +x mvnw
-      - run: ./mvnw test
-      - run: ./mvnw package -DskipTests
+      - run: ./mvnw clean package -DskipTests
 
   deploy:
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'

@@ -1,4 +1,3 @@
-/** Ranked badge display — shows tier icon, rank, LP, and win/loss for each queue. */
 import type { RankedEntry } from "../types";
 import { hideOnError } from "../utils/ddragon";
 

@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Fetches and parses ranked league entries from the Riot API. */
 @Service
 public class RankedService {
 
@@ -21,7 +20,6 @@ public class RankedService {
         this.objectMapper = objectMapper;
     }
 
-    /** Returns parsed ranked entries (tier, rank, LP, wins/losses) for a player. */
     public List<RankedEntryDto> getRankedInfo(String puuid, RiotRegion region) {
         String rankedJson = riotApiService.getRankedEntriesByPuuid(puuid, region);
         try {

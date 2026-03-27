@@ -1,5 +1,3 @@
-/** Shared TypeScript types matching the backend DTOs. */
-
 // --- Region ---
 export type Region = "NA" | "EUW" | "KR" | "JP" | "BR" | "OCE";
 

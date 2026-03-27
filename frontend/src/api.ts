@@ -1,5 +1,3 @@
-/** API client — all fetch calls to the Spring Boot backend. */
-
 /** In dev, Vite sets MODE="development" → calls localhost:8080 directly.
  *  In production, the React build is served by Spring Boot on the same origin → empty base. */
 const BASE = import.meta.env.DEV ? "http://localhost:8080" : "";

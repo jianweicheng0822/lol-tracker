@@ -1,8 +1,13 @@
 # LoL Tracker
 
-A full-stack League of Legends match history and performance analytics dashboard with AI-powered coaching.
+![Java](https://img.shields.io/badge/Java_21-ED8B00?style=flat&logo=openjdk&logoColor=white)
+![Spring Boot](https://img.shields.io/badge/Spring_Boot-6DB33F?style=flat&logo=spring-boot&logoColor=white)
+![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black)
+![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
+![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
+![AWS](https://img.shields.io/badge/AWS_EC2-FF9900?style=flat&logo=amazonec2&logoColor=white)
 
-Search any player by Riot ID, explore their ranked stats, match history, champion performance, and LP trends — all in a polished dark-themed UI with real-time AI match analysis.
+Full-stack League of Legends analytics dashboard with AI-powered match coaching. Search any player by Riot ID, explore ranked stats, match history, champion performance, and LP trends — all in a dark-themed UI with real-time AI analysis.
 
 ## Demo
 
@@ -24,51 +29,31 @@ Search any player by Riot ID, explore their ranked stats, match history, champio
 
 ## Features
 
-### Player Dashboard
-- **Tabbed profile** with Overview, Performance, Champions, and Match History views
-- **URL-driven tabs** (`?tab=performance`) with full browser back/forward support
-- **Ranked display** with tier icons, LP, and win/loss for Solo/Duo and Flex queues
-- **Favorite players** saved to database for quick access across sessions
+**Player Dashboard** — Tabbed profile (Overview, Performance, Champions, Match History) with URL-driven navigation, ranked badges, and persistent favorites
 
-### Match History
-- Match cards with champion icon, KDA, items, runes, summoner spells, and team rosters
-- **Expandable inline scoreboards** with full 10-player stats, damage, gold, CS, and vision
-- **Arena mode** support with placement-based results and augment icons
-- Clickable player names for cross-navigation between profiles
-- "Load More" pagination beyond the initial 10 matches
+**Match History** — Match cards with champion icons, KDA, items, runes, and summoner spells. Expandable inline scoreboards with full 10-player stats. Arena mode support with augment icons. Cross-navigation between player profiles
 
-### Performance Analytics
-- **LP progression** chart tracking rank changes over time
-- **Rolling win rate** trend (10-game window) with 50% reference line
-- **KDA and damage trends** with 5-game moving average overlays
-- **Per-champion stats** grid with win rate, KDA, damage, and CS breakdowns
+**Performance Analytics** — LP progression chart, rolling win rate trend, KDA and damage trends with moving average overlays, per-champion stats grid
 
-### AI Match Analysis
-- Click the sparkle button on any match card to open a chat modal
-- Ask questions about your performance, get build advice, and receive coaching tips
-- Streaming responses via SSE for responsive UX
-- System prompt constructed server-side from structured match data (no prompt injection)
+**AI Match Analysis** — Click the sparkle button on any match to open a chat modal. Streaming responses via SSE for real-time coaching. System prompt constructed server-side from structured match data
 
 ## Tech Stack
 
 ### Backend
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| Java | 21 | Runtime |
-| Spring Boot | 3.5.10 | Web framework |
-| Spring Data JPA | — | Database access |
-| Spring WebFlux | — | WebClient for OpenAI streaming |
-| H2 Database | — | Embedded SQL database |
-| Maven | — | Build tool |
+| Technology | Purpose |
+|------------|---------|
+| Java / Spring Boot | Web framework and REST API |
+| Spring Data JPA | Database access |
+| Spring WebFlux | WebClient for OpenAI streaming |
+| H2 Database | Embedded SQL database |
 
 ### Frontend
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| React | 19.2 | UI framework |
-| TypeScript | 5.9 | Type safety |
-| Vite | 7.2 | Dev server and bundler |
-| React Router | 7.13 | Client-side routing |
-| Recharts | 3.7 | Trend charts |
+| Technology | Purpose |
+|------------|---------|
+| React / TypeScript | UI framework with type safety |
+| Vite | Dev server and bundler |
+| React Router | Client-side routing |
+| Recharts | Trend charts |
 
 ### External APIs
 - **[Riot Games API](https://developer.riotgames.com)** — Account, match, ranked, and summoner data
@@ -79,95 +64,42 @@ Search any player by Riot ID, explore their ranked stats, match history, champio
 ## Architecture
 
 ```
-┌── Frontend (React + TypeScript) ─────────────────────────────────────────────┐
-│                                                                              │
-│  Pages                        Components               Utilities             │
-│  ┌────────────┐               ┌──────────────┐         ┌──────────────────┐  │
-│  │ HomePage   │               │ SearchBar    │         │ ddragon.ts       │──┼──► DDragon CDN
-│  │ PlayerPage │               │ MatchList    │         │  (version cache) │  │    (icons, spells,
-│  │ MatchDetail│               │ AiChatModal  │         │ trends.ts        │  │     runes, items)
-│  │  Page      │               │ ProfileHeader│         │ lp.ts            │  │
-│  └────────────┘               │ TabBar       │         └──────────────────┘  │
-│                               │ StatsBar     │                               │
-│  Tabs                         │ ScoreboardTbl│         API Client (api.ts)   │
-│  ┌────────────┐               └──────────────┘         ┌──────────────────┐  │
-│  │ Overview   │                                        │ REST + SSE fetch │──┼──► Community
-│  │ Performance│  (Recharts)                            └──────────────────┘  │    Dragon CDN
-│  │ Champions  │                                                 │            │    (augment icons)
-│  │ MatchHist. │                                                 │            │
-│  └────────────┘                                                 │            │
-└─────────────────────────────────────────────────────────────────┼────────────┘
-                                                                  │
-                                                        REST API (JSON + SSE)
-                                                                  │
-┌── Backend (Spring Boot + Java 21) ──────────────────────────────┼────────────┐
-│                                                                 │            │
-│  Controllers                              Services              │            │
-│  ┌──────────────────────┐                 ┌─────────────────────┼──────────┐ │
-│  │ SummonerController   │────────────────►│ RiotApiService      ▼          │ │
-│  │ MatchController      │────────────────►│  ┌──────────────────────────┐  │ │
-│  │ RankedController     │────────────────►│  │ In-Memory TTL Cache      │  │ │
-│  │ StatsController      │────────────────►│  │ (ConcurrentHashMap)      │  │ │
-│  │ TrendsController     │───────┐         │  │                          │  │ │
-│  │ FavoriteController   │───┐   │         │  │ Account     ── 24h TTL   │  │ │
-│  │ AiAnalyzeController  │─┐ │   │         │  │ Summoner    ── 30m TTL   │  │ │
-│  │ HealthController     │ │ │   │         │  │ Ranked      ── 30m TTL   │  │ │
-│  └──────────────────────┘ │ │   │         │  │ Match Detail── 10m TTL   │  │ │
-│                           │ │   │         │  │ Match IDs   ── 30s TTL   │  │ │
-│                           │ │   │         │  └──────────────────────────┘  │ │
-│                           │ │   │         │                    │           │ │
-│                           │ │   │         │  ┌─────────────────┼────────┐  │ │
-│                           │ │   │         │  │ Thread Pool (6) ▼        │  │ │
-│                           │ │   │         │  │ CompletableFuture        │──┼─┼──► Riot Games API
-│                           │ │   │         │  │ (parallel match fetch)   │  │ │    (Account-v1,
-│                           │ │   │         │  └────────────────────────  │  │ │     Summoner-v4,
-│                           │ │   │         │                             │  │ │     League-v4,
-│                           │ │   │         │ RankedService               │  │ │     Match-v5)
-│                           │ │   │         │ StatsService                │  │ │
-│                           │ │   │         │ LpTrackingService           │  │ │
-│                           │ │   │         └─────────────────────────────┘  │ │
-│                           │ │   │                                          │ │
-│                           │ │   │         ┌─────────────────────────────┐  │ │
-│                           │ │   └────────►│ MatchHistoryService         │  │ │
-│                           │ │             │ FavoritePlayerService        │  │ │
-│                           │ │             └────────────┬────────────────┘  │ │
-│                           │ │                          │                   │ │
-│                           │ │             ┌─────────────────────────────┐  │ │
-│                           │ └────────────►│ AiAnalyzeService           │──┼─┼──► OpenAI API
-│                           │               │ (WebFlux + SSE streaming)  │  │ │    (GPT-4o-mini)
-│                           │               └─────────────────────────────┘  │ │
-│  Exception Handling       │                                                │ │
-│  ┌──────────────────────┐ │  Repositories (Spring Data JPA)                │ │
-│  │ GlobalException      │ │  ┌─────────────────────────────┐              │ │
-│  │  Handler             │ │  │ MatchRecordRepository       │◄─────────────┘ │
-│  │ (429 rate limit,     │ │  │ LpSnapshotRepository        │                │
-│  │  404, 400, etc.)     │ │  │ FavoritePlayerRepository    │                │
-│  └──────────────────────┘ │  └────────────┬────────────────┘                │
-│                           │               │                                 │
-└───────────────────────────┼───────────────┼─────────────────────────────────┘
-                            │               │
-                            │  ┌────────────▼────────────────┐
-                            │  │ H2 Database (file-based)    │
-                            │  │                             │
-                            │  │ ┌─────────────────────────┐ │
-                            │  │ │ match_records           │ │
-                            │  │ │ lp_snapshots            │ │
-                            │  │ │ favorite_players        │ │
-                            │  │ └─────────────────────────┘ │
-                            │  └─────────────────────────────┘
-                            │
-┌── Deployment ─────────────┼─────────────────────────────────────────────────┐
-│                           │                                                 │
-│  GitHub Actions CI/CD     │                                                 │
-│  ┌─────────┐  ┌─────────────────┐  ┌────────┐  ┌────────────────────────┐  │
-│  │ Push to │─►│ Build & Test    │─►│  GHCR  │─►│ AWS EC2              │  │
-│  │ master  │  │ (lint, test,    │  │ (image │  │ docker pull + run    │  │
-│  │         │  │  docker build)  │  │  push) │  │ port 80 → 8080       │  │
-│  └─────────┘  └─────────────────┘  └────────┘  └────────────────────────┘  │
-│                                                                             │
-│  Docker: Multi-stage build (Node 20 → Maven 3.9/JDK 21 → JRE 21 Alpine)   │
-│  Single container serves React SPA + Spring Boot API on port 8080           │
-└─────────────────────────────────────────────────────────────────────────────┘
+┌── Frontend (React + TypeScript) ──────────────────────────────┐
+│                                                                │
+│  Pages             Components          Utilities               │
+│  · HomePage         · SearchBar         · ddragon.ts ──► DDragon CDN
+│  · PlayerPage       · MatchList         · trends.ts            │
+│  · MatchDetailPage  · AiChatModal       · lp.ts                │
+│                     · ProfileHeader     · api.ts ────► Community Dragon
+│  Tabs               · ScoreboardTable                          │
+│  · Overview                                                    │
+│  · Performance (Recharts)                                      │
+│  · Champions                                                   │
+│  · MatchHistory                                                │
+└────────────────────────────┬───────────────────────────────────┘
+                             │ REST (JSON + SSE)
+┌── Backend (Spring Boot) ───┼───────────────────────────────────┐
+│                            │                                   │
+│  Controllers ──► Services                                      │
+│  · Summoner       · RiotApiService ──────────► Riot Games API  │
+│  · Match            (in-memory TTL cache,                      │
+│  · Ranked            thread pool for parallel fetch)           │
+│  · Stats          · RankedService                              │
+│  · Trends         · StatsService                               │
+│  · Favorite       · LpTrackingService                          │
+│  · AiAnalyze      · AiAnalyzeService ───────► OpenAI API      │
+│  · Health         · MatchHistoryService                        │
+│                   · FavoritePlayerService                       │
+│  GlobalExceptionHandler                                        │
+│                   Repositories (JPA)                            │
+│                   · match_records                               │
+│                   · lp_snapshots ────────────► H2 Database      │
+│                   · favorite_players           (file-based)     │
+│                                                                │
+└── Deployment ──────────────────────────────────────────────────┘
+  GitHub Actions: Push → Build & Test → GHCR → AWS EC2
+  Docker: Multi-stage (Node 20 → Maven/JDK 21 → JRE 21 Alpine)
+  Single container serves React SPA + Spring Boot API on :8080
 ```
 
 ## Local Development Setup
@@ -188,139 +120,82 @@ RIOT_API_KEY=your-riot-api-key
 OPENAI_API_KEY=your-openai-api-key
 ```
 
-### Running the Backend
+### Running Locally
 
 ```bash
+# Backend — starts at http://localhost:8080
 cd backend
 ./mvnw spring-boot:run
-```
 
-The Spring Boot server starts at **http://localhost:8080**.
-
-### Running the Frontend
-
-```bash
+# Frontend — starts at http://localhost:5173 (proxies API to backend)
 cd frontend
 npm install
 npm run dev
 ```
 
-The Vite dev server starts at **http://localhost:5173** and proxies API requests to the backend.
-
-### Local Development URLs
-
-| Service  | URL                     | Purpose                        |
-|----------|-------------------------|--------------------------------|
-| Frontend | `http://localhost:5173`  | React dev server (hot reload)  |
-| Backend  | `http://localhost:8080`  | Spring Boot API server         |
-
 ## Production Deployment
 
-### Docker Build
-
-The project uses a **multi-stage Dockerfile** at the repository root to produce a single optimized image:
-
-1. **Stage 1 — Frontend build:** Node.js 20 Alpine compiles the React app to static assets
-2. **Stage 2 — Backend build:** Maven 3.9 + Java 21 compiles the Spring Boot application and copies the frontend build into `src/main/resources/static`
-3. **Stage 3 — Runtime:** Eclipse Temurin JRE 21 Alpine runs the final JAR with minimal image size
+### Docker
 
 ```bash
 docker build -t lol-tracker .
-```
 
-### Running the Container
-
-Pass API keys as environment variables at runtime — they are never baked into the image:
-
-```bash
 docker run -p 8080:8080 \
   -e RIOT_API_KEY=your-riot-api-key \
   -e OPENAI_API_KEY=your-openai-api-key \
   lol-tracker
 ```
 
-The application serves both the API and the React frontend on **port 8080**.
+### AWS EC2
 
-### AWS EC2 Deployment
-
-The project is deployed to an **AWS EC2** instance with automated CI/CD via GitHub Actions (`.github/workflows/ci-cd.yml`):
-
-1. **On pull request to `master`** — runs frontend lint/build and backend tests
-2. **On push to `master`** — runs CI checks, builds a Docker image, pushes it to **GitHub Container Registry (GHCR)**, and deploys to EC2 via SSH
-
-The deployment step SSHs into the EC2 instance, pulls the latest image from GHCR, stops the old container, and starts a new one with the required environment variables.
-
-**Required GitHub Secrets:**
-
-| Secret         | Purpose                          |
-|----------------|----------------------------------|
-| `EC2_HOST`     | EC2 instance public IP/hostname  |
-| `EC2_USER`     | SSH username (e.g., `ec2-user`)  |
-| `EC2_SSH_KEY`  | Private key for SSH access       |
-| `RIOT_API_KEY` | Riot Games API key               |
-| `OPENAI_API_KEY` | OpenAI API key                 |
+Automated via GitHub Actions (`.github/workflows/ci-cd.yml`):
+- **On PR to `master`** — runs lint, build, and tests
+- **On push to `master`** — builds Docker image, pushes to GHCR, deploys to EC2 via SSH
 
 ## API Endpoints
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| GET | `/api/summoner` | Resolve Riot ID to account with profile icon |
-| GET | `/api/matches/recent` | Get recent match IDs |
-| GET | `/api/matches/summary` | Get match summaries with KDA and team rosters |
-| GET | `/api/matches/detail` | Get raw match detail JSON from Riot API |
-| GET | `/api/matches/full-detail` | Get parsed match detail with all participants |
-| GET | `/api/stats` | Get aggregated player statistics |
-| GET | `/api/ranked` | Get ranked entries (Solo/Duo, Flex) |
-| GET | `/api/favorites` | List all favorite players |
-| POST | `/api/favorites` | Add a player to favorites |
-| DELETE | `/api/favorites/{puuid}` | Remove a player from favorites |
-| GET | `/api/favorites/check/{puuid}` | Check if a player is favorited |
-| GET | `/api/trends/champions` | Per-champion aggregated stats |
-| GET | `/api/trends/matches` | Per-match trend data points |
-| GET | `/api/trends/lp` | LP progression history |
-| POST | `/api/analyze` | AI match analysis (synchronous) |
-| POST | `/api/analyze/stream` | AI match analysis (SSE streaming) |
+| Domain | Method | Endpoint | Description |
+|--------|--------|----------|-------------|
+| Summoner | GET | `/api/summoner` | Resolve Riot ID to account |
+| Matches | GET | `/api/matches/recent` | Recent match IDs |
+| | GET | `/api/matches/summary` | Match summaries with KDA and rosters |
+| | GET | `/api/matches/detail` | Raw match detail from Riot API |
+| | GET | `/api/matches/full-detail` | Parsed match detail with all participants |
+| Stats | GET | `/api/stats` | Aggregated player statistics |
+| Ranked | GET | `/api/ranked` | Ranked entries (Solo/Duo, Flex) |
+| Favorites | GET | `/api/favorites` | List all favorites |
+| | POST | `/api/favorites` | Add a player to favorites |
+| | DELETE | `/api/favorites/{puuid}` | Remove a favorite |
+| | GET | `/api/favorites/check/{puuid}` | Check if player is favorited |
+| Trends | GET | `/api/trends/champions` | Per-champion aggregated stats |
+| | GET | `/api/trends/matches` | Per-match trend data points |
+| | GET | `/api/trends/lp` | LP progression history |
+| AI | POST | `/api/analyze` | AI match analysis (sync) |
+| | POST | `/api/analyze/stream` | AI match analysis (SSE streaming) |
 
 ## Project Structure
 
 ```
 lol-tracker/
-├── Dockerfile                    # Multi-stage production build
+├── Dockerfile
 ├── backend/
 │   ├── src/main/java/com/jw/backend/
-│   │   ├── *Controller.java      # REST API endpoints
-│   │   ├── service/              # Business logic (Riot API, stats, LP tracking)
-│   │   ├── repository/           # JPA data access
-│   │   ├── entity/               # Database entities
-│   │   ├── dto/                  # Data transfer objects
-│   │   ├── region/               # Region enum mapping
-│   │   └── exception/            # Global error handling
-│   └── src/test/                 # Unit tests (45 tests)
+│   │   ├── *Controller.java
+│   │   ├── service/
+│   │   ├── repository/
+│   │   ├── entity/
+│   │   ├── dto/
+│   │   ├── region/
+│   │   └── exception/
+│   └── src/test/
 └── frontend/
     └── src/
-        ├── api.ts                # API client functions
-        ├── types.ts              # TypeScript type definitions
+        ├── api.ts
+        ├── types.ts
         ├── hooks/
-        │   └── useTabNavigation.ts
         ├── utils/
-        │   ├── ddragon.ts        # DDragon CDN helpers and icon URL builders
-        │   ├── lp.ts             # LP → absolute number conversion
-        │   └── trends.ts         # Moving average and rolling win rate
         ├── components/
-        │   ├── MatchList.tsx      # Match cards with expandable scoreboards
-        │   ├── AiChatModal.tsx    # AI analysis chat (streaming)
-        │   ├── ScoreboardTable.tsx
-        │   ├── ProfileHeader.tsx  # Player icon, name, refresh/favorite
-        │   ├── TabBar.tsx         # Tab navigation bar
-        │   └── tabs/
-        │       ├── OverviewTab.tsx
-        │       ├── PerformanceTab.tsx
-        │       ├── ChampionsTab.tsx
-        │       └── MatchHistoryTab.tsx
         └── pages/
-            ├── HomePage.tsx
-            ├── PlayerPage.tsx     # Tabbed dashboard
-            └── MatchDetailPage.tsx
 ```
 
 ## Testing
@@ -330,30 +205,11 @@ cd backend
 ./mvnw test
 ```
 
-**45 unit tests** across 5 test classes:
-- `RiotRegionTest` (14 tests) — Region enum mapping
-- `GlobalExceptionHandlerTest` (3 tests) — Error response formatting
-- `SummonerControllerTest` (5 tests) — Account lookup endpoint
-- `MatchControllerTest` (12 tests) — Match data endpoints
-- `FavoriteControllerTest` (10 tests) — Favorites CRUD
+**45 unit tests** covering controllers, exception handling, and region mapping.
 
 ## Database
 
-H2 console is disabled by default. Enable it for local debugging with `-Dspring.h2.console.enabled=true`.
-
-| Setting | Value |
-|---------|-------|
-| JDBC URL | `jdbc:h2:file:./data/lol-tracker-db` |
-| Username | `sa` |
-| Password | *(empty)* |
-
-**Tables:**
-
-| Table | Purpose |
-|-------|---------|
-| `favorite_players` | Saved players with Riot ID and region |
-| `match_records` | Per-player match history for trend analysis |
-| `lp_snapshots` | LP progression snapshots (saved only on rank changes) |
+H2 embedded file-based database with three tables: `favorite_players`, `match_records`, and `lp_snapshots`. Console can be enabled for debugging with `-Dspring.h2.console.enabled=true`.
 
 ## License
 

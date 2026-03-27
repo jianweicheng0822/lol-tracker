@@ -7,7 +7,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/** REST controller for ranked league data (Solo/Duo, Flex). */
 @RestController
 @RequestMapping("/api/ranked")
 public class RankedController {
@@ -18,7 +17,6 @@ public class RankedController {
         this.rankedService = rankedService;
     }
 
-    /** Returns ranked entries for a player by PUUID. */
     @GetMapping
     public List<RankedEntryDto> getRankedInfo(
             @RequestParam String puuid,

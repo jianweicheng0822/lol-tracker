@@ -71,7 +71,6 @@ public class AiAnalyzeService {
                 .onErrorResume(e -> Flux.just("[Error: Unable to generate analysis. Please try again.]"));
     }
 
-    /** Synchronous analysis — blocks until the full response is returned from OpenAI. */
     public AiChatResponse analyze(AiChatRequest request) {
         Map<String, Object> body = Map.of(
                 "model", MODEL,

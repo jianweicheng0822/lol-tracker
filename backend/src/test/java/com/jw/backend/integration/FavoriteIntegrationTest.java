@@ -6,7 +6,7 @@ import org.springframework.http.MediaType;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-class FavoriteIntegrationTest extends BaseIntegrationTest {
+class FavoriteIntegrationTest extends BaseIntegrationSupport {
 
     @Test
     void favoriteCrud_roundTrip() throws Exception {

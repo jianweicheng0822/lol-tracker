@@ -6,7 +6,7 @@ import org.springframework.http.MediaType;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-class AuthIntegrationTest extends BaseIntegrationTest {
+class AuthIntegrationTest extends BaseIntegrationSupport {
 
     @Test
     void register_returnsTokenAndTier() throws Exception {

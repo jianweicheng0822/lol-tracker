@@ -46,17 +46,34 @@ Full-stack League of Legends analytics dashboard with AI-powered match coaching.
 ## Architecture
 
 ```mermaid
-graph LR
-    Browser["Browser<br/>(React SPA)"]
-    API["Spring Boot API<br/>(JWT + Swagger)"]
-    DB["PostgreSQL<br/>(Flyway migrations)"]
-    Riot["Riot Games API"]
-    OpenAI["OpenAI API"]
+graph TB
+    subgraph Frontend
+        Browser["React SPA<br/>(TypeScript + Vite)"]
+    end
 
-    Browser -->|REST + SSE| API
+    subgraph Backend
+        API["Spring Boot API"]
+        Security["Spring Security<br/>JWT Auth Filter"]
+        Swagger["Swagger UI<br/>/swagger-ui.html"]
+    end
+
+    subgraph Data
+        DB[("PostgreSQL<br/>Flyway migrations")]
+    end
+
+    subgraph External
+        Riot["Riot Games API"]
+        OpenAI["OpenAI API<br/>(GPT-4o-mini)"]
+        DDragon["DDragon CDN"]
+    end
+
+    Browser -->|"REST (JSON) + SSE"| Security
+    Security --> API
     API --> DB
-    API --> Riot
-    API --> OpenAI
+    API -->|"Account / Match / Ranked"| Riot
+    API -->|"Streaming analysis"| OpenAI
+    Browser -->|"Icons & assets"| DDragon
+    Swagger -.->|"Try it out"| API
 ```
 
 ## Tech Stack
@@ -97,9 +114,11 @@ cd lol-tracker
 cp .env.example .env   # Edit .env with your API keys
 
 # 2. Start PostgreSQL + app
-docker-compose up --build
+docker compose up --build
 
-# 3. Open http://localhost:8080
+# 3. Open the app and API docs
+#    App:     http://localhost:8080
+#    Swagger: http://localhost:8080/swagger-ui.html
 ```
 
 ## Manual Setup
@@ -173,20 +192,26 @@ Interactive Swagger UI is available at `/swagger-ui.html` when the app is runnin
 | | POST | `/api/analyze/stream` | AI match analysis (SSE streaming, PRO only) |
 | Subscription | GET | `/api/tier` | Get current user's subscription tier |
 | | GET | `/api/upgrade` | Upgrade current user to PRO |
+| Health | GET | `/health` | Health check |
 
 ## Testing
 
 ```bash
 cd backend
 
-# Unit tests (H2 in-memory, no Docker needed)
+# Unit tests only (H2 in-memory, no Docker needed)
 ./mvnw test
 
-# Integration tests use Testcontainers — Docker must be running
-# Testcontainers auto-starts a PostgreSQL container for integration tests
+# Unit + integration tests (requires Docker for Testcontainers)
+./mvnw verify
 ```
 
-Unit tests use H2 with `ddl-auto=create-drop` and Flyway disabled. Integration tests use Testcontainers with a real PostgreSQL instance and Flyway migrations.
+| Suite | Count | Database | Docker required |
+|-------|-------|----------|-----------------|
+| Unit tests | 158 | H2 in-memory | No |
+| Integration tests | 12 | PostgreSQL (Testcontainers) | Yes |
+
+Unit tests use H2 with `ddl-auto=create-drop` and Flyway disabled. Integration tests use Testcontainers to spin up a real PostgreSQL container and run Flyway migrations, validating the full stack end-to-end.
 
 ## Database
 

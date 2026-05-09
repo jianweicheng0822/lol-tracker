@@ -77,9 +77,14 @@ jobs:
           OPENAI_KEY: ${{ secrets.OPENAI_API_KEY }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_ACTOR: ${{ github.actor }}
+          DB_HOST: ${{ secrets.DB_HOST }}
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: IMAGE,RIOT_KEY,OPENAI_KEY,GH_TOKEN,GH_ACTOR
-          script: echo "$GH_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin && docker pull "$IMAGE" && (docker stop lol-tracker 2>/dev/null; docker rm lol-tracker 2>/dev/null; PORT_CID=$(docker ps -q --filter publish=80); [ -n "$PORT_CID" ] && docker stop "$PORT_CID" && docker rm "$PORT_CID"; true) && docker run -d --name lol-tracker -p 80:8080 -e "RIOT_API_KEY=$RIOT_KEY" -e "OPENAI_API_KEY=$OPENAI_KEY" --restart unless-stopped "$IMAGE"
+          envs: IMAGE,RIOT_KEY,OPENAI_KEY,GH_TOKEN,GH_ACTOR,DB_HOST,DB_NAME,DB_USER,DB_PASSWORD,JWT_SECRET
+          script: echo "$GH_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin && docker pull "$IMAGE" && (docker stop lol-tracker 2>/dev/null; docker rm lol-tracker 2>/dev/null; PORT_CID=$(docker ps -q --filter publish=80); [ -n "$PORT_CID" ] && docker stop "$PORT_CID" && docker rm "$PORT_CID"; true) && docker run -d --name lol-tracker -p 80:8080 -e "RIOT_API_KEY=$RIOT_KEY" -e "OPENAI_API_KEY=$OPENAI_KEY" -e "DB_HOST=$DB_HOST" -e "DB_NAME=$DB_NAME" -e "DB_USER=$DB_USER" -e "DB_PASSWORD=$DB_PASSWORD" -e "JWT_SECRET=$JWT_SECRET" --restart unless-stopped "$IMAGE"

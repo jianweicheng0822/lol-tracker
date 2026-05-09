@@ -2,11 +2,11 @@ package com.jw.backend;
 
 import com.jw.backend.entity.AppUser;
 import com.jw.backend.service.SubscriptionService;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.security.Principal;
 import java.util.Map;
 
 @RestController
@@ -20,14 +20,16 @@ public class SubscriptionController {
     }
 
     @GetMapping("/tier")
-    public Map<String, Integer> getTier(HttpSession session) {
-        AppUser user = subscriptionService.getOrCreateUser(session);
+    public Map<String, Integer> getTier(Principal principal) {
+        String username = principal != null ? principal.getName() : null;
+        AppUser user = subscriptionService.getOrCreateUser(username);
         return Map.of("tier", user.getTier());
     }
 
     @GetMapping("/upgrade")
-    public Map<String, Integer> upgrade(HttpSession session) {
-        subscriptionService.upgrade(session);
+    public Map<String, Integer> upgrade(Principal principal) {
+        String username = principal != null ? principal.getName() : null;
+        subscriptionService.upgrade(username);
         return Map.of("tier", 1);
     }
 }

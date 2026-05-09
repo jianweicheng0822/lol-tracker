@@ -3,10 +3,12 @@ package com.jw.backend;
 import com.jw.backend.dto.ChampionStatsDto;
 import com.jw.backend.dto.LpSnapshotDto;
 import com.jw.backend.dto.MatchTrendPointDto;
+import com.jw.backend.security.JwtUtil;
 import com.jw.backend.service.LpTrackingService;
 import com.jw.backend.service.MatchHistoryService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -18,10 +20,14 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(TrendsController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class TrendsControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockitoBean
+    private JwtUtil jwtUtil;
 
     @MockitoBean
     private MatchHistoryService matchHistoryService;

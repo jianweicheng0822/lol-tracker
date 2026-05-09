@@ -6,10 +6,11 @@ import com.jw.backend.service.MatchHistoryService;
 import com.jw.backend.service.RateLimitService;
 import com.jw.backend.service.RiotApiService;
 import com.jw.backend.service.SubscriptionService;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.*;
 import com.jw.backend.dto.MatchSummaryDto;
 import com.jw.backend.dto.MatchDetailDto;
+
+import java.security.Principal;
 import java.util.List;
 
 @RestController
@@ -59,12 +60,14 @@ public class MatchController {
             @RequestParam RiotRegion region,
             @RequestParam(defaultValue = "3") int count,
             @RequestParam(defaultValue = "0") int start,
-            HttpSession session
+            Principal principal
     ) {
-        AppUser user = subscriptionService.getOrCreateUser(session);
-        rateLimitService.checkRateLimit(session, user.getTier());
+        String username = principal != null ? principal.getName() : null;
+        AppUser user = subscriptionService.getOrCreateUser(username);
+        String userIdentifier = username != null ? username : "anon-" + puuid;
+        rateLimitService.checkRateLimit(userIdentifier, user.getTier());
 
-        int maxCount = subscriptionService.getMaxMatchCount(session);
+        int maxCount = subscriptionService.getMaxMatchCount(username);
         if (count > maxCount) count = maxCount;
 
         List<MatchSummaryDto> summaries = riotApiService.getRecentMatchSummaries(puuid, region, count, start);

@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.mock.web.MockHttpSession;
 
 import java.util.Optional;
 
@@ -22,20 +21,19 @@ class SubscriptionServiceTest {
     private AppUserRepository appUserRepository;
 
     private SubscriptionService subscriptionService;
-    private MockHttpSession session;
 
     @BeforeEach
     void setUp() {
         subscriptionService = new SubscriptionService(appUserRepository);
-        session = new MockHttpSession();
     }
 
     @Test
     void getOrCreateUser_whenExists_returnsExisting() {
-        AppUser existing = new AppUser(session.getId());
-        when(appUserRepository.findBySessionId(session.getId())).thenReturn(Optional.of(existing));
+        AppUser existing = new AppUser();
+        existing.setUsername("testuser");
+        when(appUserRepository.findByUsername("testuser")).thenReturn(Optional.of(existing));
 
-        AppUser result = subscriptionService.getOrCreateUser(session);
+        AppUser result = subscriptionService.getOrCreateUser("testuser");
 
         assertSame(existing, result);
         verify(appUserRepository, never()).save(any());
@@ -43,10 +41,10 @@ class SubscriptionServiceTest {
 
     @Test
     void getOrCreateUser_whenNotExists_createsNew() {
-        when(appUserRepository.findBySessionId(session.getId())).thenReturn(Optional.empty());
+        when(appUserRepository.findByUsername("testuser")).thenReturn(Optional.empty());
         when(appUserRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
 
-        AppUser result = subscriptionService.getOrCreateUser(session);
+        AppUser result = subscriptionService.getOrCreateUser("testuser");
 
         assertNotNull(result);
         assertEquals(0, result.getTier());
@@ -54,11 +52,22 @@ class SubscriptionServiceTest {
     }
 
     @Test
-    void upgrade_setsTierToOne() {
-        AppUser user = new AppUser(session.getId());
-        when(appUserRepository.findBySessionId(session.getId())).thenReturn(Optional.of(user));
+    void getOrCreateUser_whenNull_returnsAnonymousUser() {
+        AppUser result = subscriptionService.getOrCreateUser(null);
 
-        subscriptionService.upgrade(session);
+        assertNotNull(result);
+        assertEquals(0, result.getTier());
+        verify(appUserRepository, never()).findByUsername(any());
+        verify(appUserRepository, never()).save(any());
+    }
+
+    @Test
+    void upgrade_setsTierToOne() {
+        AppUser user = new AppUser();
+        user.setUsername("testuser");
+        when(appUserRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+
+        subscriptionService.upgrade("testuser");
 
         assertEquals(1, user.getTier());
         verify(appUserRepository).save(user);
@@ -66,35 +75,39 @@ class SubscriptionServiceTest {
 
     @Test
     void getMaxMatchCount_freeUser_returns20() {
-        AppUser freeUser = new AppUser(session.getId());
-        when(appUserRepository.findBySessionId(session.getId())).thenReturn(Optional.of(freeUser));
+        AppUser freeUser = new AppUser();
+        freeUser.setUsername("testuser");
+        when(appUserRepository.findByUsername("testuser")).thenReturn(Optional.of(freeUser));
 
-        assertEquals(20, subscriptionService.getMaxMatchCount(session));
+        assertEquals(20, subscriptionService.getMaxMatchCount("testuser"));
     }
 
     @Test
     void getMaxMatchCount_proUser_returns100() {
-        AppUser proUser = new AppUser(session.getId());
+        AppUser proUser = new AppUser();
+        proUser.setUsername("testuser");
         proUser.setTier(1);
-        when(appUserRepository.findBySessionId(session.getId())).thenReturn(Optional.of(proUser));
+        when(appUserRepository.findByUsername("testuser")).thenReturn(Optional.of(proUser));
 
-        assertEquals(100, subscriptionService.getMaxMatchCount(session));
+        assertEquals(100, subscriptionService.getMaxMatchCount("testuser"));
     }
 
     @Test
     void hasAiAccess_freeUser_returnsFalse() {
-        AppUser freeUser = new AppUser(session.getId());
-        when(appUserRepository.findBySessionId(session.getId())).thenReturn(Optional.of(freeUser));
+        AppUser freeUser = new AppUser();
+        freeUser.setUsername("testuser");
+        when(appUserRepository.findByUsername("testuser")).thenReturn(Optional.of(freeUser));
 
-        assertFalse(subscriptionService.hasAiAccess(session));
+        assertFalse(subscriptionService.hasAiAccess("testuser"));
     }
 
     @Test
     void hasAiAccess_proUser_returnsTrue() {
-        AppUser proUser = new AppUser(session.getId());
+        AppUser proUser = new AppUser();
+        proUser.setUsername("testuser");
         proUser.setTier(1);
-        when(appUserRepository.findBySessionId(session.getId())).thenReturn(Optional.of(proUser));
+        when(appUserRepository.findByUsername("testuser")).thenReturn(Optional.of(proUser));
 
-        assertTrue(subscriptionService.hasAiAccess(session));
+        assertTrue(subscriptionService.hasAiAccess("testuser"));
     }
 }

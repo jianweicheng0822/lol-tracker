@@ -3,6 +3,7 @@ package com.jw.backend;
 import com.jw.backend.dto.MatchSummaryDto;
 import com.jw.backend.entity.AppUser;
 import com.jw.backend.region.RiotRegion;
+import com.jw.backend.security.JwtUtil;
 import com.jw.backend.service.MatchHistoryService;
 import com.jw.backend.service.RateLimitService;
 import com.jw.backend.service.RiotApiService;
@@ -10,6 +11,7 @@ import com.jw.backend.service.SubscriptionService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
@@ -17,15 +19,21 @@ import org.springframework.test.web.servlet.MockMvc;
 import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(MatchController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class MatchControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockitoBean
+    private JwtUtil jwtUtil;
 
     @MockitoBean
     private RiotApiService riotApiService;
@@ -41,7 +49,7 @@ class MatchControllerTest {
 
     @BeforeEach
     void setUp() {
-        AppUser freeUser = new AppUser("test-session");
+        AppUser freeUser = new AppUser();
         when(subscriptionService.getOrCreateUser(any())).thenReturn(freeUser);
         when(subscriptionService.getMaxMatchCount(any())).thenReturn(20);
     }

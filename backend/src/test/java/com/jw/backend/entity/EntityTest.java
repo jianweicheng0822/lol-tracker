@@ -17,6 +17,8 @@ class EntityTest {
         AppUser user = new AppUser();
         assertNull(user.getId());
         assertNull(user.getSessionId());
+        assertNull(user.getUsername());
+        assertNull(user.getPassword());
     }
 
     @Test
@@ -25,17 +27,29 @@ class EntityTest {
         user.setId(1L);
         user.setSessionId("session-2");
         user.setTier(1);
+        user.setUsername("testuser");
+        user.setPassword("hashed");
 
         assertEquals(1L, user.getId());
         assertEquals("session-2", user.getSessionId());
         assertEquals(1, user.getTier());
+        assertEquals("testuser", user.getUsername());
+        assertEquals("hashed", user.getPassword());
     }
 
     @Test
-    void appUser_constructorSetsDefaultTier() {
+    void appUser_sessionConstructorSetsDefaultTier() {
         AppUser user = new AppUser("session-1");
         assertEquals(0, user.getTier());
         assertEquals("session-1", user.getSessionId());
+    }
+
+    @Test
+    void appUser_authConstructorSetsFields() {
+        AppUser user = new AppUser("myuser", "mypass", true);
+        assertEquals("myuser", user.getUsername());
+        assertEquals("mypass", user.getPassword());
+        assertEquals(0, user.getTier());
     }
 
     // =====================================================

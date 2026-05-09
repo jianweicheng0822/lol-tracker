@@ -4,6 +4,7 @@
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-6DB33F?style=flat&logo=spring-boot&logoColor=white)
 ![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat&logo=postgresql&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![AWS](https://img.shields.io/badge/AWS_EC2-FF9900?style=flat&logo=amazonec2&logoColor=white)
 [![codecov](https://codecov.io/gh/jianweicheng0822/lol-tracker/graph/badge.svg)](https://codecov.io/gh/jianweicheng0822/lol-tracker)
@@ -38,17 +39,40 @@ Full-stack League of Legends analytics dashboard with AI-powered match coaching.
 
 **AI Match Analysis** — Click the sparkle button on any match to open a chat modal. Streaming responses via SSE for real-time coaching. System prompt constructed server-side from structured match data
 
-**Subscription Tiers** — FREE/PRO system using HttpSession identity. FREE users get 20 matches and 5 requests/minute rate limiting. PRO users get 100 matches, unlimited requests, and AI analysis access. One-click upgrade via `/api/upgrade`
+**JWT Authentication** — Stateless authentication with Bearer tokens. Register/login endpoints return JWTs. Anonymous access is preserved as FREE tier
+
+**Subscription Tiers** — FREE/PRO system using JWT identity. FREE users get 20 matches and 5 requests/minute rate limiting. PRO users get 100 matches, unlimited requests, and AI analysis access
+
+## Architecture
+
+```mermaid
+graph LR
+    Browser["Browser<br/>(React SPA)"]
+    API["Spring Boot API<br/>(JWT + Swagger)"]
+    DB["PostgreSQL<br/>(Flyway migrations)"]
+    Riot["Riot Games API"]
+    OpenAI["OpenAI API"]
+
+    Browser -->|REST + SSE| API
+    API --> DB
+    API --> Riot
+    API --> OpenAI
+```
 
 ## Tech Stack
 
 ### Backend
 | Technology | Purpose |
 |------------|---------|
-| Java / Spring Boot | Web framework and REST API |
-| Spring Data JPA | Database access |
+| Java 21 / Spring Boot | Web framework and REST API |
+| Spring Security + JWT | Stateless authentication (jjwt) |
+| Spring Data JPA | Database access (repositories) |
+| PostgreSQL | Production relational database |
+| Flyway | Database schema migrations |
 | Spring WebFlux | WebClient for OpenAI streaming |
-| H2 Database | Embedded SQL database |
+| Springdoc OpenAPI | Swagger UI + API documentation |
+| Testcontainers | Integration tests with real PostgreSQL |
+| JaCoCo | Code coverage enforcement (70% minimum) |
 
 ### Frontend
 | Technology | Purpose |
@@ -64,71 +88,53 @@ Full-stack League of Legends analytics dashboard with AI-powered match coaching.
 - **[DDragon CDN](https://ddragon.leagueoflegends.com)** — Champion, item, spell, and profile icons
 - **[Community Dragon](https://communitydragon.org)** — Ranked tier icons, Arena augment icons
 
-## Architecture
+## Quick Start (Docker Compose)
 
-```
-┌── Frontend (React + TypeScript) ──────────────────────────────┐
-│                                                                │
-│  Pages             Components          Utilities               │
-│  · HomePage         · SearchBar         · ddragon.ts ──► DDragon CDN
-│  · PlayerPage       · MatchList         · trends.ts            │
-│  · MatchDetailPage  · AiChatModal       · lp.ts                │
-│                     · ProfileHeader     · api.ts ────► Community Dragon
-│  Tabs               · ScoreboardTable                          │
-│  · Overview                                                    │
-│  · Performance (Recharts)                                      │
-│  · Champions                                                   │
-│  · MatchHistory                                                │
-└────────────────────────────┬───────────────────────────────────┘
-                             │ REST (JSON + SSE)
-┌── Backend (Spring Boot) ───┼───────────────────────────────────┐
-│                            │                                   │
-│  Controllers ──► Services                                      │
-│  · Summoner       · RiotApiService ──────────► Riot Games API  │
-│  · Match            (in-memory TTL cache,                      │
-│  · Ranked            thread pool for parallel fetch)           │
-│  · Stats          · RankedService                              │
-│  · Trends         · StatsService                               │
-│  · Favorite       · LpTrackingService                          │
-│  · AiAnalyze      · AiAnalyzeService ───────► OpenAI API      │
-│  · Subscription   · SubscriptionService                        │
-│  · Health         · MatchHistoryService                        │
-│                   · RateLimitService                            │
-│                   · FavoritePlayerService                       │
-│  GlobalExceptionHandler                                        │
-│                   Repositories (JPA)                            │
-│                   · match_records                               │
-│                   · lp_snapshots ────────────► H2 Database      │
-│                   · favorite_players           (file-based)     │
-│                   · app_users                                   │
-│                                                                │
-└── Deployment ──────────────────────────────────────────────────┘
-  GitHub Actions: Push → Build & Test → GHCR → AWS EC2
-  Docker: Multi-stage (Node 20 → Maven/JDK 21 → JRE 21 Alpine)
-  Single container serves React SPA + Spring Boot API on :8080
+```bash
+# 1. Clone and configure
+git clone https://github.com/jianweicheng0822/lol-tracker.git
+cd lol-tracker
+cp .env.example .env   # Edit .env with your API keys
+
+# 2. Start PostgreSQL + app
+docker-compose up --build
+
+# 3. Open http://localhost:8080
 ```
 
-## Local Development Setup
+## Manual Setup
 
 ### Prerequisites
-
 - Java 21+
 - Node.js 18+
+- PostgreSQL 16+
 - [Riot API Key](https://developer.riotgames.com)
 - [OpenAI API Key](https://platform.openai.com/api-keys)
 
 ### Environment Variables
 
-Create a `backend/.env` file:
+Create a `backend/.env` file (or set env vars):
 
-```env
-RIOT_API_KEY=your-riot-api-key
-OPENAI_API_KEY=your-openai-api-key
-```
+| Variable | Required | Default | Description |
+|----------|----------|---------|-------------|
+| `RIOT_API_KEY` | Yes | — | Riot Games API key |
+| `OPENAI_API_KEY` | Yes | — | OpenAI API key for AI analysis |
+| `JWT_SECRET` | Yes | dev default | Secret for signing JWTs (min 32 chars) |
+| `DB_HOST` | No | `localhost` | PostgreSQL host |
+| `DB_PORT` | No | `5432` | PostgreSQL port |
+| `DB_NAME` | No | `lol_tracker` | PostgreSQL database name |
+| `DB_USER` | No | `postgres` | PostgreSQL username |
+| `DB_PASSWORD` | No | `postgres` | PostgreSQL password |
+| `CORS_ORIGIN` | No | `http://localhost:5173` | Allowed CORS origin |
 
 ### Running Locally
 
 ```bash
+# Start PostgreSQL (via Docker or local install)
+docker run -d --name lol-pg -p 5432:5432 \
+  -e POSTGRES_DB=lol_tracker -e POSTGRES_PASSWORD=postgres \
+  postgres:16-alpine
+
 # Backend — starts at http://localhost:8080
 cd backend
 ./mvnw spring-boot:run
@@ -139,29 +145,16 @@ npm install
 npm run dev
 ```
 
-## Production Deployment
+## API Documentation
 
-### Docker
+Interactive Swagger UI is available at `/swagger-ui.html` when the app is running.
 
-```bash
-docker build -t lol-tracker .
-
-docker run -p 8080:8080 \
-  -e RIOT_API_KEY=your-riot-api-key \
-  -e OPENAI_API_KEY=your-openai-api-key \
-  lol-tracker
-```
-
-### AWS EC2
-
-Automated via GitHub Actions (`.github/workflows/ci-cd.yml`):
-- **On PR to `master`** — runs lint, build, and tests
-- **On push to `master`** — builds Docker image, pushes to GHCR, deploys to EC2 via SSH
-
-## API Endpoints
+### Endpoints
 
 | Domain | Method | Endpoint | Description |
 |--------|--------|----------|-------------|
+| Auth | POST | `/api/auth/register` | Register new user, returns JWT |
+| | POST | `/api/auth/login` | Login, returns JWT |
 | Summoner | GET | `/api/summoner` | Resolve Riot ID to account |
 | Matches | GET | `/api/matches/recent` | Recent match IDs |
 | | GET | `/api/matches/summary` | Match summaries with KDA and rosters |
@@ -181,43 +174,90 @@ Automated via GitHub Actions (`.github/workflows/ci-cd.yml`):
 | Subscription | GET | `/api/tier` | Get current user's subscription tier |
 | | GET | `/api/upgrade` | Upgrade current user to PRO |
 
+## Testing
+
+```bash
+cd backend
+
+# Unit tests (H2 in-memory, no Docker needed)
+./mvnw test
+
+# Integration tests use Testcontainers — Docker must be running
+# Testcontainers auto-starts a PostgreSQL container for integration tests
+```
+
+Unit tests use H2 with `ddl-auto=create-drop` and Flyway disabled. Integration tests use Testcontainers with a real PostgreSQL instance and Flyway migrations.
+
+## Database
+
+PostgreSQL with Flyway-managed migrations:
+
+| Migration | Description |
+|-----------|-------------|
+| `V1__init_schema.sql` | Initial schema: `app_users`, `favorite_players`, `match_records`, `lp_snapshots` |
+| `V2__add_auth_fields.sql` | Adds `username` and `password` columns to `app_users` |
+
+Schema is validated at startup (`ddl-auto=validate`) — Flyway is the single source of truth for DDL.
+
+## Production Deployment
+
+### Docker
+
+```bash
+docker build -t lol-tracker .
+
+docker run -p 8080:8080 \
+  -e RIOT_API_KEY=your-key \
+  -e OPENAI_API_KEY=your-key \
+  -e JWT_SECRET=your-secret \
+  -e DB_HOST=your-db-host \
+  -e DB_NAME=lol_tracker \
+  -e DB_USER=postgres \
+  -e DB_PASSWORD=your-password \
+  lol-tracker
+```
+
+### AWS EC2
+
+Automated via GitHub Actions (`.github/workflows/ci-cd.yml`):
+- **On PR to `master`** — runs lint, build, and tests
+- **On push to `master`** — builds Docker image, pushes to GHCR, deploys to EC2 via SSH
+
+Production requires a PostgreSQL instance (Docker container on EC2 or RDS).
+
 ## Project Structure
 
 ```
 lol-tracker/
-├── Dockerfile
+├── docker-compose.yml          # Local dev: PostgreSQL + app
+├── .env.example                # Env var template
+├── Dockerfile                  # Multi-stage build
 ├── backend/
 │   ├── src/main/java/com/jw/backend/
-│   │   ├── *Controller.java
+│   │   ├── *Controller.java    # REST endpoints + AuthController
+│   │   ├── security/           # JWT filter, SecurityConfig, JwtUtil
+│   │   ├── config/             # OpenApiConfig
 │   │   ├── service/
 │   │   ├── repository/
 │   │   ├── entity/
 │   │   ├── dto/
 │   │   ├── region/
 │   │   └── exception/
+│   ├── src/main/resources/
+│   │   ├── application.properties
+│   │   └── db/migration/       # Flyway SQL migrations
 │   └── src/test/
+│       ├── java/.../integration/  # Testcontainers integration tests
+│       └── resources/             # H2 test config
 └── frontend/
     └── src/
-        ├── api.ts
+        ├── api.ts              # JWT token management + API client
         ├── types.ts
         ├── hooks/
         ├── utils/
         ├── components/
         └── pages/
 ```
-
-## Testing
-
-```bash
-cd backend
-./mvnw test
-```
-
-**45 unit tests** covering controllers, exception handling, and region mapping.
-
-## Database
-
-H2 embedded file-based database with four tables: `favorite_players`, `match_records`, `lp_snapshots`, and `app_users`. Console can be enabled for debugging with `-Dspring.h2.console.enabled=true`.
 
 ## License
 

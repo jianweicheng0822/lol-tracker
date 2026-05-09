@@ -10,8 +10,13 @@ public class AppUser {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true)
     private String sessionId;
+
+    @Column(unique = true)
+    private String username;
+
+    private String password;
 
     @Column(nullable = false)
     private Integer tier = 0; // 0 = FREE, 1 = PRO
@@ -21,6 +26,12 @@ public class AppUser {
 
     public AppUser(String sessionId) {
         this.sessionId = sessionId;
+        this.tier = 0;
+    }
+
+    public AppUser(String username, String password, boolean isAuth) {
+        this.username = username;
+        this.password = password;
         this.tier = 0;
     }
 
@@ -38,6 +49,22 @@ public class AppUser {
 
     public void setSessionId(String sessionId) {
         this.sessionId = sessionId;
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public String getPassword() {
+        return password;
+    }
+
+    public void setPassword(String password) {
+        this.password = password;
     }
 
     public Integer getTier() {

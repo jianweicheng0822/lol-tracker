@@ -1,9 +1,11 @@
 package com.jw.backend;
 
 import com.jw.backend.entity.FavoritePlayer;
+import com.jw.backend.security.JwtUtil;
 import com.jw.backend.service.FavoritePlayerService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
@@ -20,10 +22,14 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Tests all CRUD operations for favorite players.
  */
 @WebMvcTest(FavoriteController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class FavoriteControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
+
+    @MockitoBean
+    private JwtUtil jwtUtil;
 
     // Mock the service - we don't want to use a real database in tests
     @MockitoBean

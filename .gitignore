@@ -48,4 +48,4 @@ frontend/.cache/
 # =====================================================
 build/
 dist/
-out/
+out/node_modules/

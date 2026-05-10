@@ -1,9 +1,9 @@
 /**
- * Match history list — renders match cards with champion, KDA, items, runes, and team rosters.
- *
- * Each card has a chevron toggle that expands an inline scoreboard (fetched on demand).
- * Arena matches use placement-based win/loss (1st–4th = victory, 5th–8th = defeat).
- * Supports "Load More" pagination via onLoadMore callback from the parent page.
+ * @file MatchList.tsx
+ * @description Render the match history list with expandable match cards showing champion,
+ *   KDA, items, runes, team rosters, and inline scoreboards. Supports Arena mode with
+ *   placement-based win/loss and "Load More" pagination via parent callback.
+ * @module frontend.components
  */
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
@@ -37,12 +37,16 @@ type MatchListProps = {
   tier?: number;
 };
 
-// --- Augment icons for Arena mode (fetched from Community Dragon CDN) ---
 type AugmentEntry = { id: number; augmentSmallIconPath: string };
 let augmentCache: Record<number, string> | null = null;
 let augmentFetchPromise: Promise<Record<number, string>> | null = null;
 
-/** Fetches Arena augment icon URLs from Community Dragon. Cached globally after first load. */
+/**
+ * Fetch Arena augment icon URLs from Community Dragon. Cache globally after first load
+ * to avoid repeated network requests across component re-renders.
+ *
+ * @returns A promise resolving to a map of augment ID to icon URL.
+ */
 function fetchAugmentIcons(): Promise<Record<number, string>> {
   if (augmentCache) return Promise.resolve(augmentCache);
   if (augmentFetchPromise) return augmentFetchPromise;
@@ -73,7 +77,12 @@ function fetchAugmentIcons(): Promise<Record<number, string>> {
   return augmentFetchPromise;
 }
 
-/** React hook that loads augment icons only when Arena matches are present. */
+/**
+ * Load augment icons only when Arena matches are present in the match list.
+ *
+ * @param needed - Whether any Arena matches exist requiring augment icons.
+ * @returns A map of augment ID to icon URL.
+ */
 function useAugmentIcons(needed: boolean) {
   const [icons, setIcons] = useState<Record<number, string>>(
     augmentCache ?? {}
@@ -86,8 +95,14 @@ function useAugmentIcons(needed: boolean) {
 }
 
 /**
- * Returns a performance badge (MVP, Strong, Balanced, Struggled) based on
- * KDA ratio and kill participation. Returns null if no badge applies.
+ * Compute a performance badge based on KDA ratio and kill participation.
+ *
+ * @param kills - Player kills.
+ * @param deaths - Player deaths.
+ * @param assists - Player assists.
+ * @param killParticipation - Kill participation percentage (0-100).
+ * @param win - Whether the match was won.
+ * @returns A badge object with label and color, or null if no badge applies.
  */
 function getPerformanceTag(
   kills: number,
@@ -110,7 +125,13 @@ function getPerformanceTag(
   return null;
 }
 
-/** Single player row in the match card sidebar — shows champion icon + name. Clickable if tagline is available. */
+/**
+ * Render a single player row in the match card sidebar showing champion icon and name.
+ * Navigate to the player's profile on click when tagline data is available.
+ *
+ * @param props - Player data, image base URL, highlight flag, and region.
+ * @returns The player row element.
+ */
 function PlayerRow({
   player,
   imgBase,
@@ -141,7 +162,6 @@ function PlayerRow({
         alignItems: "center",
         gap: 5,
         fontSize: 11,
-        // Brighter player name colors for better readability against dark backgrounds
         color: isMe ? "#e2e8f0" : hovered ? "#cbd5e1" : "#94a3b8",
         fontWeight: isMe ? 600 : 400,
         background: isMe
@@ -184,7 +204,12 @@ function PlayerRow({
   );
 }
 
-/** Vertical list of PlayerRows for one team (allies or enemies) in the match card sidebar. */
+/**
+ * Render a vertical list of PlayerRows for one team (allies or enemies) in the match card sidebar.
+ *
+ * @param props - Array of players, image base URL, optional highlight PUUID, and region.
+ * @returns The team column element.
+ */
 function TeamColumn({
   players,
   imgBase,
@@ -211,7 +236,12 @@ function TeamColumn({
   );
 }
 
-/** Single item slot — shows icon with scale-up hover effect, or empty dark square if itemId is 0. */
+/**
+ * Render a single item slot icon with scale-up hover effect, or an empty dark square if empty.
+ *
+ * @param props - The item ID and DDragon image base URL.
+ * @returns The item icon element.
+ */
 function ItemIcon({ itemId, imgBase }: { itemId: number; imgBase: string }) {
   const [hovered, setHovered] = useState(false);
   return (
@@ -240,7 +270,13 @@ function ItemIcon({ itemId, imgBase }: { itemId: number; imgBase: string }) {
   );
 }
 
-/** Match card container — applies win/loss background gradient, left border accent, and hover elevation. */
+/**
+ * Render a match card container with win/loss background gradient, left border accent,
+ * and hover elevation effect.
+ *
+ * @param props - Children content, background gradient, and accent color.
+ * @returns The styled match card wrapper element.
+ */
 function MatchCard({
   children,
   winBg,
@@ -275,7 +311,12 @@ function MatchCard({
   );
 }
 
-/** AI analysis button — sparkle icon styled to match ChevronButton. */
+/**
+ * Render an AI analysis trigger button with sparkle icon styling.
+ *
+ * @param props - Click handler for opening the AI chat modal.
+ * @returns The AI button element.
+ */
 function AiButton({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
   const [hovered, setHovered] = useState(false);
   return (
@@ -303,7 +344,12 @@ function AiButton({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
   );
 }
 
-/** Toggle button (▼/▲) on the right side of each match card to expand/collapse the inline scoreboard. */
+/**
+ * Render a toggle chevron button to expand/collapse the inline scoreboard.
+ *
+ * @param props - Current expanded state and click handler.
+ * @returns The chevron button element.
+ */
 function ChevronButton({
   expanded,
   onClick,
@@ -338,9 +384,11 @@ function ChevronButton({
 }
 
 /**
- * Inline scoreboard shown when a match card is expanded. Fetches full match detail
- * on mount, then renders ArenaScoreboard (for Arena) or ScoreboardTeamTable (for standard modes).
- * The current player's team is shown first in standard modes.
+ * Render an inline scoreboard fetched on demand when a match card is expanded.
+ * Display ArenaScoreboard for Arena matches or ScoreboardTeamTable for standard modes.
+ *
+ * @param props - Match ID, region, optional highlight PUUID, and DDragon image base URL.
+ * @returns The inline scoreboard element with loading/error states.
  */
 function InlineScoreboard({
   matchId,
@@ -402,7 +450,6 @@ function InlineScoreboard({
     );
   }
 
-  // Sort teams so the current player's team appears first
   const myTeamId = match.participants.find((p) => p.puuid === puuid)?.teamId;
   const sortedTeams = [...match.teams].sort((a, b) => {
     if (a.teamId === myTeamId) return -1;
@@ -430,6 +477,13 @@ function InlineScoreboard({
   );
 }
 
+/**
+ * Render the full match history list with expandable cards, team rosters, inline scoreboards,
+ * AI analysis button, and load-more pagination.
+ *
+ * @param props - Match data, player context, pagination callbacks, and subscription tier.
+ * @returns The match list element, or null if no matches are available.
+ */
 export default function MatchList({ matches, region, puuid, gameName, onLoadMore, isLoadingMore, hasMore, tier = 0 }: MatchListProps) {
   const ddVersion = useDdragonVersion();
   const imgBase = ddragonBase(ddVersion);
@@ -467,15 +521,12 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
             m.kills, m.deaths, m.assists, killParticipation, m.win,
           );
 
-          // Arena: placement 1-4 = victory, 5-8 = defeat
           const isArena = m.queueId === 1700;
           const isWin = isArena ? (m.placement >= 1 && m.placement <= 4) : m.win;
 
-          // Stronger accent colors
           const winColor = isWin ? "#2d6ab5" : "#a83232";
           const winTextColor = isWin ? "#4d8ad0" : "#cc5555";
           const winText = isWin ? "Victory" : "Defeat";
-          // More visible backgrounds
           const winBg = isWin
             ? "linear-gradient(135deg, rgba(30,60,110,0.18) 0%, rgba(20,40,80,0.08) 100%)"
             : "linear-gradient(135deg, rgba(110,30,30,0.18) 0%, rgba(80,20,20,0.08) 100%)";
@@ -525,7 +576,7 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                     </div>
                   </div>
 
-                  {/* Arena: 2×2 augment icon grid; standard: summoner spells + runes */}
+                  {/* Arena: 2x2 augment icon grid; standard: summoner spells + runes */}
                   {m.queueId === 1700 ? (
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 22px)", gap: 2 }}>
                       {m.augments
@@ -538,7 +589,6 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                            height: 22,
                            borderRadius: 4,
                            overflow: "hidden",
-                           // Warm slate background + subtle glow for visibility on dark cards
                            background: "rgba(30,41,59,0.6)",
                            border: "1px solid rgba(255,255,255,0.15)",
                            boxShadow: "0 0 6px rgba(255,255,255,0.15)",
@@ -548,21 +598,18 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                             src={augmentIcons[augId] || ""}
                             width={22}
                             height={22}
-                            style={{ filter: "saturate(1.4)" }} // Boost color vibrancy
+                            style={{ filter: "saturate(1.4)" }}
                           />
                         </div>
                         ))}
                     </div>
                   ) : (
-                    // Summoner spells (left column) + keystone/secondary rune (right column)
                     <div style={{ display: "flex", gap: 2 }}>
-                      {/* Summoner spells D and F */}
                       <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                         <img
                           src={spellIconUrl(m.summoner1Id, imgBase)}
                           width={20}
                           height={20}
-                          // Subtle border + dark fill improves contrast against win/loss gradients
                           style={{ borderRadius: 3, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)" }}
                           onError={hideOnError}
                         />
@@ -574,7 +621,6 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                           onError={hideOnError}
                         />
                       </div>
-                      {/* Primary keystone rune + secondary rune style */}
                       <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                         {m.primaryRuneId > 0 && (
                           <img
@@ -609,7 +655,6 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                     minWidth: 0,
                   }}
                 >
-                  {/* Line 1: K / D / A — largest, most dominant */}
                   <div style={{ fontSize: 21, fontWeight: 800, letterSpacing: -0.5, lineHeight: 1 }}>
                     <span style={{ color: "#6ba3d6" }}>{m.kills}</span>
                     <span style={{ color: "#2e3844", fontWeight: 400 }}> / </span>
@@ -618,7 +663,6 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                     <span style={{ color: "#4aab9e" }}>{m.assists}</span>
                   </div>
 
-                  {/* Line 2: KDA ratio + performance badge */}
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
                     <span
                       style={{
@@ -648,7 +692,6 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                     )}
                   </div>
 
-                  {/* Line 3: Win/Loss label — more visible */}
                   <span
                     style={{
                       fontSize: 10,
@@ -662,7 +705,6 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                     {winText}
                   </span>
 
-                  {/* Secondary: metadata row — clearly lower hierarchy */}
                   <div
                     style={{
                       display: "flex",
@@ -684,7 +726,6 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                     <span>CS {cs}</span>
                   </div>
 
-                  {/* Items */}
                   <div style={{ display: "flex", gap: 2, marginTop: 1 }}>
                     {m.items.map((itemId, i) => (
                       <ItemIcon key={i} itemId={itemId} imgBase={imgBase} />

@@ -1,9 +1,17 @@
-// --- Region ---
+/**
+ * @file types.ts
+ * @description Shared TypeScript type definitions for Riot API data models, match history,
+ *   player stats, ranked entries, and UI state used across the frontend application.
+ * @module frontend.types
+ */
+
+/** Supported Riot API region codes. */
 export type Region = "NA" | "EUW" | "KR" | "JP" | "BR" | "OCE";
 
+/** Ordered list of all supported regions for the region selector dropdown. */
 export const REGIONS: Region[] = ["NA", "EUW", "KR", "JP", "BR", "OCE"];
 
-// --- Account ---
+/** Summoner account resolved from a Riot ID lookup. */
 export type Account = {
   puuid: string;
   gameName: string;
@@ -11,14 +19,15 @@ export type Account = {
   profileIconId: number;
 };
 
-// --- Match history ---
+/** Participant entry within a match summary — used for team roster display. */
 export type MatchParticipant = {
   summonerName: string;
-  riotIdTagline?: string; // Tag portion of Riot ID (e.g., "NA1") — used for clickable player links
+  riotIdTagline?: string;
   championName: string;
   puuid: string;
 };
 
+/** Summarized match data for the match history list cards. */
 export type MatchSummary = {
   matchId: string;
   championName: string;
@@ -40,13 +49,13 @@ export type MatchSummary = {
   enemies: MatchParticipant[];
   primaryRuneId: number;
   secondaryRuneStyleId: number;
-  augments: number[]; // Arena augment IDs (4 slots)
-  placement: number; // Arena placement (1–8); 0 for non-Arena modes
+  augments: number[];
+  placement: number;
   totalDamageDealtToChampions: number;
   goldEarned: number;
 };
 
-// --- Player stats ---
+/** Aggregated player statistics computed over recent matches. */
 export type PlayerStats = {
   totalGames: number;
   wins: number;
@@ -58,7 +67,7 @@ export type PlayerStats = {
   averageKda: number;
 };
 
-// --- Ranked ---
+/** A single ranked queue entry with tier, division, LP, and win/loss record. */
 export type RankedEntry = {
   queueType: string;
   tier: string;
@@ -68,7 +77,7 @@ export type RankedEntry = {
   losses: number;
 };
 
-// --- Match detail (full scoreboard) ---
+/** Full participant detail within a match scoreboard. */
 export type MatchDetailParticipant = {
   summonerName: string;
   riotIdTagline?: string;
@@ -97,10 +106,11 @@ export type MatchDetailParticipant = {
   quadraKills: number;
   pentaKills: number;
   win: boolean;
-  placement: number; // Arena placement (1–8); 0 for non-Arena modes
-  playerSubteamId: number; // Arena duo-team ID — groups two players together
+  placement: number;
+  playerSubteamId: number;
 };
 
+/** Team-level data including objectives and ban list for the match detail view. */
 export type MatchTeam = {
   teamId: number;
   win: boolean;
@@ -112,6 +122,7 @@ export type MatchTeam = {
   };
 };
 
+/** Complete match detail containing all participants, teams, and game metadata. */
 export type MatchDetail = {
   matchId: string;
   queueId: number;
@@ -123,11 +134,8 @@ export type MatchDetail = {
   participants: MatchDetailParticipant[];
 };
 
-// --- Dashboard tabs ---
 /** Valid tab IDs for the player dashboard — used by useTabNavigation hook and TabBar component. */
 export type TabId = "overview" | "performance" | "champions" | "match-history";
-
-// --- Trend / stats types (from /api/trends endpoints) ---
 
 /** Per-champion aggregated stats — returned by GET /api/trends/champions. */
 export type ChampionStats = {
@@ -167,7 +175,7 @@ export type LpSnapshot = {
   capturedAt: number;
 };
 
-// --- Favorites ---
+/** A saved favorite player entry persisted in the user's profile. */
 export type FavoritePlayer = {
   id: number;
   puuid: string;

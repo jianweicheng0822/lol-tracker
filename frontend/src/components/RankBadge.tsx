@@ -1,3 +1,9 @@
+/**
+ * @file RankBadge.tsx
+ * @description Render ranked queue badges (Solo/Duo, Flex) showing tier icon, division,
+ *   LP, and win/loss record. Display an "Unranked" fallback when no entries exist.
+ * @module frontend.components
+ */
 import type { RankedEntry } from "../types";
 import { hideOnError } from "../utils/ddragon";
 
@@ -9,9 +15,14 @@ const QUEUE_LABELS: Record<string, string> = {
 const TIER_ICON_BASE =
   "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-mini-crests";
 
-/* Emerald tier only has an SVG on Community Dragon, all others have PNGs. */
 const SVG_ONLY_TIERS = new Set(["EMERALD"]);
 
+/**
+ * Build the Community Dragon URL for a tier's ranked crest icon.
+ *
+ * @param tier - The uppercase tier name (e.g., "GOLD", "EMERALD").
+ * @returns The full URL to the tier icon asset.
+ */
 function tierIconUrl(tier: string): string {
   const ext = SVG_ONLY_TIERS.has(tier.toUpperCase()) ? "svg" : "png";
   return `${TIER_ICON_BASE}/${tier.toLowerCase()}.${ext}`;
@@ -19,10 +30,22 @@ function tierIconUrl(tier: string): string {
 
 const APEX_TIERS = new Set(["MASTER", "GRANDMASTER", "CHALLENGER"]);
 
+/**
+ * Format a tier string to title case for display.
+ *
+ * @param tier - The uppercase tier name.
+ * @returns Title-cased tier name (e.g., "Gold", "Platinum").
+ */
 function formatTier(tier: string): string {
   return tier.charAt(0) + tier.slice(1).toLowerCase();
 }
 
+/**
+ * Render a single ranked queue badge with tier icon, rank, LP, and win/loss record.
+ *
+ * @param props - The ranked entry data for one queue.
+ * @returns The queue badge element.
+ */
 function QueueBadge({ entry }: { entry: RankedEntry }) {
   const label = QUEUE_LABELS[entry.queueType] || entry.queueType;
   const totalGames = entry.wins + entry.losses;
@@ -52,6 +75,13 @@ function QueueBadge({ entry }: { entry: RankedEntry }) {
   );
 }
 
+/**
+ * Render ranked badges for all relevant queue types, sorted with Solo/Duo first.
+ * Display an "Unranked" placeholder when no ranked entries are available.
+ *
+ * @param props - The array of ranked entries from the Riot API.
+ * @returns The ranked badge container element.
+ */
 export default function RankBadge({ entries }: { entries: RankedEntry[] }) {
   const relevant = entries.filter((e) => QUEUE_LABELS[e.queueType]);
 
@@ -74,7 +104,6 @@ export default function RankBadge({ entries }: { entries: RankedEntry[] }) {
     );
   }
 
-  // Show Solo/Duo first
   relevant.sort((a, b) => {
     if (a.queueType === "RANKED_SOLO_5x5") return -1;
     if (b.queueType === "RANKED_SOLO_5x5") return 1;

@@ -1,3 +1,8 @@
+/**
+ * @file AiAnalyzeControllerTest.java
+ * @description Unit tests for the AI analysis controller endpoints.
+ * @module backend.test
+ */
 package com.jw.backend;
 
 import com.jw.backend.dto.AiChatResponse;
@@ -18,6 +23,10 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * Validate the {@link AiAnalyzeController} request handling, subscription gating,
+ * and input validation for both synchronous and streaming analysis endpoints.
+ */
 @WebMvcTest(AiAnalyzeController.class)
 @AutoConfigureMockMvc(addFilters = false)
 class AiAnalyzeControllerTest {
@@ -47,6 +56,7 @@ class AiAnalyzeControllerTest {
         }
         """;
 
+    /** Verify that a PRO-tier user receives a successful analysis response. */
     @Test
     void analyze_whenProUser_returnsOk() throws Exception {
         when(subscriptionService.hasAiAccess(any())).thenReturn(true);
@@ -61,6 +71,7 @@ class AiAnalyzeControllerTest {
             .andExpect(jsonPath("$.reply").value("Great game!"));
     }
 
+    /** Verify that a free-tier user is denied access with HTTP 403. */
     @Test
     void analyze_whenFreeUser_returnsForbidden() throws Exception {
         when(subscriptionService.hasAiAccess(any())).thenReturn(false);
@@ -71,6 +82,7 @@ class AiAnalyzeControllerTest {
             .andExpect(status().isForbidden());
     }
 
+    /** Verify that a request with null matchData returns HTTP 400. */
     @Test
     void analyze_withMissingMatchData_returnsBadRequest() throws Exception {
         when(subscriptionService.hasAiAccess(any())).thenReturn(true);
@@ -85,6 +97,7 @@ class AiAnalyzeControllerTest {
             .andExpect(status().isBadRequest());
     }
 
+    /** Verify that a request with null messages returns HTTP 400. */
     @Test
     void analyze_withMissingMessages_returnsBadRequest() throws Exception {
         when(subscriptionService.hasAiAccess(any())).thenReturn(true);
@@ -108,6 +121,7 @@ class AiAnalyzeControllerTest {
             .andExpect(status().isBadRequest());
     }
 
+    /** Verify that the streaming endpoint returns an error event for free-tier users. */
     @Test
     void analyzeStream_whenFreeUser_returnsError() throws Exception {
         when(subscriptionService.hasAiAccess(any())).thenReturn(false);
@@ -120,6 +134,7 @@ class AiAnalyzeControllerTest {
             .andExpect(content().string(org.hamcrest.Matchers.containsString("PRO subscription")));
     }
 
+    /** Verify that the streaming endpoint handles missing match data gracefully. */
     @Test
     void analyzeStream_withMissingData_returnsOk() throws Exception {
         when(subscriptionService.hasAiAccess(any())).thenReturn(true);
@@ -135,6 +150,7 @@ class AiAnalyzeControllerTest {
             .andExpect(status().isOk());
     }
 
+    /** Verify that a PRO-tier user receives a streamed response successfully. */
     @Test
     void analyzeStream_whenProUser_returnsStream() throws Exception {
         when(subscriptionService.hasAiAccess(any())).thenReturn(true);

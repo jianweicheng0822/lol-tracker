@@ -77,13 +77,6 @@
 			<scope>runtime</scope>
 		</dependency>
 
-		<!-- Database: H2 (unit tests only) -->
-		<dependency>
-			<groupId>com.h2database</groupId>
-			<artifactId>h2</artifactId>
-			<scope>test</scope>
-		</dependency>
-
 		<!-- Flyway database migrations -->
 		<dependency>
 			<groupId>org.flywaydb</groupId>

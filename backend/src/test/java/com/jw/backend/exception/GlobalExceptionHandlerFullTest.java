@@ -1,3 +1,8 @@
+/**
+ * @file GlobalExceptionHandlerFullTest.java
+ * @description Comprehensive unit tests for all global exception handler methods.
+ * @module backend.test
+ */
 package com.jw.backend.exception;
 
 import com.jw.backend.dto.ApiErrorResponse;
@@ -14,6 +19,10 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Validate every handler method in {@link GlobalExceptionHandler} including client errors,
+ * server errors, missing parameters, type mismatches, rate limits, and unknown exceptions.
+ */
 class GlobalExceptionHandlerFullTest {
 
     private GlobalExceptionHandler handler;
@@ -26,6 +35,7 @@ class GlobalExceptionHandlerFullTest {
         fakeRequest.setRequestURI("/api/test");
     }
 
+    /** Verify that a 403 Forbidden client error returns an API key error message. */
     @Test
     void handleClientError_forbidden_returnsApiKeyMessage() {
         HttpClientErrorException ex = HttpClientErrorException.create(
@@ -37,6 +47,7 @@ class GlobalExceptionHandlerFullTest {
         assertTrue(response.getBody().message().contains("API key"));
     }
 
+    /** Verify that a non-forbidden client error returns a generic Riot API failure message. */
     @Test
     void handleClientError_otherStatus_returnsGenericMessage() {
         HttpClientErrorException ex = HttpClientErrorException.create(
@@ -48,6 +59,7 @@ class GlobalExceptionHandlerFullTest {
         assertTrue(response.getBody().message().contains("Riot API request failed"));
     }
 
+    /** Verify that a 500 server error returns a Riot API server error message. */
     @Test
     void handleServerError_returnsServerErrorMessage() {
         HttpServerErrorException ex = HttpServerErrorException.create(
@@ -59,6 +71,7 @@ class GlobalExceptionHandlerFullTest {
         assertTrue(response.getBody().message().contains("Riot API server error"));
     }
 
+    /** Verify that a 502 Bad Gateway is handled as a server error. */
     @Test
     void handleServerError_502_returnsServerErrorMessage() {
         HttpServerErrorException ex = HttpServerErrorException.create(
@@ -69,6 +82,7 @@ class GlobalExceptionHandlerFullTest {
         assertEquals(502, response.getStatusCode().value());
     }
 
+    /** Verify that a missing request parameter returns HTTP 400 with the parameter name. */
     @Test
     void handleMissingParam_returnsBadRequest() throws Exception {
         MissingServletRequestParameterException ex =
@@ -80,6 +94,7 @@ class GlobalExceptionHandlerFullTest {
         assertTrue(response.getBody().message().contains("puuid"));
     }
 
+    /** Verify that a type mismatch returns HTTP 400 with the parameter name. */
     @Test
     void handleTypeMismatch_returnsBadRequest() {
         MethodArgumentTypeMismatchException ex = new MethodArgumentTypeMismatchException(
@@ -91,6 +106,7 @@ class GlobalExceptionHandlerFullTest {
         assertTrue(response.getBody().message().contains("region"));
     }
 
+    /** Verify that a rate limit exception returns HTTP 429. */
     @Test
     void handleRateLimit_returns429() {
         RateLimitException ex = new RateLimitException("Rate limit exceeded");
@@ -101,6 +117,7 @@ class GlobalExceptionHandlerFullTest {
         assertEquals("Rate limit exceeded", response.getBody().message());
     }
 
+    /** Verify that an unknown exception returns HTTP 500 with the request path. */
     @Test
     void handleUnknown_returns500() {
         Exception ex = new RuntimeException("Something broke");
@@ -112,6 +129,7 @@ class GlobalExceptionHandlerFullTest {
         assertEquals("/api/test", response.getBody().path());
     }
 
+    /** Verify that the ApiErrorResponse fields are populated correctly. */
     @Test
     void apiErrorResponse_fieldsAreCorrect() {
         HttpClientErrorException ex = HttpClientErrorException.create(

@@ -1,12 +1,9 @@
 /**
- * Shared scoreboard table used in both inline expansion (MatchList chevron)
- * and the standalone match detail page.
- *
- * Exports two components:
- *   - ArenaScoreboard  — groups 16 players into 8 duo-teams sorted by placement (1st–8th)
- *   - ScoreboardTeamTable — standard 5v5 team table with Victory/Defeat headers
- *
- * Both support clickable player names that navigate to /player/:region/:name/:tag.
+ * @file ScoreboardTable.tsx
+ * @description Shared scoreboard table components for match detail views. Supports both
+ *   standard 5v5 modes (ScoreboardTeamTable) and Arena mode (ArenaScoreboard) with
+ *   placement-based duo-team grouping. Player names are clickable for navigation.
+ * @module frontend.components
  */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -20,13 +17,23 @@ import {
   hideOnError,
 } from "../utils/ddragon";
 
-/** Abbreviate large numbers: 12345 → "12.3k" */
+/**
+ * Abbreviate large numbers for compact display (e.g., 12345 becomes "12.3k").
+ *
+ * @param n - The number to format.
+ * @returns The abbreviated string representation.
+ */
 function formatNumber(n: number) {
   if (n >= 1000) return (n / 1000).toFixed(1) + "k";
   return String(n);
 }
 
-/** Renders the highest multi-kill badge (Penta > Quadra > Triple > Double). */
+/**
+ * Render the highest multi-kill badge earned during the match (Penta > Quadra > Triple > Double).
+ *
+ * @param props - The participant data containing multi-kill counts.
+ * @returns The badge element, or null if no multi-kill occurred.
+ */
 function MultiKillBadges({ p }: { p: MatchDetailParticipant }) {
   const badges: { label: string; color: string }[] = [];
   if (p.pentaKills > 0) badges.push({ label: "PENTA", color: "#f59e0b" });
@@ -41,20 +48,23 @@ function MultiKillBadges({ p }: { p: MatchDetailParticipant }) {
   );
 }
 
-// --- Placement accent colors for Arena scoreboard headers ---
-// 1st = gold, 2nd–4th = blue (victory zone), 5th–8th = muted gray (defeat zone)
 const PLACEMENT_COLORS: Record<number, string> = {
-  1: "#c9952c", // gold — 1st place accent
-  2: "#2563eb", // blue
-  3: "#2563eb", // blue
-  4: "#2563eb", // blue
-  5: "#a83232", // red
-  6: "#a83232", // red
-  7: "#a83232", // red
-  8: "#a83232", // red
+  1: "#c9952c",
+  2: "#2563eb",
+  3: "#2563eb",
+  4: "#2563eb",
+  5: "#a83232",
+  6: "#a83232",
+  7: "#a83232",
+  8: "#a83232",
 };
 
-/** Convert placement number to ordinal string: 1 → "1st", 2 → "2nd", etc. */
+/**
+ * Convert a placement number to an ordinal string (e.g., 1 becomes "1st").
+ *
+ * @param n - The placement number (1-8).
+ * @returns The ordinal string representation.
+ */
 function placementLabel(n: number): string {
   if (n === 1) return "1st";
   if (n === 2) return "2nd";
@@ -63,9 +73,12 @@ function placementLabel(n: number): string {
 }
 
 /**
- * Arena scoreboard — groups all 16 participants into duo-teams by playerSubteamId,
- * sorted by placement (1st–8th). Each team gets a color-coded header and its
- * own column headers / player rows. The current player's team is highlighted.
+ * Render the Arena scoreboard grouping all 16 participants into duo-teams by playerSubteamId,
+ * sorted by placement (1st-8th). Each team gets a color-coded header and the current
+ * player's team is highlighted.
+ *
+ * @param props - Participants array, DDragon image base URL, optional highlight PUUID, and region.
+ * @returns The Arena scoreboard element.
  */
 export function ArenaScoreboard({
   participants,
@@ -78,7 +91,6 @@ export function ArenaScoreboard({
   highlightPuuid?: string;
   region?: string;
 }) {
-  // Group all 16 participants into duo-teams using their playerSubteamId
   const teamMap = new Map<number, MatchDetailParticipant[]>();
   for (const p of participants) {
     const key = p.playerSubteamId || 0;
@@ -86,18 +98,15 @@ export function ArenaScoreboard({
     teamMap.get(key)!.push(p);
   }
 
-  // Sort teams by placement (1st–8th) using the first member's value
   const sortedTeams = [...teamMap.entries()].sort((a, b) => {
     const pa = a[1][0]?.placement || 99;
     const pb = b[1][0]?.placement || 99;
     return pa - pb;
   });
 
-  // Global max damage across all participants — used to normalize damage bar widths
   const allParticipants = participants;
   const maxDamage = Math.max(...allParticipants.map((p) => p.totalDamageDealtToChampions), 1);
 
-  // Arena uses fewer columns than standard mode (no CS or wards)
   const gridCols = "200px 120px 80px 100px 70px 180px";
 
   return (
@@ -108,7 +117,6 @@ export function ArenaScoreboard({
         const hasHighlight = players.some((p) => p.puuid === highlightPuuid);
         const isFirst = placement === 1;
 
-        // 1st place gets a subtle warm gold background; others use their accent at low opacity
         const headerBg = isFirst
           ? "rgba(201,149,44,0.12)"
           : hasHighlight
@@ -165,7 +173,13 @@ export function ArenaScoreboard({
   );
 }
 
-/** Single player row inside an Arena team group — shows champion, KDA, damage, gold, items. */
+/**
+ * Render a single player row inside an Arena team group showing champion, KDA,
+ * damage, gold, and items.
+ *
+ * @param props - Participant data, styling context, and navigation metadata.
+ * @returns The Arena player row element.
+ */
 function ArenaPlayerRow({
   p,
   imgBase,
@@ -185,8 +199,8 @@ function ArenaPlayerRow({
 }) {
   const navigate = useNavigate();
   const kda = p.deaths === 0 ? "Perfect" : ((p.kills + p.assists) / p.deaths).toFixed(1);
-  const dmgPct = (p.totalDamageDealtToChampions / maxDamage) * 100; // Percentage of highest damage dealer
-  const canNavigate = region && p.summonerName && p.riotIdTagline; // Need tagline for profile URL
+  const dmgPct = (p.totalDamageDealtToChampions / maxDamage) * 100;
+  const canNavigate = region && p.summonerName && p.riotIdTagline;
 
   return (
     <div
@@ -196,7 +210,6 @@ function ArenaPlayerRow({
         gap: 4,
         padding: "6px 8px",
         alignItems: "center",
-        // Indigo highlight + left border accent for the current player's row
         background: isMe ? "rgba(99,102,241,0.1)" : undefined,
         borderRadius: 4,
         borderLeft: isMe ? "2px solid #6366f1" : "2px solid transparent",
@@ -206,11 +219,9 @@ function ArenaPlayerRow({
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
         <div style={{ position: "relative", flexShrink: 0 }}>
           <img src={championIconUrl(p.championName, imgBase)} width={32} height={32} style={{ borderRadius: "50%" }} onError={hideOnError} />
-          {/* Level badge pinned to bottom-right of champion icon */}
           <div style={{ position: "absolute", bottom: -2, right: -2, background: "#0f172a", fontSize: 9, padding: "0 3px", borderRadius: 4, fontWeight: 700 }}>{p.championLevel}</div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {/* Summoner spells D and F */}
           <div style={{ display: "flex", gap: 3 }}>
             <img src={spellIconUrl(p.summoner1Id, imgBase)} width={14} height={14} style={{ borderRadius: 2 }} onError={hideOnError} />
             <img src={spellIconUrl(p.summoner2Id, imgBase)} width={14} height={14} style={{ borderRadius: 2 }} onError={hideOnError} />
@@ -238,13 +249,13 @@ function ArenaPlayerRow({
         </div>
       </div>
 
-      {/* Damage dealt (top) + damage taken (bottom, muted) */}
+      {/* Damage dealt and taken */}
       <div style={{ textAlign: "center", fontSize: 11 }}>
         <div>{formatNumber(p.totalDamageDealtToChampions)}</div>
         <div style={{ color: "#64748b", fontSize: 10 }}>{formatNumber(p.totalDamageTaken)}</div>
       </div>
 
-      {/* Damage bar — width is relative to the highest damage dealer across all 8 teams */}
+      {/* Damage bar relative to highest damage dealer */}
       <div style={{ height: 8, background: "rgba(255,255,255,0.06)", borderRadius: 4, overflow: "hidden" }}>
         <div style={{ height: "100%", width: `${dmgPct}%`, background: plColor, borderRadius: 4, opacity: 0.7 }} />
       </div>
@@ -267,9 +278,12 @@ function ArenaPlayerRow({
 }
 
 /**
- * Standard team table for non-Arena modes (Summoner's Rift, ARAM, etc.).
- * Shows a Victory/Defeat header, then column headers and one row per player
- * with KDA, damage bar, gold, CS, items, and wards (hidden for ARAM).
+ * Render the standard team scoreboard table for non-Arena modes (Summoner's Rift, ARAM, etc.).
+ * Display a Victory/Defeat header, column headers, and one row per player with KDA,
+ * damage bar, gold, CS, items, and wards (hidden for ARAM).
+ *
+ * @param props - Team data, participants, DDragon base URL, highlight PUUID, queue ID, and region.
+ * @returns The team scoreboard table element.
  */
 export function ScoreboardTeamTable({
   team,
@@ -287,17 +301,14 @@ export function ScoreboardTeamTable({
   region?: string;
 }) {
   const navigate = useNavigate();
-  // ARAM (queueId 450) has no ward stats, so hide that column
   const isAram = queueId === 450;
   const showWards = !isAram;
 
-  const teamColor = team.win ? "#2563eb" : "#dc2626"; // Blue for victory, red for defeat
+  const teamColor = team.win ? "#2563eb" : "#dc2626";
   const teamLabel = team.win ? "Victory" : "Defeat";
 
-  // Normalize damage bars relative to the team's highest damage dealer
   const maxDamage = Math.max(...participants.map((p) => p.totalDamageDealtToChampions), 1);
 
-  // Grid adds an extra wards column for Summoner's Rift / other modes
   const gridCols = showWards
     ? "200px 90px 80px 100px 70px 70px 180px 70px"
     : "200px 90px 80px 100px 70px 70px 180px";
@@ -347,11 +358,9 @@ export function ScoreboardTeamTable({
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <div style={{ position: "relative", flexShrink: 0 }}>
                 <img src={championIconUrl(p.championName, imgBase)} width={32} height={32} style={{ borderRadius: "50%" }} onError={hideOnError} />
-                {/* Level badge pinned to bottom-right of champion icon */}
                 <div style={{ position: "absolute", bottom: -2, right: -2, background: "#0f172a", fontSize: 9, padding: "0 3px", borderRadius: 4, fontWeight: 700 }}>{p.championLevel}</div>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                {/* Summoner spells + keystone rune + secondary rune style in a single row */}
                 <div style={{ display: "flex", gap: 3 }}>
                   <img src={spellIconUrl(p.summoner1Id, imgBase)} width={14} height={14} style={{ borderRadius: 2 }} onError={hideOnError} />
                   <img src={spellIconUrl(p.summoner2Id, imgBase)} width={14} height={14} style={{ borderRadius: 2 }} onError={hideOnError} />
@@ -386,7 +395,7 @@ export function ScoreboardTeamTable({
               {formatNumber(p.totalDamageDealtToChampions)}
             </div>
 
-            {/* Damage bar — blue for winning team, red for losing team */}
+            {/* Damage bar */}
             <div style={{ height: 8, background: "rgba(255,255,255,0.06)", borderRadius: 4, overflow: "hidden" }}>
               <div style={{ height: "100%", width: `${dmgPct}%`, background: team.win ? "#3b82f6" : "#ef4444", borderRadius: 4 }} />
             </div>
@@ -410,7 +419,7 @@ export function ScoreboardTeamTable({
               ))}
             </div>
 
-            {/* Wards: placed / killed / control wards bought (hidden for ARAM) */}
+            {/* Wards: placed / killed / control wards bought */}
             {showWards && (
               <div style={{ textAlign: "center", fontSize: 11, color: "#94a3b8" }}>
                 {p.wardsPlaced}/{p.wardsKilled}/{p.visionWardsBoughtInGame}
@@ -424,9 +433,11 @@ export function ScoreboardTeamTable({
 }
 
 /**
- * Clickable player name — navigates to player's match history on click.
- * Only interactive when riotIdTagline is available (canNavigate).
- * Shows underline + blue highlight on hover as a navigation affordance.
+ * Render a clickable player name that navigates to the player's profile page.
+ * Only interactive when the Riot ID tagline is available for URL construction.
+ *
+ * @param props - Player name, highlight state, navigation capability flag, and click handler.
+ * @returns The player name span element.
  */
 function PlayerName({
   name,
@@ -453,14 +464,14 @@ function PlayerName({
       onMouseLeave={() => setHovered(false)}
       style={{
         fontSize: 12,
-        fontWeight: isMe ? 700 : 400, // Bold for the current player
+        fontWeight: isMe ? 700 : 400,
         maxWidth: 130,
         overflow: "hidden",
         textOverflow: "ellipsis",
         whiteSpace: "nowrap",
         cursor: canNavigate ? "pointer" : undefined,
         textDecoration: canNavigate && hovered ? "underline" : undefined,
-        color: canNavigate && hovered ? "#93c5fd" : undefined, // Light blue on hover
+        color: canNavigate && hovered ? "#93c5fd" : undefined,
         transition: "color 0.15s",
       }}
     >

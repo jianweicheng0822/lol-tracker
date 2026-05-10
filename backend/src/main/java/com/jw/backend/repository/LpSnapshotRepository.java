@@ -1,3 +1,8 @@
+/**
+ * @file LpSnapshotRepository.java
+ * @description Spring Data JPA repository for LP snapshot persistence and retrieval.
+ * @module backend.repository
+ */
 package com.jw.backend.repository;
 
 import com.jw.backend.entity.LpSnapshot;
@@ -8,25 +13,28 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Repository for LpSnapshot entities.
- *
- * Provides queries for LP history charts and change detection.
- * Spring Data JPA generates SQL from method names automatically.
+ * Provide time-ordered LP snapshot queries for trend charts and delta detection.
  */
 @Repository
 public interface LpSnapshotRepository extends JpaRepository<LpSnapshot, Long> {
 
     /**
-     * Get full LP history for a queue, oldest first (chronological order for charts).
-     * Generated SQL: SELECT * FROM lp_snapshots WHERE puuid = ? AND queue_type = ? ORDER BY captured_at ASC
+     * Retrieve all snapshots for a player/queue in chronological order.
+     *
+     * <p>Oldest-first ordering supports left-to-right chart rendering.</p>
+     *
+     * @param puuid     the player's unique identifier
+     * @param queueType the ranked queue type
+     * @return chronologically ordered list of LP snapshots
      */
     List<LpSnapshot> findByPuuidAndQueueTypeOrderByCapturedAtAsc(String puuid, String queueType);
 
     /**
-     * Get the most recent snapshot for change detection.
-     * "findTop" limits to 1 result; ordered DESC so it returns the latest.
-     * Used to check if LP has changed before saving a new snapshot.
-     * Generated SQL: SELECT * FROM lp_snapshots WHERE puuid = ? AND queue_type = ? ORDER BY captured_at DESC LIMIT 1
+     * Retrieve the most recent snapshot for delta detection before persisting a new one.
+     *
+     * @param puuid     the player's unique identifier
+     * @param queueType the ranked queue type
+     * @return the most recent snapshot, if any exist
      */
     Optional<LpSnapshot> findTopByPuuidAndQueueTypeOrderByCapturedAtDesc(String puuid, String queueType);
 }

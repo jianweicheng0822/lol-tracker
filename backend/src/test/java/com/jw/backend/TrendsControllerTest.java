@@ -1,3 +1,8 @@
+/**
+ * @file TrendsControllerTest.java
+ * @description Unit tests for the trends controller endpoints (champions, matches, LP).
+ * @module backend.test
+ */
 package com.jw.backend;
 
 import com.jw.backend.dto.ChampionStatsDto;
@@ -19,6 +24,10 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * Validate the {@link TrendsController} for retrieving champion stats, match trend
+ * data points, and LP history snapshots, including default parameter handling.
+ */
 @WebMvcTest(TrendsController.class)
 @AutoConfigureMockMvc(addFilters = false)
 class TrendsControllerTest {
@@ -35,6 +44,7 @@ class TrendsControllerTest {
     @MockitoBean
     private LpTrackingService lpTrackingService;
 
+    /** Verify that champion stats are returned with correct aggregated values. */
     @Test
     void getChampionStats_returnsOk() throws Exception {
         List<ChampionStatsDto> stats = List.of(
@@ -49,12 +59,14 @@ class TrendsControllerTest {
             .andExpect(jsonPath("$[0].games").value(10));
     }
 
+    /** Verify that a missing puuid for champion stats returns HTTP 400. */
     @Test
     void getChampionStats_missingPuuid_returnsBadRequest() throws Exception {
         mockMvc.perform(get("/api/trends/champions"))
             .andExpect(status().isBadRequest());
     }
 
+    /** Verify that match trend points are returned successfully. */
     @Test
     void getMatchTrends_returnsOk() throws Exception {
         List<MatchTrendPointDto> trends = List.of(
@@ -68,12 +80,14 @@ class TrendsControllerTest {
             .andExpect(jsonPath("$[0].matchId").value("NA1_123"));
     }
 
+    /** Verify that a missing puuid for match trends returns HTTP 400. */
     @Test
     void getMatchTrends_missingPuuid_returnsBadRequest() throws Exception {
         mockMvc.perform(get("/api/trends/matches"))
             .andExpect(status().isBadRequest());
     }
 
+    /** Verify that LP history defaults to RANKED_SOLO_5x5 queue type. */
     @Test
     void getLpHistory_withDefaultQueueType_returnsOk() throws Exception {
         List<LpSnapshotDto> snapshots = List.of(
@@ -89,6 +103,7 @@ class TrendsControllerTest {
         verify(lpTrackingService).getLpHistory("test-puuid", "RANKED_SOLO_5x5");
     }
 
+    /** Verify that a custom queueType parameter is passed through correctly. */
     @Test
     void getLpHistory_withCustomQueueType_returnsOk() throws Exception {
         when(lpTrackingService.getLpHistory("test-puuid", "RANKED_FLEX_SR")).thenReturn(List.of());
@@ -101,6 +116,7 @@ class TrendsControllerTest {
         verify(lpTrackingService).getLpHistory("test-puuid", "RANKED_FLEX_SR");
     }
 
+    /** Verify that a missing puuid for LP history returns HTTP 400. */
     @Test
     void getLpHistory_missingPuuid_returnsBadRequest() throws Exception {
         mockMvc.perform(get("/api/trends/lp"))

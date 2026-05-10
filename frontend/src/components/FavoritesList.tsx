@@ -1,4 +1,9 @@
-/** Clickable favorites chips — navigates to a saved player's profile on click. */
+/**
+ * @file FavoritesList.tsx
+ * @description Render clickable favorite player chips that navigate to a saved player's profile.
+ *   Each chip includes a remove button to delete the favorite via the backend API.
+ * @module frontend.components
+ */
 import { useNavigate } from "react-router-dom";
 import type { FavoritePlayer } from "../types";
 import { removeFavorite } from "../api";
@@ -8,6 +13,13 @@ type FavoritesListProps = {
   onUpdate: () => void;
 };
 
+/**
+ * Render a horizontal row of favorite player chips. Navigate to the player's
+ * profile on click, or remove the favorite when the close button is pressed.
+ *
+ * @param props - The list of favorite players and a callback to refresh the list after mutations.
+ * @returns The favorites chip row element, or null if the list is empty.
+ */
 export default function FavoritesList({ favorites, onUpdate }: FavoritesListProps) {
   const navigate = useNavigate();
 

@@ -1,8 +1,10 @@
 /**
- * LP (League Points) conversion utilities for LP progression charts.
+ * @file lp.ts
+ * @description LP (League Points) conversion utilities for LP progression charts.
+ * @module frontend.utils
  *
  * The Riot ranked system uses tier + division + LP (e.g., "Gold II 45 LP").
- * To plot LP on a single Y-axis, we convert this into a flat number:
+ * To plot LP on a single Y-axis, convert this into a flat number:
  *   Iron IV 0 LP = 0,  Iron III 0 LP = 100,  Bronze IV 0 LP = 400, ...
  *
  * Each tier spans 400 LP (4 divisions x 100 LP each).

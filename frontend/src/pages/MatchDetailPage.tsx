@@ -1,8 +1,11 @@
 /**
- * Match detail page — standalone page for a single match (accessed via direct URL).
- * Displays a full scoreboard with all participants. Uses ArenaScoreboard for Arena
- * matches (placement-based grouping) and ScoreboardTeamTable for standard 5v5 modes.
- * Player names are clickable to navigate to their match history.
+ * @file MatchDetailPage.tsx
+ * @description Standalone match detail page displaying full scoreboard for all participants.
+ * @module frontend.pages
+ *
+ * Use ArenaScoreboard for Arena matches (placement-based grouping) and
+ * ScoreboardTeamTable for standard 5v5 modes. Player names are clickable
+ * to navigate to their match history.
  */
 import { useEffect, useState } from "react";
 import { useParams, useSearchParams, useNavigate } from "react-router-dom";

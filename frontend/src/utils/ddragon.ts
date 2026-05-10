@@ -1,6 +1,10 @@
 /**
- * Shared DDragon/Community Dragon helpers — version resolution, asset URL builders,
- * rune/spell/queue mappings, and display utilities used across all components.
+ * @file ddragon.ts
+ * @description DDragon asset URL builders, version resolution, and static game data mappings.
+ * @module frontend.utils
+ *
+ * Provide version-aware asset URL construction, keystone rune/spell/queue ID lookups,
+ * and display utilities (duration formatting, time-ago) used across all components.
  */
 import { useState, useEffect } from "react";
 

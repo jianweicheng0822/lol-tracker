@@ -1,3 +1,8 @@
+/**
+ * @file MatchControllerTest.java
+ * @description Unit tests for the match history controller endpoints.
+ * @module backend.test
+ */
 package com.jw.backend;
 
 import com.jw.backend.dto.MatchSummaryDto;
@@ -25,6 +30,10 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * Validate the {@link MatchController} for fetching recent match IDs, match details,
+ * and match summaries, including parameter validation and default value handling.
+ */
 @WebMvcTest(MatchController.class)
 @AutoConfigureMockMvc(addFilters = false)
 class MatchControllerTest {
@@ -54,19 +63,14 @@ class MatchControllerTest {
         when(subscriptionService.getMaxMatchCount(any())).thenReturn(20);
     }
 
-    // =====================================================
-    // TESTS FOR: GET /api/matches/recent
-    // =====================================================
-
+    /** Verify that valid puuid and region parameters return match IDs successfully. */
     @Test
     void getRecentMatches_withValidParams_returnsOk() throws Exception {
-        // ARRANGE
         String fakeMatchIds = "[\"NA1_123\", \"NA1_456\", \"NA1_789\"]";
 
         when(riotApiService.getRecentMatchIds("test-puuid", RiotRegion.NA, 10))
             .thenReturn(fakeMatchIds);
 
-        // ACT & ASSERT
         mockMvc.perform(
                 get("/api/matches/recent")
                     .param("puuid", "test-puuid")
@@ -77,59 +81,51 @@ class MatchControllerTest {
             .andExpect(content().json(fakeMatchIds));
     }
 
+    /** Verify that the default count of 10 is used when count is not provided. */
     @Test
     void getRecentMatches_usesDefaultCount_whenCountNotProvided() throws Exception {
-        // ARRANGE - default count is 10
         when(riotApiService.getRecentMatchIds("test-puuid", RiotRegion.NA, 10))
             .thenReturn("[]");
 
-        // ACT - no count parameter provided
         mockMvc.perform(
                 get("/api/matches/recent")
                     .param("puuid", "test-puuid")
                     .param("region", "NA")
-                    // count is NOT provided - should default to 10
             )
             .andExpect(status().isOk());
 
-        // ASSERT - verify service was called with default count (10)
         verify(riotApiService, times(1))
             .getRecentMatchIds("test-puuid", RiotRegion.NA, 10);
     }
 
+    /** Verify that a missing puuid parameter returns HTTP 400. */
     @Test
     void getRecentMatches_missingPuuid_returnsBadRequest() throws Exception {
         mockMvc.perform(
                 get("/api/matches/recent")
-                    // puuid is MISSING!
                     .param("region", "NA")
             )
             .andExpect(status().isBadRequest());
     }
 
+    /** Verify that a missing region parameter returns HTTP 400. */
     @Test
     void getRecentMatches_missingRegion_returnsBadRequest() throws Exception {
         mockMvc.perform(
                 get("/api/matches/recent")
                     .param("puuid", "test-puuid")
-                    // region is MISSING!
             )
             .andExpect(status().isBadRequest());
     }
 
-    // =====================================================
-    // TESTS FOR: GET /api/matches/detail
-    // =====================================================
-
+    /** Verify that valid matchId and region return match detail JSON. */
     @Test
     void getMatchDetail_withValidParams_returnsOk() throws Exception {
-        // ARRANGE
         String fakeMatchDetail = "{\"matchId\":\"NA1_123\",\"info\":{}}";
 
         when(riotApiService.getMatchDetail("NA1_123", RiotRegion.NA))
             .thenReturn(fakeMatchDetail);
 
-        // ACT & ASSERT
         mockMvc.perform(
                 get("/api/matches/detail")
                     .param("matchId", "NA1_123")
@@ -139,33 +135,29 @@ class MatchControllerTest {
             .andExpect(content().json(fakeMatchDetail));
     }
 
+    /** Verify that a missing matchId parameter returns HTTP 400. */
     @Test
     void getMatchDetail_missingMatchId_returnsBadRequest() throws Exception {
         mockMvc.perform(
                 get("/api/matches/detail")
-                    // matchId is MISSING!
                     .param("region", "NA")
             )
             .andExpect(status().isBadRequest());
     }
 
+    /** Verify that a missing region parameter for match detail returns HTTP 400. */
     @Test
     void getMatchDetail_missingRegion_returnsBadRequest() throws Exception {
         mockMvc.perform(
                 get("/api/matches/detail")
                     .param("matchId", "NA1_123")
-                    // region is MISSING!
             )
             .andExpect(status().isBadRequest());
     }
 
-    // =====================================================
-    // TESTS FOR: GET /api/matches/summary
-    // =====================================================
-
+    /** Verify that match summaries are returned with correct structure and values. */
     @Test
     void getMatchSummaries_withValidParams_returnsOk() throws Exception {
-        // ARRANGE - create fake match summaries
         List<MatchSummaryDto> fakeSummaries = List.of(
             new MatchSummaryDto("NA1_123", "Ahri", 10, 2, 8, true, 1800L, 1700000000000L,
                 18, 4, 14, new int[]{1001,1002,1003,0,0,0,3340}, 150, 30, 420, 30, List.of(), List.of(),
@@ -178,7 +170,6 @@ class MatchControllerTest {
         when(riotApiService.getRecentMatchSummaries("test-puuid", RiotRegion.NA, 3, 0))
             .thenReturn(fakeSummaries);
 
-        // ACT & ASSERT
         mockMvc.perform(
                 get("/api/matches/summary")
                     .param("puuid", "test-puuid")
@@ -186,71 +177,62 @@ class MatchControllerTest {
                     .param("count", "3")
             )
             .andExpect(status().isOk())
-            // Check that response is a JSON array with 2 items
             .andExpect(jsonPath("$.length()").value(2))
-            // Check first match
             .andExpect(jsonPath("$[0].matchId").value("NA1_123"))
             .andExpect(jsonPath("$[0].championName").value("Ahri"))
             .andExpect(jsonPath("$[0].kills").value(10))
             .andExpect(jsonPath("$[0].deaths").value(2))
             .andExpect(jsonPath("$[0].assists").value(8))
             .andExpect(jsonPath("$[0].win").value(true))
-            // Check second match
             .andExpect(jsonPath("$[1].matchId").value("NA1_456"))
             .andExpect(jsonPath("$[1].championName").value("Zed"))
             .andExpect(jsonPath("$[1].win").value(false));
     }
 
+    /** Verify that the default count of 3 is used for summaries when count is omitted. */
     @Test
     void getMatchSummaries_usesDefaultCount_whenCountNotProvided() throws Exception {
-        // ARRANGE - default count is 3, default start is 0
         when(riotApiService.getRecentMatchSummaries("test-puuid", RiotRegion.NA, 3, 0))
             .thenReturn(List.of());
 
-        // ACT - no count parameter provided
         mockMvc.perform(
                 get("/api/matches/summary")
                     .param("puuid", "test-puuid")
                     .param("region", "NA")
-                    // count is NOT provided - should default to 3
             )
             .andExpect(status().isOk());
 
-        // ASSERT - verify service was called with default count (3) and start (0)
         verify(riotApiService, times(1))
             .getRecentMatchSummaries("test-puuid", RiotRegion.NA, 3, 0);
     }
 
+    /** Verify that a missing puuid for summaries returns HTTP 400. */
     @Test
     void getMatchSummaries_missingPuuid_returnsBadRequest() throws Exception {
         mockMvc.perform(
                 get("/api/matches/summary")
-                    // puuid is MISSING!
                     .param("region", "NA")
             )
             .andExpect(status().isBadRequest());
     }
 
+    /** Verify that a missing region for summaries returns HTTP 400. */
     @Test
     void getMatchSummaries_missingRegion_returnsBadRequest() throws Exception {
         mockMvc.perform(
                 get("/api/matches/summary")
                     .param("puuid", "test-puuid")
-                    // region is MISSING!
             )
             .andExpect(status().isBadRequest());
     }
 
-    // =====================================================
-    // TEST: Invalid region returns 400
-    // =====================================================
-
+    /** Verify that an invalid region string returns HTTP 400. */
     @Test
     void getRecentMatches_invalidRegion_returnsBadRequest() throws Exception {
         mockMvc.perform(
                 get("/api/matches/recent")
                     .param("puuid", "test-puuid")
-                    .param("region", "INVALID_REGION")  // Not a valid RiotRegion
+                    .param("region", "INVALID_REGION")
             )
             .andExpect(status().isBadRequest());
     }

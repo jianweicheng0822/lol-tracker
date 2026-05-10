@@ -1,12 +1,9 @@
 /**
- * Performance tab — 4 Recharts line charts showing historical trends:
- *   1. LP Progression    — absolute LP over time (from LP snapshots)
- *   2. Win Rate Trend    — rolling 10-game win rate percentage
- *   3. KDA Trend         — per-game KDA with 5-game moving average
- *   4. Damage / Game     — per-game damage with 5-game moving average
- *
- * Data is fetched lazily on tab activation from /api/trends/matches and /api/trends/lp.
- * Charts use a 2-column grid layout to fit the wider dashboard (1060px).
+ * @file PerformanceTab.tsx
+ * @description Render 4 Recharts line charts showing historical performance trends:
+ *   LP Progression, Win Rate Trend (rolling 10-game), KDA Trend with moving average,
+ *   and Damage per Game with moving average. Data is fetched lazily on tab activation.
+ * @module frontend.components.tabs
  */
 import { useEffect, useState } from "react";
 import {
@@ -21,15 +18,20 @@ import type { MatchTrendPoint, LpSnapshot } from "../../types";
 
 type Props = { puuid: string };
 
+/**
+ * Render the Performance tab with 4 trend charts in a 2-column grid layout.
+ * Fetch match trends and LP history in parallel on mount.
+ *
+ * @param props - The player's PUUID for fetching trend data.
+ * @returns The performance tab content element.
+ */
 export default function PerformanceTab({ puuid }: Props) {
   const [trends, setTrends] = useState<MatchTrendPoint[]>([]);
   const [lpData, setLpData] = useState<LpSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Lazy fetch — only loads when the Performance tab is first activated
   useEffect(() => {
     let cancelled = false;
-    // Fetch match trends and LP history in parallel
     Promise.all([
       fetchMatchTrends(puuid).catch(() => []),
       fetchLpHistory(puuid).catch(() => []),
@@ -46,22 +48,20 @@ export default function PerformanceTab({ puuid }: Props) {
   if (loading) return <div style={{ textAlign: "center", padding: 40, opacity: 0.5 }}>Loading performance data...</div>;
   if (trends.length === 0 && lpData.length === 0) return <div style={{ textAlign: "center", padding: 40, opacity: 0.5 }}>No trend data available yet. Play some games!</div>;
 
-  // --- Compute chart datasets from raw trend points ---
-
-  // KDA per game with 5-game moving average overlay (yellow line)
+  // KDA per game with 5-game moving average
   const kdaValues = trends.map((t) => {
     const kda = t.deaths === 0 ? t.kills + t.assists : (t.kills + t.assists) / t.deaths;
     return Math.round(kda * 100) / 100;
   });
   const kdaMA = movingAverage(kdaValues, 5);
   const kdaChartData = trends.map((t, i) => ({
-    idx: i + 1,       // Game number (X-axis)
-    kda: kdaValues[i], // Raw KDA for this game
-    ma: kdaMA[i],      // 5-game moving average (null for first 4 games)
+    idx: i + 1,
+    kda: kdaValues[i],
+    ma: kdaMA[i],
     win: t.win,
   }));
 
-  // Rolling 10-game win rate — null until 10 games are accumulated
+  // Rolling 10-game win rate
   const wrValues = rollingWinRate(trends.map((t) => t.win), 10);
   const wrChartData = trends.map((_t, i) => ({
     idx: i + 1,
@@ -77,17 +77,15 @@ export default function PerformanceTab({ puuid }: Props) {
     win: t.win,
   }));
 
-  // LP progression — converts tier+rank+LP to a single number for the Y-axis
+  // LP progression converted to absolute LP for single Y-axis plotting
   const lpChartData = lpData.map((s, i) => ({
     idx: i + 1,
     lp: toAbsoluteLp(s.tier, s.rankDivision, s.leaguePoints),
     label: `${s.tier.charAt(0)}${s.tier.slice(1).toLowerCase()} ${s.rankDivision} ${s.leaguePoints}LP`,
   }));
 
-  // --- Render chart cards — each only shows if there's sufficient data ---
   return (
     <div style={styles.grid}>
-      {/* LP chart — needs at least 2 snapshots to show a meaningful line */}
       {lpChartData.length > 1 && (
         <ChartCard title="LP Progression">
           <ResponsiveContainer width="100%" height={200}>
@@ -105,7 +103,6 @@ export default function PerformanceTab({ puuid }: Props) {
         </ChartCard>
       )}
 
-      {/* Win rate — 50% reference line helps contextualize the trend */}
       {wrChartData.some((d) => d.winRate !== null) && (
         <ChartCard title="Win Rate Trend (Rolling 10)">
           <ResponsiveContainer width="100%" height={200}>
@@ -124,7 +121,6 @@ export default function PerformanceTab({ puuid }: Props) {
         </ChartCard>
       )}
 
-      {/* KDA — indigo raw line + yellow moving average for smoothed trend */}
       {kdaChartData.length > 0 && (
         <ChartCard title="KDA Trend">
           <ResponsiveContainer width="100%" height={200}>
@@ -143,7 +139,6 @@ export default function PerformanceTab({ puuid }: Props) {
         </ChartCard>
       )}
 
-      {/* Damage — red raw line + yellow moving average */}
       {dmgChartData.length > 0 && (
         <ChartCard title="Damage / Game">
           <ResponsiveContainer width="100%" height={200}>
@@ -165,7 +160,12 @@ export default function PerformanceTab({ puuid }: Props) {
   );
 }
 
-/** Reusable card wrapper with uppercase section title and dark semi-transparent background. */
+/**
+ * Render a reusable chart card wrapper with an uppercase section title and dark background.
+ *
+ * @param props - The card title and chart children to render inside.
+ * @returns The chart card container element.
+ */
 function ChartCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div style={styles.card}>

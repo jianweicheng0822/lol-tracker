@@ -1,3 +1,8 @@
+/**
+ * @file EntityTest.java
+ * @description Unit tests for JPA entity constructors, getters, and setters.
+ * @module backend.test
+ */
 package com.jw.backend.entity;
 
 import org.junit.jupiter.api.Test;
@@ -6,12 +11,13 @@ import java.time.LocalDateTime;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Validate the data integrity of all JPA entities ({@link AppUser}, {@link FavoritePlayer},
+ * {@link LpSnapshot}, {@link MatchRecord}) including constructors, default values, and accessors.
+ */
 class EntityTest {
 
-    // =====================================================
-    // AppUser
-    // =====================================================
-
+    /** Verify that the AppUser default constructor initializes all fields to null. */
     @Test
     void appUser_defaultConstructor() {
         AppUser user = new AppUser();
@@ -21,6 +27,7 @@ class EntityTest {
         assertNull(user.getPassword());
     }
 
+    /** Verify that AppUser getters and setters correctly store and retrieve values. */
     @Test
     void appUser_gettersAndSetters() {
         AppUser user = new AppUser("session-1");
@@ -37,6 +44,7 @@ class EntityTest {
         assertEquals("hashed", user.getPassword());
     }
 
+    /** Verify that the session constructor sets a default tier of 0. */
     @Test
     void appUser_sessionConstructorSetsDefaultTier() {
         AppUser user = new AppUser("session-1");
@@ -44,6 +52,7 @@ class EntityTest {
         assertEquals("session-1", user.getSessionId());
     }
 
+    /** Verify that the auth constructor sets username and password fields. */
     @Test
     void appUser_authConstructorSetsFields() {
         AppUser user = new AppUser("myuser", "mypass", true);
@@ -52,10 +61,7 @@ class EntityTest {
         assertEquals(0, user.getTier());
     }
 
-    // =====================================================
-    // FavoritePlayer
-    // =====================================================
-
+    /** Verify that the FavoritePlayer default constructor initializes fields to null. */
     @Test
     void favoritePlayer_defaultConstructor() {
         FavoritePlayer fp = new FavoritePlayer();
@@ -63,6 +69,7 @@ class EntityTest {
         assertNull(fp.getPuuid());
     }
 
+    /** Verify that FavoritePlayer getters and setters work correctly. */
     @Test
     void favoritePlayer_gettersAndSetters() {
         FavoritePlayer fp = new FavoritePlayer("puuid-1", "Faker", "KR1", "KR");
@@ -82,16 +89,14 @@ class EntityTest {
         assertEquals(now, fp.getSavedAt());
     }
 
+    /** Verify that the FavoritePlayer constructor automatically sets savedAt. */
     @Test
     void favoritePlayer_constructorSetsSavedAt() {
         FavoritePlayer fp = new FavoritePlayer("puuid", "Faker", "KR1", "KR");
         assertNotNull(fp.getSavedAt());
     }
 
-    // =====================================================
-    // LpSnapshot
-    // =====================================================
-
+    /** Verify that the LpSnapshot default constructor initializes fields to null. */
     @Test
     void lpSnapshot_defaultConstructor() {
         LpSnapshot snap = new LpSnapshot();
@@ -99,6 +104,7 @@ class EntityTest {
         assertNull(snap.getPuuid());
     }
 
+    /** Verify that LpSnapshot getters and setters work correctly. */
     @Test
     void lpSnapshot_gettersAndSetters() {
         LpSnapshot snap = new LpSnapshot("puuid", "RANKED_SOLO_5x5", "GOLD", "I", 75);
@@ -119,6 +125,7 @@ class EntityTest {
         assertEquals(1000L, snap.getCapturedAt());
     }
 
+    /** Verify that the LpSnapshot constructor sets capturedAt to the current timestamp. */
     @Test
     void lpSnapshot_constructorSetsCapturedAt() {
         long before = System.currentTimeMillis();
@@ -128,10 +135,7 @@ class EntityTest {
         assertTrue(snap.getCapturedAt() >= before && snap.getCapturedAt() <= after);
     }
 
-    // =====================================================
-    // MatchRecord
-    // =====================================================
-
+    /** Verify that all MatchRecord getters and setters store and retrieve values correctly. */
     @Test
     void matchRecord_allGettersAndSetters() {
         MatchRecord r = new MatchRecord();

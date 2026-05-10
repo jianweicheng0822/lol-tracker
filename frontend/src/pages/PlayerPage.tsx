@@ -1,7 +1,10 @@
 /**
- * Player profile page — tabbed dashboard with ranked info, stats, match history, and trends.
- * Fetches account, matches, stats, ranked, and favorite status in parallel on mount.
- * Supports tabbed navigation via URL search params (?tab=overview).
+ * @file PlayerPage.tsx
+ * @description Tabbed player dashboard with ranked info, stats, match history, and trends.
+ * @module frontend.pages
+ *
+ * Fetch account, matches, stats, ranked, and favorite status in parallel on mount.
+ * Support tabbed navigation via URL search params (?tab=overview).
  */
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";

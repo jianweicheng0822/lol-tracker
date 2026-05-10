@@ -1,3 +1,8 @@
+/**
+ * @file FavoritePlayerRepository.java
+ * @description Spring Data JPA repository for FavoritePlayer entity operations.
+ * @module backend.repository
+ */
 package com.jw.backend.repository;
 
 import com.jw.backend.entity.FavoritePlayer;
@@ -7,38 +12,31 @@ import org.springframework.stereotype.Repository;
 import java.util.Optional;
 
 /**
- * Repository for FavoritePlayer entity.
- *
- * By extending JpaRepository, we get these methods FREE:
- * - save(entity)      → INSERT or UPDATE
- * - findAll()         → SELECT *
- * - findById(id)      → SELECT WHERE id = ?
- * - deleteById(id)    → DELETE WHERE id = ?
- * - count()           → COUNT(*)
+ * Provide CRUD and PUUID-based lookup operations for the favorite_players table.
  */
 @Repository
 public interface FavoritePlayerRepository extends JpaRepository<FavoritePlayer, Long> {
 
-    // =====================================================
-    // Custom query methods
-    // Spring generates the SQL automatically from method name!
-    // =====================================================
-
     /**
-     * Find a favorite by puuid.
-     * Generated SQL: SELECT * FROM favorite_players WHERE puuid = ?
+     * Find a favorite player by their PUUID.
+     *
+     * @param puuid the player's unique identifier
+     * @return the matching favorite entry, if present
      */
     Optional<FavoritePlayer> findByPuuid(String puuid);
 
     /**
-     * Check if a player is already saved.
-     * Generated SQL: SELECT COUNT(*) > 0 FROM favorite_players WHERE puuid = ?
+     * Check whether a favorite entry exists for the given PUUID.
+     *
+     * @param puuid the player's unique identifier
+     * @return true if the player is in favorites
      */
     boolean existsByPuuid(String puuid);
 
     /**
-     * Delete by puuid.
-     * Generated SQL: DELETE FROM favorite_players WHERE puuid = ?
+     * Delete a favorite entry by PUUID.
+     *
+     * @param puuid the player's unique identifier
      */
     void deleteByPuuid(String puuid);
 }

@@ -1,9 +1,9 @@
 /**
- * Horizontal tab navigation bar for the player dashboard.
- * Renders 4 tabs: Overview, Performance, Champions, Match History.
- * Active tab has an indigo (#6366f1) bottom border and bright text;
- * inactive tabs dim to slate and brighten on hover.
- * Tab state is managed via URL search params (see useTabNavigation hook).
+ * @file TabBar.tsx
+ * @description Render horizontal tab navigation for the player dashboard with four tabs:
+ *   Overview, Performance, Champions, and Match History. Active tab state is managed
+ *   via URL search params (see useTabNavigation hook).
+ * @module frontend.components
  */
 import { useState } from "react";
 import type { TabId } from "../types";
@@ -13,7 +13,7 @@ type Props = {
   onTabChange: (tab: TabId) => void;
 };
 
-/** Tab definitions — order here controls the visual tab order. */
+/** Tab definitions — order controls the visual tab layout. */
 const TABS: { id: TabId; label: string }[] = [
   { id: "overview", label: "Overview" },
   { id: "performance", label: "Performance" },
@@ -21,7 +21,12 @@ const TABS: { id: TabId; label: string }[] = [
   { id: "match-history", label: "Match History" },
 ];
 
-/** Single tab button with hover state tracking for interactive styling. */
+/**
+ * Render a single tab button with hover state tracking for interactive styling.
+ *
+ * @param props - Tab metadata, active state, and click handler.
+ * @returns The tab button element.
+ */
 function Tab({ label, active, onClick }: { id: TabId; label: string; active: boolean; onClick: () => void }) {
   const [hovered, setHovered] = useState(false);
 
@@ -34,9 +39,7 @@ function Tab({ label, active, onClick }: { id: TabId; label: string; active: boo
         padding: "10px 20px",
         background: "none",
         border: "none",
-        // Active: indigo bottom border; inactive: transparent (no visual shift on click)
         borderBottom: active ? "2px solid #6366f1" : "2px solid transparent",
-        // Active: bright text; hover: medium brightness; default: dim slate
         color: active ? "#e2e8f0" : hovered ? "#94a3b8" : "#64748b",
         fontSize: 14,
         fontWeight: active ? 600 : 500,
@@ -49,6 +52,12 @@ function Tab({ label, active, onClick }: { id: TabId; label: string; active: boo
   );
 }
 
+/**
+ * Render the tab bar container with all dashboard tabs.
+ *
+ * @param props - The currently active tab ID and a callback to change tabs.
+ * @returns The tab bar navigation element.
+ */
 export default function TabBar({ activeTab, onTabChange }: Props) {
   return (
     <div style={styles.container}>

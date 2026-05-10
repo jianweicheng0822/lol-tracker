@@ -1,3 +1,8 @@
+/**
+ * @file MatchHistoryServiceTest.java
+ * @description Unit tests for the match history service persistence and aggregation logic.
+ * @module backend.test
+ */
 package com.jw.backend.service;
 
 import com.jw.backend.dto.ChampionStatsDto;
@@ -17,6 +22,10 @@ import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+/**
+ * Validate the {@link MatchHistoryService} for persisting match records, computing
+ * per-champion statistics, and generating chronological match trend data.
+ */
 @ExtendWith(MockitoExtension.class)
 class MatchHistoryServiceTest {
 
@@ -53,10 +62,7 @@ class MatchHistoryServiceTest {
         return r;
     }
 
-    // =====================================================
-    // persistMatchRecords
-    // =====================================================
-
+    /** Verify that new match records are persisted to the repository. */
     @Test
     void persistMatchRecords_savesNewRecords() {
         when(matchRecordRepository.existsByPuuidAndMatchId("puuid", "NA1_1")).thenReturn(false);
@@ -70,6 +76,7 @@ class MatchHistoryServiceTest {
         verify(matchRecordRepository).save(any(MatchRecord.class));
     }
 
+    /** Verify that duplicate match records are skipped without saving. */
     @Test
     void persistMatchRecords_skipsDuplicates() {
         when(matchRecordRepository.existsByPuuidAndMatchId("puuid", "NA1_1")).thenReturn(true);
@@ -83,10 +90,7 @@ class MatchHistoryServiceTest {
         verify(matchRecordRepository, never()).save(any());
     }
 
-    // =====================================================
-    // getChampionStats
-    // =====================================================
-
+    /** Verify that champion stats are aggregated correctly across multiple matches. */
     @Test
     void getChampionStats_aggregatesCorrectly() {
         List<MatchRecord> records = List.of(
@@ -99,7 +103,6 @@ class MatchHistoryServiceTest {
         List<ChampionStatsDto> result = service.getChampionStats("puuid");
 
         assertEquals(2, result.size());
-        // Ahri has 2 games, Zed has 1 - sorted by games desc
         assertEquals("Ahri", result.get(0).championName());
         assertEquals(2, result.get(0).games());
         assertEquals(1, result.get(0).wins());
@@ -107,6 +110,7 @@ class MatchHistoryServiceTest {
         assertEquals(1, result.get(1).games());
     }
 
+    /** Verify that zero deaths produces a perfect KDA calculation. */
     @Test
     void getChampionStats_withZeroDeaths_handlesPerfectKda() {
         List<MatchRecord> records = List.of(
@@ -120,6 +124,7 @@ class MatchHistoryServiceTest {
         assertEquals(15.0, result.get(0).avgKda());
     }
 
+    /** Verify that an empty record list returns an empty champion stats list. */
     @Test
     void getChampionStats_withEmptyRecords_returnsEmptyList() {
         when(matchRecordRepository.findByPuuidOrderByGameEndTimestampDesc("puuid")).thenReturn(List.of());
@@ -129,10 +134,7 @@ class MatchHistoryServiceTest {
         assertTrue(result.isEmpty());
     }
 
-    // =====================================================
-    // getMatchTrends
-    // =====================================================
-
+    /** Verify that match trends are returned in chronological (ascending) order. */
     @Test
     void getMatchTrends_returnsChronologicalOrder() {
         List<MatchRecord> records = List.of(
@@ -144,11 +146,11 @@ class MatchHistoryServiceTest {
         List<MatchTrendPointDto> result = service.getMatchTrends("puuid");
 
         assertEquals(2, result.size());
-        // Should be reversed to chronological (oldest first)
         assertEquals("NA1_1", result.get(0).matchId());
         assertEquals("NA1_2", result.get(1).matchId());
     }
 
+    /** Verify that total CS is calculated as minions plus neutral minions killed. */
     @Test
     void getMatchTrends_calculatesTotalCs() {
         MatchRecord record = makeRecord("NA1_1", "Ahri", 10, 2, 8, true, 1000L);

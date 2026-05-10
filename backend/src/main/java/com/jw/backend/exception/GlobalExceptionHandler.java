@@ -1,3 +1,8 @@
+/**
+ * @file GlobalExceptionHandler.java
+ * @description Centralized exception handler translating exceptions into structured API error responses.
+ * @module backend.exception
+ */
 package com.jw.backend.exception;
 
 import com.jw.backend.dto.ApiErrorResponse;
@@ -13,14 +18,27 @@ import org.springframework.web.method.annotation.MethodArgumentTypeMismatchExcep
 
 import java.time.Instant;
 
+/**
+ * Map application and upstream exceptions to consistent {@link ApiErrorResponse} payloads.
+ *
+ * <p>Provides user-friendly error messages for common Riot API error codes while
+ * keeping internal details out of client-facing responses. Spring selects handlers
+ * by exception type specificity, with the generic fallback catching unexpected errors.</p>
+ */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+    /**
+     * Handle HTTP 4xx errors from the Riot API with user-friendly messages.
+     *
+     * @param ex  the client error exception from RestClient
+     * @param req the originating HTTP request
+     * @return structured error response with contextual guidance
+     */
     @ExceptionHandler(HttpClientErrorException.class)
     public ResponseEntity<ApiErrorResponse> handleClientError(HttpClientErrorException ex, HttpServletRequest req) {
         HttpStatus status = (HttpStatus) ex.getStatusCode();
 
-        // Make messages readable for frontend users
         String msg = switch (status) {
             case NOT_FOUND -> "Riot account not found. Check gameName/tagLine (case/spacing) and region.";
             case UNAUTHORIZED, FORBIDDEN -> "Riot API key is invalid or expired. Update your RIOT_API_KEY.";
@@ -39,6 +57,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(body);
     }
 
+    /**
+     * Handle HTTP 5xx errors from the Riot API.
+     *
+     * @param ex  the server error exception from RestClient
+     * @param req the originating HTTP request
+     * @return structured error response advising retry
+     */
     @ExceptionHandler(HttpServerErrorException.class)
     public ResponseEntity<ApiErrorResponse> handleServerError(HttpServerErrorException ex, HttpServletRequest req) {
         HttpStatus status = (HttpStatus) ex.getStatusCode();
@@ -52,10 +77,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(status).body(body);
     }
 
-    // =====================================================
-    // Handle missing request parameters (e.g., ?gameName is missing)
-    // Returns 400 Bad Request
-    // =====================================================
+    /**
+     * Handle missing required request parameters.
+     *
+     * @param ex  the missing parameter exception
+     * @param req the originating HTTP request
+     * @return 400 response identifying the missing parameter
+     */
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ApiErrorResponse> handleMissingParam(
             MissingServletRequestParameterException ex, HttpServletRequest req) {
@@ -69,10 +97,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(400).body(body);
     }
 
-    // =====================================================
-    // Handle invalid parameter types (e.g., region=INVALID)
-    // Returns 400 Bad Request
-    // =====================================================
+    /**
+     * Handle type conversion failures for request parameters.
+     *
+     * @param ex  the type mismatch exception
+     * @param req the originating HTTP request
+     * @return 400 response identifying the invalid parameter
+     */
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ApiErrorResponse> handleTypeMismatch(
             MethodArgumentTypeMismatchException ex, HttpServletRequest req) {
@@ -86,6 +117,13 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(400).body(body);
     }
 
+    /**
+     * Handle application-level rate limit violations.
+     *
+     * @param ex  the rate limit exception with a user-facing message
+     * @param req the originating HTTP request
+     * @return 429 response with rate limit guidance
+     */
     @ExceptionHandler(RateLimitException.class)
     public ResponseEntity<ApiErrorResponse> handleRateLimit(RateLimitException ex, HttpServletRequest req) {
         ApiErrorResponse body = new ApiErrorResponse(
@@ -98,11 +136,15 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(429).body(body);
     }
 
-    // =====================================================
-    // Catch-all for any other unexpected exceptions
-    // Returns 500 Internal Server Error
-    // This should be LAST so specific handlers run first
-    // =====================================================
+    /**
+     * Catch-all handler for unexpected exceptions.
+     *
+     * <p>Logs should be checked for root cause; the client receives a generic message.</p>
+     *
+     * @param ex  the unhandled exception
+     * @param req the originating HTTP request
+     * @return 500 response with generic error message
+     */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleUnknown(Exception ex, HttpServletRequest req) {
         ApiErrorResponse body = new ApiErrorResponse(

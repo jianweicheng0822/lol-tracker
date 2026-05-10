@@ -1,12 +1,9 @@
 /**
- * AI Chat Modal — ChatGPT-style conversation UI for match analysis.
- *
- * Architecture: The modal sends structured match data (KDA, items, team comps, etc.)
- * to the backend, which constructs the prompt and proxies to OpenAI. Tokens stream
- * back via SSE for real-time rendering. The API key never touches the browser.
- *
- * Conversation history is maintained in local state while the modal is open,
- * enabling multi-turn follow-up questions. State resets on close.
+ * @file AiChatModal.tsx
+ * @description ChatGPT-style conversation modal for AI-powered match analysis. Sends structured
+ *   match data to the backend which constructs the LLM prompt and proxies to OpenAI. Tokens
+ *   stream back via SSE for real-time rendering. The API key never touches the browser.
+ * @module frontend.components
  */
 import { useState, useRef, useEffect } from "react";
 import type { MatchSummary } from "../types";
@@ -18,7 +15,12 @@ type Props = {
   onClose: () => void;
 };
 
-/** Converts a MatchSummary into the structured data shape the backend expects. */
+/**
+ * Convert a MatchSummary into the structured data shape the backend expects for AI analysis.
+ *
+ * @param m - The match summary to transform.
+ * @returns Structured match data suitable for the AI analysis endpoint.
+ */
 function buildMatchData(m: MatchSummary): AiMatchData {
   const isArena = m.queueId === 1700;
   return {
@@ -42,6 +44,14 @@ function buildMatchData(m: MatchSummary): AiMatchData {
 
 type Message = { role: "user" | "assistant"; content: string };
 
+/**
+ * Render a full-screen modal with a chat interface for AI match analysis.
+ * Maintain conversation history in local state for multi-turn follow-up questions.
+ * State resets when the modal is closed.
+ *
+ * @param props - The match to analyze and a callback to close the modal.
+ * @returns The AI chat modal overlay element.
+ */
 export default function AiChatModal({ match, onClose }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -49,7 +59,6 @@ export default function AiChatModal({ match, onClose }: Props) {
   const [streamingContent, setStreamingContent] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Auto-scroll to bottom when messages or streaming content update
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, streamingContent]);
@@ -77,7 +86,6 @@ export default function AiChatModal({ match, onClose }: Props) {
     setIsLoading(true);
     setStreamingContent("");
 
-    // Send full conversation history so the AI maintains context across turns
     const apiMessages: AiChatMessage[] = newMessages.map((m) => ({
       role: m.role,
       content: m.content,

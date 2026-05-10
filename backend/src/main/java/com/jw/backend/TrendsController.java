@@ -1,3 +1,8 @@
+/**
+ * @file TrendsController.java
+ * @description REST controller for locally-stored trend and analytics data.
+ * @module backend.controller
+ */
 package com.jw.backend;
 
 import com.jw.backend.dto.ChampionStatsDto;
@@ -10,12 +15,10 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 /**
- * REST controller for trend and analytics endpoints.
- * Serves data from the local database (not the Riot API directly) for
- * the Performance and Champions dashboard tabs.
+ * Serve analytics data from the local database to avoid Riot API rate limits.
  *
- * Data is populated automatically as users browse match histories and player profiles —
- * match records and LP snapshots are captured by MatchController and SummonerController.
+ * <p>These endpoints power the frontend trend charts and champion statistics views.
+ * Data is populated asynchronously as matches are fetched through other endpoints.</p>
  */
 @RestController
 @RequestMapping("/api/trends")
@@ -24,27 +27,50 @@ public class TrendsController {
     private final MatchHistoryService matchHistoryService;
     private final LpTrackingService lpTrackingService;
 
+    /**
+     * Construct the controller with required service dependencies.
+     *
+     * @param matchHistoryService service for querying persisted match records
+     * @param lpTrackingService   service for querying LP history snapshots
+     */
     public TrendsController(MatchHistoryService matchHistoryService, LpTrackingService lpTrackingService) {
         this.matchHistoryService = matchHistoryService;
         this.lpTrackingService = lpTrackingService;
     }
 
-    /** Returns per-champion aggregated stats (win rate, KDA, damage) sorted by games played. */
+    /**
+     * Retrieve per-champion aggregated statistics sorted by games played.
+     *
+     * <p>Surfaces the player's most-played champions first, allowing the UI
+     * to highlight main champions.</p>
+     *
+     * @param puuid the player's unique identifier
+     * @return list of champion statistics ordered by total games descending
+     */
     @GetMapping("/champions")
     public List<ChampionStatsDto> getChampionStats(@RequestParam String puuid) {
         return matchHistoryService.getChampionStats(puuid);
     }
 
-    /** Returns per-match data points in chronological order for trend line charts. */
+    /**
+     * Retrieve chronological match data points for trend line charts.
+     *
+     * @param puuid the player's unique identifier
+     * @return time-ordered list of match performance data points
+     */
     @GetMapping("/matches")
     public List<MatchTrendPointDto> getMatchTrends(@RequestParam String puuid) {
         return matchHistoryService.getMatchTrends(puuid);
     }
 
     /**
-     * Returns LP progression snapshots for a specific queue (defaults to Solo/Duo).
-     * The default "RANKED_SOLO_5x5" matches the Riot API queue type identifier
-     * for Solo/Duo ranked, which is the most commonly tracked queue.
+     * Retrieve LP history for a specific ranked queue.
+     *
+     * <p>Defaults to RANKED_SOLO_5x5 as the primary competitive queue.</p>
+     *
+     * @param puuid     the player's unique identifier
+     * @param queueType the ranked queue type (default: RANKED_SOLO_5x5)
+     * @return chronological list of LP snapshots
      */
     @GetMapping("/lp")
     public List<LpSnapshotDto> getLpHistory(

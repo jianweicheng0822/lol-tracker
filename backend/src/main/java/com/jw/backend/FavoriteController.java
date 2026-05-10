@@ -1,3 +1,8 @@
+/**
+ * @file FavoriteController.java
+ * @description REST controller for managing a user's favorite players list.
+ * @module backend.controller
+ */
 package com.jw.backend;
 
 import com.jw.backend.entity.FavoritePlayer;
@@ -8,19 +13,31 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Manage CRUD operations for the authenticated user's favorite players.
+ *
+ * <p>Favorites are keyed by the player's PUUID to ensure uniqueness regardless
+ * of name changes.</p>
+ */
 @RestController
 @RequestMapping("/api/favorites")
 public class FavoriteController {
 
     private final FavoritePlayerService favoriteService;
 
+    /**
+     * Construct the controller with the favorite player service.
+     *
+     * @param favoriteService service handling favorite player business logic
+     */
     public FavoriteController(FavoritePlayerService favoriteService) {
         this.favoriteService = favoriteService;
     }
 
     /**
-     * GET /api/favorites
-     * Get all favorite players.
+     * Retrieve all favorite players for the current user.
+     *
+     * @return list of all persisted favorite player entries
      */
     @GetMapping
     public List<FavoritePlayer> getAllFavorites() {
@@ -28,9 +45,13 @@ public class FavoriteController {
     }
 
     /**
-     * POST /api/favorites
-     * Add a player to favorites.
-     * Body: { "puuid": "...", "gameName": "...", "tagLine": "...", "region": "..." }
+     * Add a player to the favorites list.
+     *
+     * <p>Rejects duplicates at the service layer, returning a 400 response
+     * if the player is already favorited.</p>
+     *
+     * @param body request body containing puuid, gameName, tagLine, and region fields
+     * @return the persisted FavoritePlayer entity, or an error response
      */
     @PostMapping
     public ResponseEntity<?> addFavorite(@RequestBody Map<String, String> body) {
@@ -39,7 +60,6 @@ public class FavoriteController {
         String tagLine = body.get("tagLine");
         String region = body.get("region");
 
-        // Validate input
         if (puuid == null || gameName == null || tagLine == null || region == null) {
             return ResponseEntity.badRequest().body(Map.of(
                 "error", "Missing required fields: puuid, gameName, tagLine, region"
@@ -58,8 +78,12 @@ public class FavoriteController {
     }
 
     /**
-     * DELETE /api/favorites/{puuid}
-     * Remove a player from favorites.
+     * Remove a player from favorites by PUUID.
+     *
+     * <p>Operation is idempotent — returns 404 only if the entry was not found.</p>
+     *
+     * @param puuid the player's unique identifier
+     * @return success message or 404 if not found
      */
     @DeleteMapping("/{puuid}")
     public ResponseEntity<?> removeFavorite(@PathVariable String puuid) {
@@ -73,8 +97,12 @@ public class FavoriteController {
     }
 
     /**
-     * GET /api/favorites/check/{puuid}
-     * Check if a player is in favorites.
+     * Check whether a player is in the current user's favorites.
+     *
+     * <p>Used by the UI to toggle the favorite icon state without fetching the full list.</p>
+     *
+     * @param puuid the player's unique identifier
+     * @return map containing a single "isFavorite" boolean flag
      */
     @GetMapping("/check/{puuid}")
     public Map<String, Boolean> checkFavorite(@PathVariable String puuid) {

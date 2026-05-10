@@ -1,11 +1,17 @@
 /**
- * Hook for URL-driven tab navigation on the player dashboard.
+ * @file useTabNavigation.ts
+ * @description Hook for URL-driven tab navigation on the player dashboard.
+ * @module frontend.hooks
+ */
+
+/**
+ * Manage active tab state via URL search parameters for browser back/forward support.
  *
- * Reads the active tab from the `?tab=` URL search parameter and provides
- * a setter that pushes new entries to browser history (enabling back/forward).
- * Defaults to "overview" if the param is missing or invalid.
+ * Read the active tab from the `?tab=` URL search parameter and provide
+ * a setter that pushes new history entries. Defaults to "overview" if the
+ * param is missing or invalid.
  *
- * Example URL: /player/NA/Faker/KR1?tab=performance
+ * @returns tuple of [activeTab, setTab] for reading and updating the current tab
  */
 import { useSearchParams } from "react-router-dom";
 import type { TabId } from "../types";

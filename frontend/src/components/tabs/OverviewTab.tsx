@@ -1,10 +1,9 @@
 /**
- * Overview tab — the default dashboard view combining rank, stats, and recent game summary.
- * Uses a 2-column grid layout:
- *   Left column:  RankBadge (Solo/Duo + Flex) and StatsBar (donut, KDA, top champions)
- *   Right column: Recent 10 games W/L strip and average KDA breakdown
- *
- * All data comes from props (already fetched by PlayerPage) — no additional API calls.
+ * @file OverviewTab.tsx
+ * @description Render the default Overview dashboard tab combining rank badges, stats panel,
+ *   and a recent games summary. Uses a 2-column grid layout with no additional API calls
+ *   since all data is passed from the parent PlayerPage.
+ * @module frontend.components.tabs
  */
 import type { PlayerStats, MatchSummary, RankedEntry } from "../../types";
 import RankBadge from "../RankBadge";
@@ -16,23 +15,28 @@ type Props = {
   ranked: RankedEntry[];
 };
 
+/**
+ * Render the Overview tab with ranked badges, performance stats, recent game results strip,
+ * and average KDA breakdown across the most recent 10 matches.
+ *
+ * @param props - Player stats, match list, and ranked entries (pre-fetched by PlayerPage).
+ * @returns The overview tab content element.
+ */
 export default function OverviewTab({ stats, matches, ranked }: Props) {
-  // Take the most recent 10 matches for the quick summary cards
   const recent10 = matches.slice(0, 10);
   const wins10 = recent10.filter((m) => m.win).length;
   const losses10 = recent10.length - wins10;
 
   return (
     <div style={styles.grid}>
-      {/* Left column — existing components reused from the original linear layout */}
+      {/* Left column — rank badges and stats panel */}
       <div>
         <RankBadge entries={ranked} />
         {stats && <StatsBar stats={stats} matches={matches} />}
       </div>
 
-      {/* Right column — new summary cards for at-a-glance performance */}
+      {/* Right column — recent games strip and KDA summary cards */}
       <div>
-        {/* Recent games strip — small W/L tiles showing the last 10 results */}
         <div style={styles.card}>
           <div style={styles.cardTitle}>Recent {recent10.length} Games</div>
           <div style={styles.recentBar}>
@@ -44,7 +48,6 @@ export default function OverviewTab({ stats, matches, ranked }: Props) {
                   width: 24,
                   height: 24,
                   borderRadius: 4,
-                  // Green background for wins, red for losses
                   background: m.win ? "#1a4a2e" : "#4a1a1a",
                   border: `1px solid ${m.win ? "#2d6b45" : "#6b2d2d"}`,
                   display: "flex",
@@ -59,7 +62,6 @@ export default function OverviewTab({ stats, matches, ranked }: Props) {
               </div>
             ))}
           </div>
-          {/* Win/loss record with percentage */}
           <div style={styles.recentRecord}>
             <span style={{ color: "#4ade80" }}>{wins10}W</span>
             {" "}
@@ -72,7 +74,6 @@ export default function OverviewTab({ stats, matches, ranked }: Props) {
           </div>
         </div>
 
-        {/* KDA breakdown — computed from recent matches, color-coded by stat type */}
         {recent10.length > 0 && (
           <div style={styles.card}>
             <div style={styles.cardTitle}>Recent KDA</div>
@@ -88,7 +89,12 @@ export default function OverviewTab({ stats, matches, ranked }: Props) {
   );
 }
 
-/** Reusable single-stat display with large colored value and small label. */
+/**
+ * Render a single stat display with a large colored value and a small label beneath it.
+ *
+ * @param props - The label text, formatted value string, and accent color.
+ * @returns The stat display element.
+ */
 function Stat({ label, value, color }: { label: string; value: string; color: string }) {
   return (
     <div style={{ textAlign: "center" }}>

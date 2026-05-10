@@ -1,3 +1,8 @@
+/**
+ * @file OpenApiConfig.java
+ * @description Configuration for OpenAPI/Swagger documentation with JWT security scheme.
+ * @module backend.config
+ */
 package com.jw.backend.config;
 
 import io.swagger.v3.oas.models.Components;
@@ -7,9 +12,17 @@ import io.swagger.v3.oas.models.security.SecurityScheme;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/**
+ * Define the OpenAPI specification metadata and security scheme for Swagger UI.
+ */
 @Configuration
 public class OpenApiConfig {
 
+    /**
+     * Configure the OpenAPI document with application info and JWT bearer auth scheme.
+     *
+     * @return the configured OpenAPI specification bean
+     */
     @Bean
     public OpenAPI openAPI() {
         return new OpenAPI()

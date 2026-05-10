@@ -1,9 +1,19 @@
+/**
+ * @file HomePage.tsx
+ * @description Landing page with summoner search bar and favorites list.
+ * @module frontend.pages
+ */
 import { useCallback, useEffect, useState } from "react";
 import SearchBar from "../components/SearchBar";
 import FavoritesList from "../components/FavoritesList";
 import { fetchFavorites } from "../api";
 import type { FavoritePlayer } from "../types";
 
+/**
+ * Render the application landing page with search bar and saved favorites.
+ *
+ * @returns the home page layout with centered search and favorites list
+ */
 export default function HomePage() {
   const [favorites, setFavorites] = useState<FavoritePlayer[]>([]);
 

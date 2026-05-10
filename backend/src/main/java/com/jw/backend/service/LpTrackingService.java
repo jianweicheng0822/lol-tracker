@@ -1,3 +1,8 @@
+/**
+ * @file LpTrackingService.java
+ * @description Service for capturing and retrieving LP (League Points) history snapshots.
+ * @module backend.service
+ */
 package com.jw.backend.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -12,11 +17,10 @@ import java.util.List;
 import java.util.Optional;
 
 /**
- * Service for tracking LP (League Points) changes over time.
+ * Track LP progression over time by capturing snapshots on rank or LP changes.
  *
- * Captures snapshots of a player's ranked position each time their profile is viewed.
- * Only saves a new snapshot when the rank actually changes (tier, division, or LP),
- * keeping the database lean while building a complete LP progression history.
+ * <p>Snapshots are only persisted when a delta is detected compared to the most recent
+ * stored value, preventing timeline bloat from repeated lookups without rank changes.</p>
  */
 @Service
 public class LpTrackingService {
@@ -25,6 +29,13 @@ public class LpTrackingService {
     private final RiotApiService riotApiService;
     private final ObjectMapper objectMapper;
 
+    /**
+     * Construct the service with required dependencies.
+     *
+     * @param lpSnapshotRepository repository for LP snapshot persistence
+     * @param riotApiService       service for fetching ranked data from Riot API
+     * @param objectMapper         Jackson mapper for JSON parsing
+     */
     public LpTrackingService(LpSnapshotRepository lpSnapshotRepository, RiotApiService riotApiService,
                              ObjectMapper objectMapper) {
         this.lpSnapshotRepository = lpSnapshotRepository;
@@ -33,13 +44,17 @@ public class LpTrackingService {
     }
 
     /**
-     * Fetches current ranked data from the Riot API and saves a snapshot if LP has changed.
-     * Called automatically by SummonerController on every player profile lookup.
-     * Iterates over all ranked queues (Solo/Duo, Flex) and snapshots each independently.
+     * Capture an LP snapshot for all ranked queues if the rank or LP has changed.
+     *
+     * <p>Compares the current ranked data against the most recent snapshot per queue.
+     * Only persists a new entry when tier, division, or LP differs — this avoids
+     * generating redundant data points on repeated profile lookups.</p>
+     *
+     * @param puuid  the player's unique identifier
+     * @param region the Riot platform region for the League-v4 API call
      */
     public void captureSnapshot(String puuid, RiotRegion region) {
         try {
-            // Fetch current ranked entries from the Riot API (cached in RiotApiService)
             String rankedJson = riotApiService.getRankedEntriesByPuuid(puuid, region);
             JsonNode entries = objectMapper.readTree(rankedJson);
 
@@ -51,14 +66,11 @@ public class LpTrackingService {
                 String rank = entry.path("rank").asText("");
                 int lp = entry.path("leaguePoints").asInt(0);
 
-                // Skip entries without a tier (unranked queues)
                 if (tier.isEmpty()) continue;
 
-                // Compare against the most recent snapshot to detect changes
                 Optional<LpSnapshot> last = lpSnapshotRepository
                         .findTopByPuuidAndQueueTypeOrderByCapturedAtDesc(puuid, queueType);
 
-                // Only save if this is the first snapshot or if tier/rank/LP changed
                 boolean changed = last.isEmpty()
                         || !last.get().getTier().equals(tier)
                         || !last.get().getRankDivision().equals(rank)
@@ -69,12 +81,17 @@ public class LpTrackingService {
                 }
             }
         } catch (Exception e) {
-            // Non-fatal: LP tracking failure shouldn't block the profile lookup
             System.err.println("Failed to capture LP snapshot: " + e.getMessage());
         }
     }
 
-    /** Returns full LP history for a queue in chronological order (oldest first) for chart rendering. */
+    /**
+     * Retrieve chronological LP history for a player in a specific queue.
+     *
+     * @param puuid     the player's unique identifier
+     * @param queueType the ranked queue type (e.g., "RANKED_SOLO_5x5")
+     * @return time-ordered list of LP snapshot DTOs from oldest to newest
+     */
     public List<LpSnapshotDto> getLpHistory(String puuid, String queueType) {
         return lpSnapshotRepository.findByPuuidAndQueueTypeOrderByCapturedAtAsc(puuid, queueType)
                 .stream()

@@ -1,3 +1,8 @@
+/**
+ * @file MatchRecordRepository.java
+ * @description Spring Data JPA repository for local match record persistence.
+ * @module backend.repository
+ */
 package com.jw.backend.repository;
 
 import com.jw.backend.entity.MatchRecord;
@@ -7,26 +12,29 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 /**
- * Repository for MatchRecord entities.
- *
- * Spring Data JPA generates the SQL automatically from method names:
- * - findBy...  → SELECT WHERE ...
- * - existsBy... → SELECT COUNT(*) > 0 WHERE ...
+ * Provide match record queries for analytics and deduplication checks.
  */
 @Repository
 public interface MatchRecordRepository extends JpaRepository<MatchRecord, Long> {
 
     /**
-     * Get all matches for a player, newest first.
-     * Used by champion stats aggregation and match trend charts.
-     * Generated SQL: SELECT * FROM match_records WHERE puuid = ? ORDER BY game_end_timestamp DESC
+     * Retrieve all match records for a player ordered by newest first.
+     *
+     * <p>The analytics layer reverses this ordering when chronological display is needed.</p>
+     *
+     * @param puuid the player's unique identifier
+     * @return match records sorted by game end timestamp descending
      */
     List<MatchRecord> findByPuuidOrderByGameEndTimestampDesc(String puuid);
 
     /**
-     * Check if a specific match is already persisted for this player.
-     * Prevents duplicate inserts when the same matches are fetched again.
-     * Generated SQL: SELECT COUNT(*) > 0 FROM match_records WHERE puuid = ? AND match_id = ?
+     * Check whether a match record already exists for deduplication.
+     *
+     * <p>Riot match IDs are globally unique across all shards.</p>
+     *
+     * @param puuid   the player's unique identifier
+     * @param matchId the Riot match identifier
+     * @return true if the record already exists
      */
     boolean existsByPuuidAndMatchId(String puuid, String matchId);
 }

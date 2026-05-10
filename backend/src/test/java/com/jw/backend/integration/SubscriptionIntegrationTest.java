@@ -1,3 +1,8 @@
+/**
+ * @file SubscriptionIntegrationTest.java
+ * @description Integration tests for subscription tier management and AI access gating.
+ * @module backend.test
+ */
 package com.jw.backend.integration;
 
 import com.jayway.jsonpath.JsonPath;
@@ -9,8 +14,13 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * Validate subscription tier retrieval, upgrade flow, and AI endpoint access control
+ * for both anonymous and authenticated users against a real database.
+ */
 class SubscriptionIntegrationTest extends BaseIntegrationSupport {
 
+    /** Verify that an anonymous user defaults to the free tier (0). */
     @Test
     void anonymousUser_getsFreeTeir() throws Exception {
         mockMvc.perform(get("/api/tier"))
@@ -18,9 +28,9 @@ class SubscriptionIntegrationTest extends BaseIntegrationSupport {
             .andExpect(jsonPath("$.tier").value(0));
     }
 
+    /** Verify that an authenticated user can upgrade from free to PRO tier. */
     @Test
     void authenticatedUser_canUpgrade() throws Exception {
-        // Register
         String regBody = """
             {"username": "upgradeuser", "password": "pass123"}
             """;
@@ -32,25 +42,23 @@ class SubscriptionIntegrationTest extends BaseIntegrationSupport {
 
         String token = JsonPath.read(regResult.getResponse().getContentAsString(), "$.token");
 
-        // Check tier — should be FREE
         mockMvc.perform(get("/api/tier")
                 .header("Authorization", "Bearer " + token))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.tier").value(0));
 
-        // Upgrade
         mockMvc.perform(get("/api/upgrade")
                 .header("Authorization", "Bearer " + token))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.tier").value(1));
 
-        // Verify tier is now PRO
         mockMvc.perform(get("/api/tier")
                 .header("Authorization", "Bearer " + token))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.tier").value(1));
     }
 
+    /** Verify that the AI analyze endpoint blocks free-tier users with HTTP 403. */
     @Test
     void aiAccess_blockedForFreeUser() throws Exception {
         String body = """

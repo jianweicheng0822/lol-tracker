@@ -259,15 +259,15 @@ lol-tracker/
 ├── Dockerfile                  # Multi-stage build
 ├── backend/
 │   ├── src/main/java/com/jw/backend/
-│   │   ├── *Controller.java    # REST endpoints + AuthController
+│   │   ├── *Controller.java    # REST endpoints (Javadoc on all public methods)
 │   │   ├── security/           # JWT filter, SecurityConfig, JwtUtil
-│   │   ├── config/             # OpenApiConfig
-│   │   ├── service/
-│   │   ├── repository/
-│   │   ├── entity/
-│   │   ├── dto/
-│   │   ├── region/
-│   │   └── exception/
+│   │   ├── config/             # OpenApiConfig (Swagger/OpenAPI)
+│   │   ├── service/            # Business logic layer
+│   │   ├── repository/         # Spring Data JPA interfaces
+│   │   ├── entity/             # JPA entities (AppUser, MatchRecord, etc.)
+│   │   ├── dto/                # Immutable records for API transport
+│   │   ├── region/             # Riot region routing/platform mappings
+│   │   └── exception/          # Global exception handler + custom exceptions
 │   ├── src/main/resources/
 │   │   ├── application.properties
 │   │   └── db/migration/       # Flyway SQL migrations
@@ -277,12 +277,20 @@ lol-tracker/
 └── frontend/
     └── src/
         ├── api.ts              # JWT token management + API client
-        ├── types.ts
-        ├── hooks/
-        ├── utils/
-        ├── components/
-        └── pages/
+        ├── types.ts            # Shared TypeScript interfaces
+        ├── hooks/              # Custom React hooks (useTabNavigation)
+        ├── utils/              # DDragon helpers, LP conversion, trend math
+        ├── components/         # Reusable UI components (JSDoc documented)
+        └── pages/              # Route-level page components
 ```
+
+## Code Documentation
+
+All source files follow a consistent documentation standard:
+
+- **Backend (Java):** Javadoc with `@file`, `@description`, `@module` headers. All public methods have `@param`, `@returns`, and `@throws` annotations where applicable.
+- **Frontend (TypeScript):** JSDoc with the same file header convention. Exported functions and components include parameter and return descriptions.
+- **Style:** Imperative mood, concise descriptions focused on intent and business logic rather than restating code.
 
 ## License
 

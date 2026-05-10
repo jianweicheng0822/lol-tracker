@@ -1,6 +1,9 @@
 /**
- * Pure helper functions for computing trend data used by Recharts line charts.
- * These operate on arrays of raw values and return arrays of the same length,
+ * @file trends.ts
+ * @description Pure helper functions for computing trend data used by Recharts line charts.
+ * @module frontend.utils
+ *
+ * Operate on arrays of raw values and return arrays of the same length,
  * with `null` for positions where the window hasn't accumulated enough data.
  */
 

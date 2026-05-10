@@ -1,3 +1,8 @@
+/**
+ * @file main.tsx
+ * @description Application entry point that mounts the React root with routing and strict mode.
+ * @module frontend.root
+ */
 import { StrictMode } from 'react'
 import { createRoot } from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'

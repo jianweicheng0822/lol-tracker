@@ -1,3 +1,8 @@
+/**
+ * @file RankedControllerTest.java
+ * @description Unit tests for the ranked information controller endpoint.
+ * @module backend.test
+ */
 package com.jw.backend;
 
 import com.jw.backend.dto.RankedEntryDto;
@@ -17,6 +22,10 @@ import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * Validate the {@link RankedController} for retrieving ranked queue entries,
+ * including parameter validation and invalid region handling.
+ */
 @WebMvcTest(RankedController.class)
 @AutoConfigureMockMvc(addFilters = false)
 class RankedControllerTest {
@@ -30,6 +39,7 @@ class RankedControllerTest {
     @MockitoBean
     private RankedService rankedService;
 
+    /** Verify that valid puuid and region return ranked entries with correct data. */
     @Test
     void getRankedInfo_withValidParams_returnsOk() throws Exception {
         List<RankedEntryDto> entries = List.of(
@@ -48,18 +58,21 @@ class RankedControllerTest {
             .andExpect(jsonPath("$[0].leaguePoints").value(75));
     }
 
+    /** Verify that a missing puuid parameter returns HTTP 400. */
     @Test
     void getRankedInfo_missingPuuid_returnsBadRequest() throws Exception {
         mockMvc.perform(get("/api/ranked").param("region", "NA"))
             .andExpect(status().isBadRequest());
     }
 
+    /** Verify that a missing region parameter returns HTTP 400. */
     @Test
     void getRankedInfo_missingRegion_returnsBadRequest() throws Exception {
         mockMvc.perform(get("/api/ranked").param("puuid", "test-puuid"))
             .andExpect(status().isBadRequest());
     }
 
+    /** Verify that an invalid region value returns HTTP 400. */
     @Test
     void getRankedInfo_invalidRegion_returnsBadRequest() throws Exception {
         mockMvc.perform(get("/api/ranked")

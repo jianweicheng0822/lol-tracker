@@ -1,4 +1,9 @@
-/** Performance summary panel — donut win rate, KDA summary, and recent champion stats. */
+/**
+ * @file StatsBar.tsx
+ * @description Render a performance summary panel with a donut win-rate chart, KDA breakdown,
+ *   and top-3 recent champion stats. Used in the Overview tab for at-a-glance performance.
+ * @module frontend.components
+ */
 import { useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
 import type { PlayerStats, MatchSummary } from "../types";
@@ -9,7 +14,6 @@ type StatsBarProps = {
   matches?: MatchSummary[];
 };
 
-// --- Champion performance aggregation ---
 type ChampionPerf = {
   championName: string;
   games: number;
@@ -19,6 +23,12 @@ type ChampionPerf = {
   assists: number;
 };
 
+/**
+ * Aggregate match data by champion, returning the top 3 most-played champions.
+ *
+ * @param matches - Array of match summaries to aggregate.
+ * @returns Sorted array of champion performance objects (max 3).
+ */
 function aggregateChampions(matches: MatchSummary[]): ChampionPerf[] {
   const map = new Map<string, ChampionPerf>();
   for (const m of matches) {
@@ -38,7 +48,12 @@ function aggregateChampions(matches: MatchSummary[]): ChampionPerf[] {
     .slice(0, 3);
 }
 
-// --- Champion row ---
+/**
+ * Render a single champion row with icon, name, win/loss record, win rate, and KDA.
+ *
+ * @param props - The champion performance data and DDragon image base URL.
+ * @returns The champion row element.
+ */
 function ChampionRow({ champ, imgBase }: { champ: ChampionPerf; imgBase: string }) {
   const [hovered, setHovered] = useState(false);
   const wr = champ.games > 0 ? Math.round((champ.wins / champ.games) * 100) : 0;
@@ -85,6 +100,13 @@ function ChampionRow({ champ, imgBase }: { champ: ChampionPerf; imgBase: string 
   );
 }
 
+/**
+ * Render the stats bar panel containing a donut win-rate chart, KDA summary section,
+ * and top recent champions. Return null if no games have been played.
+ *
+ * @param props - Aggregated player stats and optional match list for champion breakdown.
+ * @returns The stats bar element, or null if totalGames is zero.
+ */
 export default function StatsBar({ stats, matches }: StatsBarProps) {
   const ddVersion = useDdragonVersion();
   const imgBase = ddragonBase(ddVersion);
@@ -131,7 +153,6 @@ export default function StatsBar({ stats, matches }: StatsBarProps) {
                 </Pie>
               </PieChart>
             </ResponsiveContainer>
-            {/* Center label */}
             <div style={styles.donutCenter}>
               <div style={styles.donutPercent}>{stats.winRate}%</div>
               <div style={styles.donutLabel}>Win Rate</div>
@@ -188,8 +209,6 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     gap: 24,
   },
-
-  // Left — Donut
   donutSection: {
     display: "flex",
     flexDirection: "column",
@@ -222,8 +241,6 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#546378",
     marginTop: 4,
   },
-
-  // Center — KDA
   kdaSection: {
     display: "flex",
     flexDirection: "column",
@@ -249,8 +266,6 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#7e8fa6",
     marginTop: 4,
   },
-
-  // Right — Champions
   champSection: {
     flex: 1,
     minWidth: 0,

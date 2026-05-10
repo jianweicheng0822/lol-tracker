@@ -1,3 +1,8 @@
+/**
+ * @file StatsServiceTest.java
+ * @description Unit tests for the player statistics calculation service.
+ * @module backend.test
+ */
 package com.jw.backend.service;
 
 import com.jw.backend.dto.MatchSummaryDto;
@@ -14,6 +19,10 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Validate the {@link StatsService} for computing win rate, average KDA, and
+ * handling edge cases like zero matches and perfect KDA.
+ */
 @ExtendWith(MockitoExtension.class)
 class StatsServiceTest {
 
@@ -33,6 +42,7 @@ class StatsServiceTest {
                 8005, 8200, new int[4], 0, 15000, 12000);
     }
 
+    /** Verify that stats are calculated correctly for multiple matches. */
     @Test
     void calculateStats_withMatches_returnsCorrectStats() {
         List<MatchSummaryDto> matches = List.of(
@@ -53,6 +63,7 @@ class StatsServiceTest {
         assertEquals(7.0, result.averageAssists());
     }
 
+    /** Verify that zero matches produce all-zero statistics. */
     @Test
     void calculateStats_withNoMatches_returnsZeros() {
         when(riotApiService.getRecentMatchSummaries("puuid", RiotRegion.NA, 10)).thenReturn(List.of());
@@ -65,6 +76,7 @@ class StatsServiceTest {
         assertEquals(0.0, result.averageKda());
     }
 
+    /** Verify that zero deaths produce a perfect KDA (kills + assists). */
     @Test
     void calculateStats_withZeroDeaths_returnsPerfectKda() {
         List<MatchSummaryDto> matches = List.of(match(10, 0, 5, true));

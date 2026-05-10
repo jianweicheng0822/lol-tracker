@@ -1,150 +1,104 @@
+/**
+ * @file RiotRegionTest.java
+ * @description Unit tests for the RiotRegion enum routing and platform mappings.
+ * @module backend.test
+ */
 package com.jw.backend.region;
 
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Validate that each {@link RiotRegion} enum value returns the correct routing cluster
+ * and platform identifier for Riot API requests.
+ */
 class RiotRegionTest {
 
-    // =====================================================
-    // ROUTING TESTS - Test the routing() method
-    // routing() returns: "americas", "europe", or "asia"
-    // =====================================================
-
+    /** Verify that NA routes to the americas cluster. */
     @Test
     void na_routing_returnsAmericas() {
-        // ARRANGE - Get the enum value we want to test
-        RiotRegion region = RiotRegion.NA;
-
-        // ACT - Call the method we're testing
-        String result = region.routing();
-
-        // ASSERT - Check if the result is what we expect
-        assertEquals("americas", result);
+        assertEquals("americas", RiotRegion.NA.routing());
     }
 
+    /** Verify that EUW routes to the europe cluster. */
     @Test
     void euw_routing_returnsEurope() {
-        RiotRegion region = RiotRegion.EUW;
-        String result = region.routing();
-        assertEquals("europe", result);
+        assertEquals("europe", RiotRegion.EUW.routing());
     }
 
+    /** Verify that KR routes to the asia cluster. */
     @Test
     void kr_routing_returnsAsia() {
-        RiotRegion region = RiotRegion.KR;
-        String result = region.routing();
-        assertEquals("asia", result);
+        assertEquals("asia", RiotRegion.KR.routing());
     }
 
+    /** Verify that JP routes to the asia cluster. */
     @Test
     void jp_routing_returnsAsia() {
-        // JP is in Asia region (not KR!)
-        RiotRegion region = RiotRegion.JP;
-        String result = region.routing();
-        assertEquals("asia", result);
+        assertEquals("asia", RiotRegion.JP.routing());
     }
 
+    /** Verify that BR routes to the americas cluster. */
     @Test
     void br_routing_returnsAmericas() {
-        // BR (Brazil) is in Americas region (not Asia!)
-        RiotRegion region = RiotRegion.BR;
-        String result = region.routing();
-        assertEquals("americas", result);
+        assertEquals("americas", RiotRegion.BR.routing());
     }
 
+    /** Verify that OCE routes to the americas cluster. */
     @Test
     void oce_routing_returnsAmericas() {
-        // OCE (Oceania) is routed through Americas
-        RiotRegion region = RiotRegion.OCE;
-        String result = region.routing();
-        assertEquals("americas", result);
+        assertEquals("americas", RiotRegion.OCE.routing());
     }
 
-    // =====================================================
-    // PLATFORM TESTS - Test the platform() method
-    // platform() returns: "na1", "euw1", "kr", "jp1", etc.
-    // =====================================================
-
+    /** Verify that NA returns platform "na1". */
     @Test
     void na_platform_returnsNa1() {
-        RiotRegion region = RiotRegion.NA;
-        String result = region.platform();
-        assertEquals("na1", result);
+        assertEquals("na1", RiotRegion.NA.platform());
     }
 
+    /** Verify that EUW returns platform "euw1". */
     @Test
     void euw_platform_returnsEuw1() {
-        RiotRegion region = RiotRegion.EUW;
-        String result = region.platform();
-        assertEquals("euw1", result);
+        assertEquals("euw1", RiotRegion.EUW.platform());
     }
 
+    /** Verify that KR returns platform "kr". */
     @Test
     void kr_platform_returnsKr() {
-        RiotRegion region = RiotRegion.KR;
-        String result = region.platform();
-        assertEquals("kr", result);
+        assertEquals("kr", RiotRegion.KR.platform());
     }
 
+    /** Verify that JP returns platform "jp1". */
     @Test
     void jp_platform_returnsJp1() {
-        RiotRegion region = RiotRegion.JP;
-        String result = region.platform();
-        assertEquals("jp1", result);
+        assertEquals("jp1", RiotRegion.JP.platform());
     }
 
+    /** Verify that BR returns platform "br1". */
     @Test
     void br_platform_returnsBr1() {
-        RiotRegion region = RiotRegion.BR;
-        String result = region.platform();
-        assertEquals("br1", result);
+        assertEquals("br1", RiotRegion.BR.platform());
     }
 
+    /** Verify that OCE returns platform "oc1". */
     @Test
     void oce_platform_returnsOc1() {
-        RiotRegion region = RiotRegion.OCE;
-        String result = region.platform();
-        assertEquals("oc1", result);
+        assertEquals("oc1", RiotRegion.OCE.platform());
     }
 
-    // =====================================================
-    // SAFETY TESTS - Loop through ALL regions
-    // These tests protect against future bugs.
-    // If someone adds a new region with null values,
-    // these tests will catch it!
-    // =====================================================
-
+    /** Verify that all regions have a non-null routing value. */
     @Test
     void allRegions_haveNonNullRouting() {
-        // RiotRegion.values() returns an array of ALL enum values:
-        // [NA, EUW, KR, JP, BR, OCE]
-
         for (RiotRegion region : RiotRegion.values()) {
-            // For each region, check that routing() is not null
-
-            // assertNotNull(value, message)
-            // - Fails the test if 'value' is null
-            // - 'message' explains what went wrong (shown if test fails)
-
-            assertNotNull(
-                region.routing(),                              // value to check
-                region.name() + " should have a routing value" // error message
-            );
-
-            // Example: if NA.routing() returned null, you'd see:
-            // "NA should have a routing value"
+            assertNotNull(region.routing(), region.name() + " should have a routing value");
         }
     }
 
+    /** Verify that all regions have a non-null platform value. */
     @Test
     void allRegions_haveNonNullPlatform() {
-        // Same pattern: loop through all regions
         for (RiotRegion region : RiotRegion.values()) {
-            // Check that platform() is not null for each region
-            assertNotNull(
-                region.platform(),
-                region.name() + " should have a platform value"
-            );
+            assertNotNull(region.platform(), region.name() + " should have a platform value");
         }
     }
 }

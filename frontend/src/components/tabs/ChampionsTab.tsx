@@ -1,11 +1,9 @@
 /**
- * Champions tab — grid of champion performance cards sorted by games played.
- * Each card shows: champion icon, name, games played, win rate, KDA, avg damage, and avg CS.
- *
- * Data is fetched lazily from /api/trends/champions on tab activation.
- * Uses a 2-column grid layout with color-coded stats:
- *   - Win rate: green (60%+), slate (50%+), red (<50%)
- *   - KDA: green (3+), gold (2+), red (<2)
+ * @file ChampionsTab.tsx
+ * @description Render a grid of champion performance cards sorted by games played. Each card
+ *   displays champion icon, name, games, win rate, KDA, average damage, and average CS.
+ *   Data is fetched lazily from /api/trends/champions on tab activation.
+ * @module frontend.components.tabs
  */
 import { useEffect, useState } from "react";
 import { fetchChampionStats } from "../../api";
@@ -14,13 +12,19 @@ import type { ChampionStats } from "../../types";
 
 type Props = { puuid: string };
 
+/**
+ * Render the Champions tab content with a 2-column grid of champion stat cards.
+ * Fetch data on mount and display loading/empty states as needed.
+ *
+ * @param props - The player's PUUID for fetching champion-specific stats.
+ * @returns The champions tab grid element.
+ */
 export default function ChampionsTab({ puuid }: Props) {
   const [champions, setChampions] = useState<ChampionStats[]>([]);
   const [loading, setLoading] = useState(true);
   const ddVersion = useDdragonVersion();
-  const imgBase = ddragonBase(ddVersion); // Base URL for DDragon champion icons
+  const imgBase = ddragonBase(ddVersion);
 
-  // Lazy fetch — only loads when the Champions tab is first activated
   useEffect(() => {
     let cancelled = false;
     fetchChampionStats(puuid)
@@ -42,16 +46,12 @@ export default function ChampionsTab({ puuid }: Props) {
   return (
     <div style={styles.grid}>
       {champions.map((c) => {
-        // Color-code win rate: green for high, slate for average, red for low
         const wrColor = c.winRate >= 60 ? "#4ade80" : c.winRate >= 50 ? "#94a3b8" : "#f87171";
-        // Color-code KDA: green for excellent, gold for decent, red for poor
         const kdaColor = c.avgKda >= 3 ? "#3a9e72" : c.avgKda >= 2 ? "#c9981a" : "#b05050";
 
         return (
           <div key={c.championName} style={styles.card}>
-            {/* Champion header — circular icon with name and game count */}
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
-              {/* Champion portrait from DDragon CDN */}
               <img
                 src={championIconUrl(c.championName, imgBase)}
                 width={40}
@@ -64,7 +64,6 @@ export default function ChampionsTab({ puuid }: Props) {
                 <div style={{ fontSize: 11, color: "#7e8fa6" }}>{c.games} games</div>
               </div>
             </div>
-            {/* Stat row — evenly spaced metrics across the card width */}
             <div style={styles.statsRow}>
               <div style={{ textAlign: "center" }}>
                 <div style={{ fontSize: 16, fontWeight: 700, color: wrColor }}>{c.winRate}%</div>

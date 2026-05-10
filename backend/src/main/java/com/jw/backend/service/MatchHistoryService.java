@@ -1,3 +1,8 @@
+/**
+ * @file MatchHistoryService.java
+ * @description Service for persisting and querying local match history records.
+ * @module backend.service
+ */
 package com.jw.backend.service;
 
 import com.jw.backend.dto.ChampionStatsDto;
@@ -11,30 +16,37 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 /**
- * Service for persisting match records and computing aggregated stats.
+ * Local persistence layer that decouples analytics queries from live Riot API calls.
  *
- * Match data is saved to the database as it flows through the match summary endpoint,
- * building up a historical record. This service then queries that data to produce:
- * - Champion-level aggregations (win rate, KDA, damage per champion)
- * - Per-match trend data points (chronological stats for performance charts)
+ * <p>Match records are stored as they are fetched through the match summary endpoint,
+ * enabling trend charts and champion statistics without additional API consumption.</p>
  */
 @Service
 public class MatchHistoryService {
 
     private final MatchRecordRepository matchRecordRepository;
 
+    /**
+     * Construct the service with the match record repository.
+     *
+     * @param matchRecordRepository JPA repository for match record persistence
+     */
     public MatchHistoryService(MatchRecordRepository matchRecordRepository) {
         this.matchRecordRepository = matchRecordRepository;
     }
 
     /**
-     * Saves match summaries to the database, skipping any that already exist.
-     * Called automatically by MatchController after fetching summaries from the Riot API.
-     * Uses existsByPuuidAndMatchId to avoid duplicate inserts on repeated page loads.
+     * Persist match summaries as local records, skipping duplicates.
+     *
+     * <p>Uses an existence check on (puuid, matchId) to achieve idempotent upsert
+     * semantics — Riot match IDs are globally unique so conflicts indicate replays.</p>
+     *
+     * @param puuid     the player's unique identifier
+     * @param region    the Riot region string
+     * @param summaries list of match summaries fetched from the Riot API
      */
     public void persistMatchRecords(String puuid, String region, List<MatchSummaryDto> summaries) {
         for (MatchSummaryDto s : summaries) {
-            // Skip if this match is already recorded for this player
             if (!matchRecordRepository.existsByPuuidAndMatchId(puuid, s.matchId())) {
                 MatchRecord r = new MatchRecord();
                 r.setPuuid(puuid);
@@ -60,14 +72,18 @@ public class MatchHistoryService {
     }
 
     /**
-     * Aggregates all recorded matches by champion for the Champions tab.
-     * Groups matches by championName, computes averages, and returns sorted by games played (most played first).
-     * All numeric values are pre-rounded for direct frontend display.
+     * Compute per-champion aggregate statistics from stored match records.
+     *
+     * <p>Aggregation is performed in-memory, which is acceptable for datasets
+     * under ~10k records per player. Results are sorted by games played descending
+     * to surface the player's most-played champions first.</p>
+     *
+     * @param puuid the player's unique identifier
+     * @return list of champion statistics sorted by total games descending
      */
     public List<ChampionStatsDto> getChampionStats(String puuid) {
         List<MatchRecord> records = matchRecordRepository.findByPuuidOrderByGameEndTimestampDesc(puuid);
 
-        // Group all matches by champion name for per-champion aggregation
         Map<String, List<MatchRecord>> byChampion = records.stream()
                 .collect(Collectors.groupingBy(MatchRecord::getChampionName));
 
@@ -81,10 +97,8 @@ public class MatchHistoryService {
                     double avgKills = games.stream().mapToInt(MatchRecord::getKills).average().orElse(0);
                     double avgDeaths = games.stream().mapToInt(MatchRecord::getDeaths).average().orElse(0);
                     double avgAssists = games.stream().mapToInt(MatchRecord::getAssists).average().orElse(0);
-                    // KDA = (K+A)/D; perfect KDA (0 deaths) just sums kills and assists
                     double avgKda = avgDeaths == 0 ? avgKills + avgAssists : (avgKills + avgAssists) / avgDeaths;
                     double avgDamage = games.stream().mapToInt(MatchRecord::getTotalDamageDealtToChampions).average().orElse(0);
-                    // Total CS = lane minions + jungle monsters
                     double avgCs = games.stream().mapToInt(g -> g.getTotalMinionsKilled() + g.getNeutralMinionsKilled()).average().orElse(0);
 
                     return new ChampionStatsDto(name, total, wins,
@@ -96,20 +110,21 @@ public class MatchHistoryService {
                             Math.round(avgDamage),
                             Math.round(avgCs * 10) / 10.0);
                 })
-                // Sort by most played champion first
                 .sorted(Comparator.comparingInt(ChampionStatsDto::games).reversed())
                 .toList();
     }
 
     /**
-     * Returns per-match data points in chronological order (oldest first) for trend charts.
-     * Each point contains KDA, damage, gold, CS, and win/loss for one game.
-     * The frontend uses this to render KDA trend, damage/game, and rolling win rate charts.
+     * Retrieve match trend data points in chronological order for chart rendering.
+     *
+     * <p>Returns oldest-first ordering since the frontend renders left-to-right time axes.</p>
+     *
+     * @param puuid the player's unique identifier
+     * @return time-ordered list of match performance data points
      */
     public List<MatchTrendPointDto> getMatchTrends(String puuid) {
         List<MatchRecord> records = matchRecordRepository.findByPuuidOrderByGameEndTimestampDesc(puuid);
 
-        // Reverse to chronological order (oldest → newest) so chart X-axis reads left-to-right
         List<MatchRecord> chronological = new ArrayList<>(records);
         Collections.reverse(chronological);
 

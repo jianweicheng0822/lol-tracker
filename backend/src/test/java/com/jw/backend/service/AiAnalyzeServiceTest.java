@@ -1,3 +1,8 @@
+/**
+ * @file AiAnalyzeServiceTest.java
+ * @description Unit tests for the AI analysis service internal methods.
+ * @module backend.test
+ */
 package com.jw.backend.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -11,6 +16,10 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+/**
+ * Validate the {@link AiAnalyzeService} internal helper methods including OpenAI message
+ * construction, streaming token extraction, and system prompt generation.
+ */
 class AiAnalyzeServiceTest {
 
     private final ObjectMapper objectMapper = new ObjectMapper();
@@ -19,10 +28,7 @@ class AiAnalyzeServiceTest {
         return new AiAnalyzeService("fake-api-key", objectMapper);
     }
 
-    // =====================================================
-    // buildOpenAiMessages (via reflection)
-    // =====================================================
-
+    /** Verify that buildOpenAiMessages produces a system message and user messages. */
     @Test
     void buildOpenAiMessages_containsSystemAndUserMessages() throws Exception {
         AiAnalyzeService service = createService();
@@ -50,6 +56,7 @@ class AiAnalyzeServiceTest {
         assertEquals("How did I do?", messages.get(1).get("content"));
     }
 
+    /** Verify that null messages result in only a system message being built. */
     @Test
     void buildOpenAiMessages_withNullMessages_onlyHasSystem() throws Exception {
         AiAnalyzeService service = createService();
@@ -70,10 +77,7 @@ class AiAnalyzeServiceTest {
         assertEquals("system", messages.get(0).get("role"));
     }
 
-    // =====================================================
-    // extractTokenFromChunk (via reflection)
-    // =====================================================
-
+    /** Verify that a valid streaming chunk yields the content token. */
     @Test
     void extractTokenFromChunk_withValidChunk_returnsContent() throws Exception {
         AiAnalyzeService service = createService();
@@ -89,6 +93,7 @@ class AiAnalyzeServiceTest {
         assertEquals("Hello", result);
     }
 
+    /** Verify that a chunk with no content field returns null. */
     @Test
     void extractTokenFromChunk_withMissingContent_returnsNull() throws Exception {
         AiAnalyzeService service = createService();
@@ -104,6 +109,7 @@ class AiAnalyzeServiceTest {
         assertNull(result);
     }
 
+    /** Verify that invalid JSON input returns null without throwing. */
     @Test
     void extractTokenFromChunk_withInvalidJson_returnsNull() throws Exception {
         AiAnalyzeService service = createService();
@@ -115,10 +121,7 @@ class AiAnalyzeServiceTest {
         assertNull(result);
     }
 
-    // =====================================================
-    // buildSystemPrompt (via reflection)
-    // =====================================================
-
+    /** Verify that the system prompt contains the game context and champion name. */
     @Test
     void buildSystemPrompt_containsMatchData() throws Exception {
         AiAnalyzeService service = createService();

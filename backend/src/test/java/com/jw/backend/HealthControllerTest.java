@@ -1,3 +1,8 @@
+/**
+ * @file HealthControllerTest.java
+ * @description Unit tests for the application health check endpoint.
+ * @module backend.test
+ */
 package com.jw.backend;
 
 import org.junit.jupiter.api.Test;
@@ -11,6 +16,10 @@ import com.jw.backend.security.JwtUtil;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
+/**
+ * Validate that the {@link HealthController} returns an HTTP 200 "ok" response
+ * to confirm application liveness.
+ */
 @WebMvcTest(HealthController.class)
 @AutoConfigureMockMvc(addFilters = false)
 class HealthControllerTest {
@@ -21,6 +30,7 @@ class HealthControllerTest {
     @MockitoBean
     private JwtUtil jwtUtil;
 
+    /** Verify that the /health endpoint returns HTTP 200 with body "ok". */
     @Test
     void health_returnsOk() throws Exception {
         mockMvc.perform(get("/health"))

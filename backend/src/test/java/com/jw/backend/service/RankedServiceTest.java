@@ -1,3 +1,8 @@
+/**
+ * @file RankedServiceTest.java
+ * @description Unit tests for the ranked service JSON parsing and error handling.
+ * @module backend.test
+ */
 package com.jw.backend.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -14,6 +19,10 @@ import java.util.List;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+/**
+ * Validate the {@link RankedService} for parsing Riot API ranked entry JSON,
+ * handling empty arrays, and throwing on malformed input.
+ */
 @ExtendWith(MockitoExtension.class)
 class RankedServiceTest {
 
@@ -27,6 +36,7 @@ class RankedServiceTest {
         rankedService = new RankedService(riotApiService, new ObjectMapper());
     }
 
+    /** Verify that valid ranked JSON is parsed into correctly populated DTOs. */
     @Test
     void getRankedInfo_parsesJsonCorrectly() {
         String json = """
@@ -48,6 +58,7 @@ class RankedServiceTest {
         assertEquals(80, result.get(0).losses());
     }
 
+    /** Verify that an empty JSON array returns an empty list. */
     @Test
     void getRankedInfo_withEmptyArray_returnsEmptyList() {
         when(riotApiService.getRankedEntriesByPuuid("puuid", RiotRegion.NA)).thenReturn("[]");
@@ -57,6 +68,7 @@ class RankedServiceTest {
         assertTrue(result.isEmpty());
     }
 
+    /** Verify that invalid JSON throws a RuntimeException. */
     @Test
     void getRankedInfo_withInvalidJson_throwsException() {
         when(riotApiService.getRankedEntriesByPuuid("puuid", RiotRegion.NA)).thenReturn("not json");

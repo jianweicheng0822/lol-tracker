@@ -1,3 +1,9 @@
+/**
+ * @file SearchBar.tsx
+ * @description Render the summoner search form with region selector, game name input, tag input,
+ *   and search button. Navigate to the player profile page on submission.
+ * @module frontend.components
+ */
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Region } from "../types";
@@ -10,6 +16,13 @@ type SearchBarProps = {
   initialTag?: string;
 };
 
+/**
+ * Render a search bar for looking up summoners by Riot ID (game name + tag) and region.
+ * Navigate to the player profile route on valid submission.
+ *
+ * @param props - Optional compact mode flag and initial field values for pre-population.
+ * @returns The search bar form element.
+ */
 export default function SearchBar({ compact, initialRegion, initialGameName, initialTag }: SearchBarProps) {
   const navigate = useNavigate();
   const [region, setRegion] = useState<Region>(initialRegion || "NA");

@@ -1,19 +1,33 @@
+/**
+ * @file ChampionStatsDto.java
+ * @description DTO for pre-aggregated per-champion performance statistics.
+ * @module backend.dto
+ */
 package com.jw.backend.dto;
 
 /**
- * Aggregated performance stats for a single champion across all recorded matches.
- * Returned by GET /api/trends/champions for the Champions tab grid.
- * Values are pre-rounded server-side for direct display (e.g., avgKda to 2 decimals).
+ * Aggregated statistics for a single champion across multiple games.
+ *
+ * @param championName the champion's display name
+ * @param games        total number of games played
+ * @param wins         total wins
+ * @param winRate      win percentage (0-100 scale)
+ * @param avgKills     average kills per game
+ * @param avgDeaths    average deaths per game
+ * @param avgAssists   average assists per game
+ * @param avgKda       average KDA ratio
+ * @param avgDamage    average damage dealt to champions per game
+ * @param avgCs        average combined CS (minions + neutral monsters) per game
  */
 public record ChampionStatsDto(
-        String championName,   // Champion internal name (e.g., "Ahri") — used as DDragon icon key
-        int games,             // Total games played on this champion
-        int wins,              // Total wins
-        double winRate,        // Win rate percentage (0–100), rounded to 1 decimal
-        double avgKills,       // Average kills per game
-        double avgDeaths,      // Average deaths per game
-        double avgAssists,     // Average assists per game
-        double avgKda,         // Average KDA ratio ((K+A)/D), rounded to 2 decimals
-        double avgDamage,      // Average damage to champions per game
-        double avgCs           // Average CS (minions + jungle monsters) per game
+        String championName,
+        int games,
+        int wins,
+        double winRate,
+        double avgKills,
+        double avgDeaths,
+        double avgAssists,
+        double avgKda,
+        double avgDamage,
+        double avgCs
 ) {}

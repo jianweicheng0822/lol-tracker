@@ -1,3 +1,8 @@
+/**
+ * @file AiAnalyzeService.java
+ * @description Service that integrates with the OpenAI API to provide AI-powered match analysis.
+ * @module backend.service
+ */
 package com.jw.backend.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -16,14 +21,10 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Handles AI-powered match analysis by proxying requests to the OpenAI Chat Completions API.
+ * Orchestrate AI-powered match analysis by communicating with the OpenAI Chat Completions API.
  *
- * Architecture: Frontend → Backend → OpenAI
- * The API key is injected server-side via environment variable and never exposed to the client.
- * The backend constructs the system prompt from structured match data, so the frontend
- * only sends raw stats — no prompt engineering happens on the client.
- *
- * Supports both streaming (SSE via Flux) and synchronous responses.
+ * <p>Supports both synchronous single-response and streaming (SSE) modes. Match data
+ * is injected into the system prompt to provide the LLM with full game context.</p>
  */
 @Service
 public class AiAnalyzeService {
@@ -36,6 +37,12 @@ public class AiAnalyzeService {
     private final WebClient webClient;
     private final ObjectMapper objectMapper;
 
+    /**
+     * Initialize the service with the OpenAI API key and JSON mapper.
+     *
+     * @param apiKey       OpenAI API key injected from application properties
+     * @param objectMapper Jackson mapper for JSON serialization/deserialization
+     */
     public AiAnalyzeService(
             @Value("${openai.api-key}") String apiKey,
             ObjectMapper objectMapper
@@ -48,9 +55,13 @@ public class AiAnalyzeService {
     }
 
     /**
-     * Streams AI analysis tokens back as a Flux for real-time rendering.
-     * Uses OpenAI's streaming mode (stream: true) and parses SSE chunks
-     * to extract individual content tokens from choices[0].delta.content.
+     * Stream AI analysis tokens as they are generated for real-time display.
+     *
+     * <p>Uses OpenAI's streaming mode to emit partial responses. The "[DONE]" sentinel
+     * from OpenAI is filtered out before tokens are forwarded to the client.</p>
+     *
+     * @param request the chat request containing match data and conversation history
+     * @return reactive flux of text tokens; emits an error message on failure
      */
     public Flux<String> analyzeStream(AiChatRequest request) {
         Map<String, Object> body = Map.of(
@@ -71,6 +82,12 @@ public class AiAnalyzeService {
                 .onErrorResume(e -> Flux.just("[Error: Unable to generate analysis. Please try again.]"));
     }
 
+    /**
+     * Perform a synchronous (blocking) AI analysis and return the complete response.
+     *
+     * @param request the chat request containing match data and conversation history
+     * @return structured response with the AI reply, model identifier, and token usage
+     */
     public AiChatResponse analyze(AiChatRequest request) {
         Map<String, Object> body = Map.of(
                 "model", MODEL,
@@ -97,7 +114,12 @@ public class AiAnalyzeService {
         }
     }
 
-    /** Extracts the content token from a single SSE JSON chunk, or null if no content is present. */
+    /**
+     * Extract the content token from a streaming SSE chunk.
+     *
+     * @param chunk raw JSON string from the OpenAI streaming response
+     * @return the text content delta, or null if the chunk contains no content
+     */
     private String extractTokenFromChunk(String chunk) {
         try {
             JsonNode delta = objectMapper.readTree(chunk)
@@ -109,9 +131,10 @@ public class AiAnalyzeService {
     }
 
     /**
-     * Builds the OpenAI message array: system prompt (with match data) + conversation history.
-     * The system prompt is constructed server-side to keep prompt engineering off the client
-     * and to prevent prompt injection via the frontend.
+     * Build the OpenAI messages array with match context injected into the system prompt.
+     *
+     * @param request the chat request containing match data and user messages
+     * @return ordered list of role/content message maps for the OpenAI API
      */
     private List<Map<String, String>> buildOpenAiMessages(AiChatRequest request) {
         List<Map<String, String>> messages = new ArrayList<>();
@@ -126,7 +149,15 @@ public class AiAnalyzeService {
         return messages;
     }
 
-    /** Serializes match data into the system prompt so the AI has full game context. */
+    /**
+     * Construct the system prompt that frames the AI as a League coaching assistant.
+     *
+     * <p>Match data is serialized as JSON and appended to the prompt so the model
+     * has full game context for generating specific, actionable advice.</p>
+     *
+     * @param matchData structured match performance data to analyze
+     * @return complete system prompt string
+     */
     private String buildSystemPrompt(AiChatRequest.MatchData matchData) {
         String matchJson;
         try {

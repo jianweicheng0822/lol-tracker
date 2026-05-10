@@ -1,3 +1,8 @@
+/**
+ * @file SecurityConfig.java
+ * @description Spring Security configuration with JWT authentication and CORS settings.
+ * @module backend.security
+ */
 package com.jw.backend.security;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +21,14 @@ import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import java.util.List;
 
+/**
+ * Configure Spring Security for stateless JWT-based authentication.
+ *
+ * <p>All endpoints are publicly accessible (permitAll) with optional JWT authentication.
+ * The JWT filter populates the SecurityContext when a valid token is present, enabling
+ * controllers to access the authenticated principal for subscription tier enforcement.
+ * CORS is configured here alongside auth to keep access control centralized.</p>
+ */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -23,12 +36,25 @@ public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
     private final String allowedOrigin;
 
+    /**
+     * Construct the configuration with required dependencies.
+     *
+     * @param jwtAuthFilter  the JWT authentication filter
+     * @param allowedOrigin  CORS allowed origin from properties (defaults to localhost:5173)
+     */
     public SecurityConfig(JwtAuthFilter jwtAuthFilter,
                           @Value("${cors.allowed-origin:http://localhost:5173}") String allowedOrigin) {
         this.jwtAuthFilter = jwtAuthFilter;
         this.allowedOrigin = allowedOrigin;
     }
 
+    /**
+     * Define the security filter chain with stateless session management and JWT filter.
+     *
+     * @param http the HttpSecurity builder
+     * @return the configured security filter chain
+     * @throws Exception if configuration fails
+     */
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
@@ -41,6 +67,11 @@ public class SecurityConfig {
         return http.build();
     }
 
+    /**
+     * Configure CORS to allow requests from the frontend origin.
+     *
+     * @return the CORS configuration source
+     */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
@@ -54,6 +85,11 @@ public class SecurityConfig {
         return source;
     }
 
+    /**
+     * Provide a BCrypt password encoder for credential hashing.
+     *
+     * @return BCrypt password encoder instance
+     */
     @Bean
     public PasswordEncoder passwordEncoder() {
         return new BCryptPasswordEncoder();

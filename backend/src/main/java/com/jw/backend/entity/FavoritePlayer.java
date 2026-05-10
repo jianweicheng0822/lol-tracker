@@ -1,26 +1,24 @@
+/**
+ * @file FavoritePlayer.java
+ * @description JPA entity representing a player saved to the user's favorites list.
+ * @module backend.entity
+ */
 package com.jw.backend.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 /**
- * Entity class that maps to the "favorite_players" database table.
- * Each instance represents one saved favorite player.
+ * Persistent entity for a favorited player, keyed by PUUID for stability across name changes.
  */
 @Entity
 @Table(name = "favorite_players")
 public class FavoritePlayer {
 
-    // =====================================================
-    // Primary Key - auto-generated unique ID
-    // =====================================================
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // =====================================================
-    // Player Information
-    // =====================================================
     @Column(nullable = false)
     private String puuid;
 
@@ -33,21 +31,21 @@ public class FavoritePlayer {
     @Column(nullable = false)
     private String region;
 
-    // =====================================================
-    // Metadata
-    // =====================================================
     @Column(nullable = false)
     private LocalDateTime savedAt;
 
-    // =====================================================
-    // Constructors
-    // =====================================================
-
-    // Default constructor (required by JPA)
+    /** Default constructor for JPA. */
     public FavoritePlayer() {
     }
 
-    // Constructor for creating new favorites
+    /**
+     * Construct a new favorite player entry with the current timestamp.
+     *
+     * @param puuid    the player's globally unique identifier
+     * @param gameName the player's display name
+     * @param tagLine  the player's tag line
+     * @param region   the Riot platform region
+     */
     public FavoritePlayer(String puuid, String gameName, String tagLine, String region) {
         this.puuid = puuid;
         this.gameName = gameName;
@@ -55,10 +53,6 @@ public class FavoritePlayer {
         this.region = region;
         this.savedAt = LocalDateTime.now();
     }
-
-    // =====================================================
-    // Getters and Setters
-    // =====================================================
 
     public Long getId() {
         return id;

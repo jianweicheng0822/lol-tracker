@@ -1,7 +1,18 @@
+/**
+ * @file AppUser.java
+ * @description JPA entity representing an application user with subscription tier.
+ * @module backend.entity
+ */
 package com.jw.backend.entity;
 
 import jakarta.persistence.*;
 
+/**
+ * Persistent user entity storing authentication credentials and subscription state.
+ *
+ * <p>The tier field maps to feature gates: 0 = FREE, 1 = PRO.
+ * Anonymous users are represented by transient (non-persisted) instances.</p>
+ */
 @Entity
 @Table(name = "app_users")
 public class AppUser {
@@ -18,17 +29,31 @@ public class AppUser {
 
     private String password;
 
+    /** Subscription tier: 0 = FREE, 1 = PRO. Maps to feature gates in SubscriptionService. */
     @Column(nullable = false)
-    private Integer tier = 0; // 0 = FREE, 1 = PRO
+    private Integer tier = 0;
 
+    /** Default constructor for JPA and transient anonymous user instances. */
     public AppUser() {
     }
 
+    /**
+     * Construct a session-based anonymous user.
+     *
+     * @param sessionId unique session identifier
+     */
     public AppUser(String sessionId) {
         this.sessionId = sessionId;
         this.tier = 0;
     }
 
+    /**
+     * Construct an authenticated user with credentials.
+     *
+     * @param username the user's login name
+     * @param password BCrypt-hashed password
+     * @param isAuth   flag distinguishing this constructor from the session-based one
+     */
     public AppUser(String username, String password, boolean isAuth) {
         this.username = username;
         this.password = password;

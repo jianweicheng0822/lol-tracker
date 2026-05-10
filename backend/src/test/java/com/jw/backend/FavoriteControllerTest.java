@@ -1,3 +1,8 @@
+/**
+ * @file FavoriteControllerTest.java
+ * @description Unit tests for the favorite players controller CRUD endpoints.
+ * @module backend.test
+ */
 package com.jw.backend;
 
 import com.jw.backend.entity.FavoritePlayer;
@@ -18,8 +23,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 /**
- * Unit tests for FavoriteController.
- * Tests all CRUD operations for favorite players.
+ * Validate the {@link FavoriteController} for listing, adding, removing, and
+ * checking favorite players, including error handling for duplicates and missing fields.
  */
 @WebMvcTest(FavoriteController.class)
 @AutoConfigureMockMvc(addFilters = false)
@@ -31,17 +36,12 @@ class FavoriteControllerTest {
     @MockitoBean
     private JwtUtil jwtUtil;
 
-    // Mock the service - we don't want to use a real database in tests
     @MockitoBean
     private FavoritePlayerService favoriteService;
 
-    // =====================================================
-    // GET /api/favorites - Get all favorites
-    // =====================================================
-
+    /** Verify that GET /api/favorites returns all saved favorites. */
     @Test
     void getAllFavorites_returnsListOfFavorites() throws Exception {
-        // ARRANGE - Create fake favorites
         FavoritePlayer fav1 = new FavoritePlayer("puuid-1", "Faker", "KR1", "KR");
         fav1.setId(1L);
         FavoritePlayer fav2 = new FavoritePlayer("puuid-2", "Doublelift", "NA1", "NA");
@@ -49,7 +49,6 @@ class FavoriteControllerTest {
 
         when(favoriteService.getAllFavorites()).thenReturn(List.of(fav1, fav2));
 
-        // ACT & ASSERT
         mockMvc.perform(get("/api/favorites"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.length()").value(2))
@@ -59,24 +58,19 @@ class FavoriteControllerTest {
             .andExpect(jsonPath("$[1].tagLine").value("NA1"));
     }
 
+    /** Verify that GET /api/favorites returns an empty list when no favorites exist. */
     @Test
     void getAllFavorites_whenEmpty_returnsEmptyList() throws Exception {
-        // ARRANGE
         when(favoriteService.getAllFavorites()).thenReturn(List.of());
 
-        // ACT & ASSERT
         mockMvc.perform(get("/api/favorites"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.length()").value(0));
     }
 
-    // =====================================================
-    // POST /api/favorites - Add a favorite
-    // =====================================================
-
+    /** Verify that POST /api/favorites with valid data returns the created favorite. */
     @Test
     void addFavorite_withValidData_returnsCreatedFavorite() throws Exception {
-        // ARRANGE
         FavoritePlayer saved = new FavoritePlayer("puuid-123", "Faker", "KR1", "KR");
         saved.setId(1L);
 
@@ -92,7 +86,6 @@ class FavoriteControllerTest {
             }
             """;
 
-        // ACT & ASSERT
         mockMvc.perform(post("/api/favorites")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody))
@@ -103,9 +96,9 @@ class FavoriteControllerTest {
             .andExpect(jsonPath("$.region").value("KR"));
     }
 
+    /** Verify that adding a duplicate favorite returns HTTP 400 with an error message. */
     @Test
     void addFavorite_whenAlreadyExists_returnsBadRequest() throws Exception {
-        // ARRANGE - Service returns null when player already exists
         when(favoriteService.addFavorite(anyString(), anyString(), anyString(), anyString()))
             .thenReturn(null);
 
@@ -118,7 +111,6 @@ class FavoriteControllerTest {
             }
             """;
 
-        // ACT & ASSERT
         mockMvc.perform(post("/api/favorites")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody))
@@ -126,9 +118,9 @@ class FavoriteControllerTest {
             .andExpect(jsonPath("$.error").value("Player is already in favorites"));
     }
 
+    /** Verify that adding a favorite with missing required fields returns HTTP 400. */
     @Test
     void addFavorite_withMissingFields_returnsBadRequest() throws Exception {
-        // ARRANGE - Missing gameName
         String requestBody = """
             {
                 "puuid": "puuid-123",
@@ -137,7 +129,6 @@ class FavoriteControllerTest {
             }
             """;
 
-        // ACT & ASSERT
         mockMvc.perform(post("/api/favorites")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody))
@@ -145,67 +136,50 @@ class FavoriteControllerTest {
             .andExpect(jsonPath("$.error").exists());
     }
 
-    // =====================================================
-    // DELETE /api/favorites/{puuid} - Remove a favorite
-    // =====================================================
-
+    /** Verify that deleting an existing favorite returns HTTP 200. */
     @Test
     void removeFavorite_whenExists_returnsOk() throws Exception {
-        // ARRANGE
         when(favoriteService.removeFavorite("puuid-123")).thenReturn(true);
 
-        // ACT & ASSERT
         mockMvc.perform(delete("/api/favorites/puuid-123"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.message").value("Removed from favorites"));
 
-        // Verify service was called
         verify(favoriteService, times(1)).removeFavorite("puuid-123");
     }
 
+    /** Verify that deleting a non-existent favorite returns HTTP 404. */
     @Test
     void removeFavorite_whenNotFound_returnsNotFound() throws Exception {
-        // ARRANGE
         when(favoriteService.removeFavorite("puuid-not-found")).thenReturn(false);
 
-        // ACT & ASSERT
         mockMvc.perform(delete("/api/favorites/puuid-not-found"))
             .andExpect(status().isNotFound());
     }
 
-    // =====================================================
-    // GET /api/favorites/check/{puuid} - Check if favorite
-    // =====================================================
-
+    /** Verify that checking a favorited player returns isFavorite true. */
     @Test
     void checkFavorite_whenIsFavorite_returnsTrue() throws Exception {
-        // ARRANGE
         when(favoriteService.isFavorite("puuid-123")).thenReturn(true);
 
-        // ACT & ASSERT
         mockMvc.perform(get("/api/favorites/check/puuid-123"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.isFavorite").value(true));
     }
 
+    /** Verify that checking a non-favorited player returns isFavorite false. */
     @Test
     void checkFavorite_whenNotFavorite_returnsFalse() throws Exception {
-        // ARRANGE
         when(favoriteService.isFavorite("puuid-456")).thenReturn(false);
 
-        // ACT & ASSERT
         mockMvc.perform(get("/api/favorites/check/puuid-456"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.isFavorite").value(false));
     }
 
-    // =====================================================
-    // Verify service interactions
-    // =====================================================
-
+    /** Verify that the service is invoked with the exact parameters from the request body. */
     @Test
     void addFavorite_callsServiceWithCorrectParameters() throws Exception {
-        // ARRANGE
         FavoritePlayer saved = new FavoritePlayer("test-puuid", "TestPlayer", "TAG", "NA");
         saved.setId(1L);
         when(favoriteService.addFavorite(anyString(), anyString(), anyString(), anyString()))
@@ -220,12 +194,10 @@ class FavoriteControllerTest {
             }
             """;
 
-        // ACT
         mockMvc.perform(post("/api/favorites")
             .contentType(MediaType.APPLICATION_JSON)
             .content(requestBody));
 
-        // ASSERT - Verify service was called with correct params
         verify(favoriteService, times(1))
             .addFavorite("test-puuid",   "TestPlayer", "TAG", "NA");
     }

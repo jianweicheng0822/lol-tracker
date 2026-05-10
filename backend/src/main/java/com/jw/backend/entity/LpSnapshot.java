@@ -1,51 +1,53 @@
+/**
+ * @file LpSnapshot.java
+ * @description JPA entity representing a point-in-time LP (League Points) snapshot.
+ * @module backend.entity
+ */
 package com.jw.backend.entity;
 
 import jakarta.persistence.*;
 
 /**
- * JPA entity representing a point-in-time snapshot of a player's LP (League Points).
- * Persisted to the "lp_snapshots" table for LP progression charts.
+ * Immutable snapshot of a player's ranked standing at a specific moment.
  *
- * A new snapshot is saved only when the player's rank/LP changes compared to the
- * most recent snapshot, avoiding duplicate entries for unchanged ranks.
+ * <p>The capturedAt field uses epoch milliseconds to match Riot's timestamp format,
+ * enabling consistent time-axis rendering alongside match timestamps.</p>
  */
 @Entity
 @Table(name = "lp_snapshots")
 public class LpSnapshot {
 
-    // =====================================================
-    // Primary Key
-    // =====================================================
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // =====================================================
-    // Player and queue identification
-    // =====================================================
     @Column(nullable = false)
-    private String puuid;       // Riot universal player identifier
+    private String puuid;
 
     @Column(nullable = false)
-    private String queueType;   // Queue type string (e.g., "RANKED_SOLO_5x5", "RANKED_FLEX_SR")
-
-    // =====================================================
-    // Rank data at the time of capture
-    // =====================================================
-    @Column(nullable = false)
-    private String tier;         // Rank tier (e.g., "GOLD", "PLATINUM", "DIAMOND")
+    private String queueType;
 
     @Column(nullable = false)
-    private String rankDivision; // Division within tier (e.g., "I", "II", "III", "IV")
+    private String tier;
 
-    private int leaguePoints;    // LP within the current division (0–100 for non-apex tiers)
+    @Column(nullable = false)
+    private String rankDivision;
 
-    private long capturedAt;     // Epoch ms — when this snapshot was taken
+    private int leaguePoints;
+    private long capturedAt;
 
-    // Default constructor required by JPA
+    /** Default constructor for JPA. */
     public LpSnapshot() {}
 
-    /** Creates a new snapshot with capturedAt set to the current time. */
+    /**
+     * Construct a new LP snapshot with the current system time.
+     *
+     * @param puuid        the player's unique identifier
+     * @param queueType    the ranked queue (e.g., "RANKED_SOLO_5x5")
+     * @param tier         the player's tier (e.g., "GOLD")
+     * @param rankDivision the division within the tier (e.g., "II")
+     * @param leaguePoints current LP within the division
+     */
     public LpSnapshot(String puuid, String queueType, String tier, String rankDivision, int leaguePoints) {
         this.puuid = puuid;
         this.queueType = queueType;
@@ -54,8 +56,6 @@ public class LpSnapshot {
         this.leaguePoints = leaguePoints;
         this.capturedAt = System.currentTimeMillis();
     }
-
-    // --- Getters and Setters ---
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

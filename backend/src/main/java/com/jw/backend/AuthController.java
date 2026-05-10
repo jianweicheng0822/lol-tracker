@@ -1,3 +1,8 @@
+/**
+ * @file AuthController.java
+ * @description REST controller handling user registration and login with JWT authentication.
+ * @module backend.controller
+ */
 package com.jw.backend;
 
 import com.jw.backend.dto.AuthRequest;
@@ -16,6 +21,12 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.Map;
 import java.util.Optional;
 
+/**
+ * Handle user authentication flows including registration and credential-based login.
+ *
+ * <p>Passwords are stored as BCrypt hashes. Successful authentication returns a signed
+ * JWT token that clients include in subsequent requests via the Authorization header.</p>
+ */
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -24,12 +35,25 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
 
+    /**
+     * Construct the controller with required authentication dependencies.
+     *
+     * @param appUserRepository repository for user persistence operations
+     * @param passwordEncoder   encoder for hashing and verifying passwords
+     * @param jwtUtil           utility for generating signed JWT tokens
+     */
     public AuthController(AppUserRepository appUserRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
         this.appUserRepository = appUserRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
     }
 
+    /**
+     * Register a new user account and return a JWT token upon success.
+     *
+     * @param request contains username and password credentials
+     * @return 201 with JWT token on success, 400 for invalid input, or 409 if username exists
+     */
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody AuthRequest request) {
         if (request.username() == null || request.username().isBlank()
@@ -49,6 +73,12 @@ public class AuthController {
         return ResponseEntity.status(HttpStatus.CREATED).body(new AuthResponse(token, user.getTier()));
     }
 
+    /**
+     * Authenticate an existing user and return a JWT token upon valid credentials.
+     *
+     * @param request contains username and password credentials
+     * @return 200 with JWT token on success, 400 for invalid input, or 401 for bad credentials
+     */
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest request) {
         if (request.username() == null || request.username().isBlank()

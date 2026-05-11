@@ -208,8 +208,8 @@ cd backend
 
 | Suite | Count | Database | Docker required |
 |-------|-------|----------|-----------------|
-| Unit tests | 158 | H2 in-memory | No |
-| Integration tests | 12 | PostgreSQL (Testcontainers) | Yes |
+| Unit tests | 157 | H2 in-memory | No |
+| Integration tests | 11 | PostgreSQL (Testcontainers) | Yes |
 
 Unit tests use H2 with `ddl-auto=create-drop` and Flyway disabled. Integration tests use Testcontainers to spin up a real PostgreSQL container and run Flyway migrations, validating the full stack end-to-end.
 

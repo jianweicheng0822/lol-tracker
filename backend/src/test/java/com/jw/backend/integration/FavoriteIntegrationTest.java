@@ -15,7 +15,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  * Validate the complete add/check/list/remove lifecycle for favorite players
  * against a real PostgreSQL database.
  */
-class FavoriteIntegrationTest extends BaseIntegrationSupport {
+class
+FavoriteIntegrationTest extends BaseIntegrationSupport {
 
     /** Verify the full CRUD round-trip: list, add, check, list again, delete, and verify removal. */
     @Test

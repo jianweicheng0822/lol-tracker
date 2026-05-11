@@ -38,6 +38,7 @@ data/
 # =====================================================
 # Frontend (Node/npm)
 # =====================================================
+node_modules/
 frontend/node_modules/
 frontend/dist/
 frontend/.cache/

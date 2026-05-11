@@ -13,7 +13,7 @@ Full-stack League of Legends analytics dashboard with AI-powered match coaching.
 
 ## Demo
 
-**Live Demo:** [http://54.170.131.128](http://54.170.131.128)
+**Live Demo:** [http://3.84.122.22](http://3.84.122.22)
 
 ## Screenshots
 

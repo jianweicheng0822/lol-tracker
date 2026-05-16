@@ -50,3 +50,12 @@ frontend/.cache/
 build/
 dist/
 out/node_modules/
+
+# =====================================================
+# Resume (personal, do not upload)
+# =====================================================
+resume.tex
+resume.pdf
+resume.aux
+resume.log
+resume.out

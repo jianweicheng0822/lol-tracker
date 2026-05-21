@@ -63,7 +63,7 @@ class SubscriptionControllerTest {
     /** Verify that the upgrade endpoint sets the user tier to PRO and invokes the service. */
     @Test
     void upgrade_returnsProTier() throws Exception {
-        mockMvc.perform(get("/api/upgrade"))
+        mockMvc.perform(post("/api/upgrade"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.tier").value(1));
 

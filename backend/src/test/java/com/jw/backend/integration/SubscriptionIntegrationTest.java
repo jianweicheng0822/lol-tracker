@@ -47,7 +47,7 @@ class SubscriptionIntegrationTest extends BaseIntegrationSupport {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.tier").value(0));
 
-        mockMvc.perform(get("/api/upgrade")
+        mockMvc.perform(post("/api/upgrade")
                 .header("Authorization", "Bearer " + token))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.tier").value(1));

@@ -312,7 +312,7 @@ export async function fetchTier(): Promise<{ tier: number }> {
  * @returns An object containing the new numeric tier value.
  */
 export async function upgradeTier(): Promise<{ tier: number }> {
-  const res = await fetch(`${BASE}/api/upgrade`, fetchOpts());
+  const res = await fetch(`${BASE}/api/upgrade`, { ...fetchOpts(), method: "POST" });
   if (!res.ok) throw new Error(await readErrorMessage(res));
   return res.json();
 }

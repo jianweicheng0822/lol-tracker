@@ -194,7 +194,7 @@ Interactive Swagger UI is available at `/swagger-ui.html` when the app is runnin
 | AI | POST | `/api/analyze` | AI match analysis (sync, PRO only) |
 | | POST | `/api/analyze/stream` | AI match analysis (SSE streaming, PRO only) |
 | Subscription | GET | `/api/tier` | Get current user's subscription tier |
-| | GET | `/api/upgrade` | Upgrade current user to PRO |
+| | POST | `/api/upgrade` | Upgrade current user to PRO |
 | Health | GET | `/health` | Health check |
 
 ## Testing

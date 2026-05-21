@@ -8,6 +8,7 @@ package com.jw.backend;
 import com.jw.backend.entity.AppUser;
 import com.jw.backend.service.SubscriptionService;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -57,7 +58,7 @@ public class SubscriptionController {
      * @param principal authenticated user principal; may be null for anonymous users
      * @return map confirming the new tier value (1 = PRO)
      */
-    @GetMapping("/upgrade")
+    @PostMapping("/upgrade")
     public Map<String, Integer> upgrade(Principal principal) {
         String username = principal != null ? principal.getName() : null;
         subscriptionService.upgrade(username);

@@ -15,6 +15,8 @@ Full-stack League of Legends analytics dashboard with AI-powered match coaching.
 
 **Live Demo:** [http://3.84.122.22](http://3.84.122.22)
 
+> **Note:** The demo runs on an AWS EC2 instance and may be unavailable if the instance is stopped.
+
 ## Screenshots
 
 | Home | Overview |
@@ -87,6 +89,7 @@ graph TB
 | PostgreSQL | Production relational database |
 | Flyway | Database schema migrations |
 | Spring WebFlux | WebClient for OpenAI streaming |
+| Lombok | Reduces boilerplate in entities and DTOs |
 | Springdoc OpenAPI | Swagger UI + API documentation |
 | Testcontainers | Integration tests with real PostgreSQL |
 | JaCoCo | Code coverage enforcement (70% minimum) |
@@ -96,7 +99,7 @@ graph TB
 |------------|---------|
 | React / TypeScript | UI framework with type safety |
 | Vite | Dev server and bundler |
-| React Router | Client-side routing |
+| React Router DOM | Client-side routing |
 | Recharts | Trend charts |
 
 ### External APIs
@@ -125,14 +128,14 @@ docker compose up --build
 
 ### Prerequisites
 - Java 21+
-- Node.js 18+
+- Node.js 20+
 - PostgreSQL 16+
 - [Riot API Key](https://developer.riotgames.com)
 - [OpenAI API Key](https://platform.openai.com/api-keys)
 
 ### Environment Variables
 
-Create a `backend/.env` file (or set env vars):
+Create a `backend/.env` file (or set env vars). The backend uses [spring-dotenv](https://github.com/paulschwarz/spring-dotenv) to load `.env` files automatically. For Docker Compose, the root `.env` file is used instead (see Quick Start above).
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
@@ -199,7 +202,7 @@ Interactive Swagger UI is available at `/swagger-ui.html` when the app is runnin
 ```bash
 cd backend
 
-# Unit tests only (H2 in-memory, no Docker needed)
+# Unit tests only (MockMvc with mocked services, no Docker needed)
 ./mvnw test
 
 # Unit + integration tests (requires Docker for Testcontainers)
@@ -208,10 +211,12 @@ cd backend
 
 | Suite | Count | Database | Docker required |
 |-------|-------|----------|-----------------|
-| Unit tests | 157 | H2 in-memory | No |
+| Unit tests | 157 | None (mocked) | No |
 | Integration tests | 11 | PostgreSQL (Testcontainers) | Yes |
 
-Unit tests use H2 with `ddl-auto=create-drop` and Flyway disabled. Integration tests use Testcontainers to spin up a real PostgreSQL container and run Flyway migrations, validating the full stack end-to-end.
+Unit tests use `@WebMvcTest` with MockMvc and mocked service layers — no database is involved. Integration tests use Testcontainers to spin up a real PostgreSQL container and run Flyway migrations, validating the full stack end-to-end.
+
+> **Note:** Frontend tests are not yet implemented. The backend provides full coverage via the suites above.
 
 ## Database
 
@@ -260,6 +265,7 @@ lol-tracker/
 ├── backend/
 │   ├── src/main/java/com/jw/backend/
 │   │   ├── *Controller.java    # REST endpoints (Javadoc on all public methods)
+│   │   ├── SpaForwardingController.java  # Forwards non-API routes to React SPA
 │   │   ├── security/           # JWT filter, SecurityConfig, JwtUtil
 │   │   ├── config/             # OpenApiConfig (Swagger/OpenAPI)
 │   │   ├── service/            # Business logic layer
@@ -273,7 +279,7 @@ lol-tracker/
 │   │   └── db/migration/       # Flyway SQL migrations
 │   └── src/test/
 │       ├── java/.../integration/  # Testcontainers integration tests
-│       └── resources/             # H2 test config
+│       └── resources/             # Test config (Flyway disabled, mocked keys)
 └── frontend/
     └── src/
         ├── api.ts              # JWT token management + API client

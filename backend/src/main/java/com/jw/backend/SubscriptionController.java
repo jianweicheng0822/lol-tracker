@@ -7,6 +7,8 @@ package com.jw.backend;
 
 import com.jw.backend.entity.AppUser;
 import com.jw.backend.service.SubscriptionService;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -55,13 +57,15 @@ public class SubscriptionController {
      * <p>In the current implementation this is a simple toggle; payment integration
      * would gate this endpoint in a production deployment.</p>
      *
-     * @param principal authenticated user principal; may be null for anonymous users
-     * @return map confirming the new tier value (1 = PRO)
+     * @param principal authenticated user principal; returns 401 if null
+     * @return map confirming the new tier value (1 = PRO), or 401 if not authenticated
      */
     @PostMapping("/upgrade")
-    public Map<String, Integer> upgrade(Principal principal) {
-        String username = principal != null ? principal.getName() : null;
-        subscriptionService.upgrade(username);
-        return Map.of("tier", 1);
+    public ResponseEntity<Map<String, Integer>> upgrade(Principal principal) {
+        if (principal == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        subscriptionService.upgrade(principal.getName());
+        return ResponseEntity.ok(Map.of("tier", 1));
     }
 }

@@ -16,7 +16,7 @@ import PerformanceTab from "../components/tabs/PerformanceTab";
 import ChampionsTab from "../components/tabs/ChampionsTab";
 import MatchHistoryTab from "../components/tabs/MatchHistoryTab";
 import { useTabNavigation } from "../hooks/useTabNavigation";
-import { fetchAccount, fetchMatchSummaries, fetchStats, fetchRanked, checkIsFavorite, addFavorite, removeFavorite, fetchTier, upgradeTier } from "../api";
+import { fetchAccount, fetchMatchSummaries, fetchStats, fetchRanked, checkIsFavorite, addFavorite, removeFavorite, fetchTier, upgradeTier, getAuthToken } from "../api";
 import type { Region, Account, MatchSummary, PlayerStats, RankedEntry } from "../types";
 
 export default function PlayerPage() {
@@ -177,9 +177,13 @@ export default function PlayerPage() {
                 {tier === 0 && (
                   <div style={styles.upgradeBanner}>
                     FREE tier: 20 matches max, no AI analysis.{" "}
-                    <button style={styles.upgradeBtn} onClick={async () => { const d = await upgradeTier(); setTier(d.tier); }}>
-                      Upgrade to PRO
-                    </button>
+                    {getAuthToken() ? (
+                      <button style={styles.upgradeBtn} onClick={async () => { const d = await upgradeTier(); setTier(d.tier); }}>
+                        Upgrade to PRO
+                      </button>
+                    ) : (
+                      <span style={{ fontSize: 13 }}>Log in to upgrade.</span>
+                    )}
                   </div>
                 )}
                 <MatchHistoryTab

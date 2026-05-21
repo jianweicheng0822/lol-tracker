@@ -60,13 +60,12 @@ class SubscriptionControllerTest {
             .andExpect(jsonPath("$.tier").value(1));
     }
 
-    /** Verify that the upgrade endpoint sets the user tier to PRO and invokes the service. */
+    /** Verify that the upgrade endpoint returns 401 for anonymous users. */
     @Test
-    void upgrade_returnsProTier() throws Exception {
+    void upgrade_returnsUnauthorizedForAnonymous() throws Exception {
         mockMvc.perform(post("/api/upgrade"))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.tier").value(1));
+            .andExpect(status().isUnauthorized());
 
-        verify(subscriptionService).upgrade(any());
+        verify(subscriptionService, never()).upgrade(any());
     }
 }

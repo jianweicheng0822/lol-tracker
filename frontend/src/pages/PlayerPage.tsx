@@ -9,6 +9,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import SearchBar from "../components/SearchBar";
+import AuthModal from "../components/AuthModal";
 import ProfileHeader from "../components/ProfileHeader";
 import TabBar from "../components/TabBar";
 import OverviewTab from "../components/tabs/OverviewTab";
@@ -16,7 +17,7 @@ import PerformanceTab from "../components/tabs/PerformanceTab";
 import ChampionsTab from "../components/tabs/ChampionsTab";
 import MatchHistoryTab from "../components/tabs/MatchHistoryTab";
 import { useTabNavigation } from "../hooks/useTabNavigation";
-import { fetchAccount, fetchMatchSummaries, fetchStats, fetchRanked, checkIsFavorite, addFavorite, removeFavorite, fetchTier, upgradeTier, getAuthToken } from "../api";
+import { fetchAccount, fetchMatchSummaries, fetchStats, fetchRanked, checkIsFavorite, addFavorite, removeFavorite, fetchTier, upgradeTier, getAuthToken, setAuthToken } from "../api";
 import type { Region, Account, MatchSummary, PlayerStats, RankedEntry } from "../types";
 
 export default function PlayerPage() {
@@ -33,6 +34,8 @@ export default function PlayerPage() {
   const [tier, setTier] = useState(0);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+
+  const [showAuthModal, setShowAuthModal] = useState(false);
 
   const [status, setStatus] = useState<"loading" | "error" | "done">("loading");
   const [errorMsg, setErrorMsg] = useState("");
@@ -136,7 +139,31 @@ export default function PlayerPage() {
           initialGameName={decodeURIComponent(gameName || "")}
           initialTag={decodeURIComponent(tag || "")}
         />
+        <div style={{ marginLeft: "auto", flexShrink: 0 }}>
+          {getAuthToken() ? (
+            <button
+              onClick={() => { setAuthToken(null); setTier(0); }}
+              style={styles.authBtn}
+            >
+              Log out
+            </button>
+          ) : (
+            <button onClick={() => setShowAuthModal(true)} style={styles.authBtn}>
+              Log in
+            </button>
+          )}
+        </div>
       </div>
+
+      {showAuthModal && (
+        <AuthModal
+          onSuccess={async () => {
+            const d = await fetchTier().catch(() => ({ tier: 0 }));
+            setTier(d.tier);
+          }}
+          onClose={() => setShowAuthModal(false)}
+        />
+      )}
 
       {/* Content */}
       <div style={styles.content}>
@@ -182,7 +209,9 @@ export default function PlayerPage() {
                         Upgrade to PRO
                       </button>
                     ) : (
-                      <span style={{ fontSize: 13 }}>Log in to upgrade.</span>
+                      <button style={{ ...styles.upgradeBtn, background: "#4f46e5" }} onClick={() => setShowAuthModal(true)}>
+                        Log in to upgrade
+                      </button>
                     )}
                   </div>
                 )}
@@ -260,6 +289,16 @@ const styles: Record<string, React.CSSProperties> = {
     background: "#3b82f6",
     color: "#fff",
     border: "none",
+    borderRadius: 6,
+    padding: "6px 14px",
+    cursor: "pointer",
+    fontWeight: 600,
+    fontSize: 13,
+  },
+  authBtn: {
+    background: "transparent",
+    color: "#94a3b8",
+    border: "1px solid #334155",
     borderRadius: 6,
     padding: "6px 14px",
     cursor: "pointer",

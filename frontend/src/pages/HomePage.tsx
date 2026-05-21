@@ -64,6 +64,7 @@ export default function HomePage() {
 
 const styles: Record<string, React.CSSProperties> = {
   page: {
+    position: "relative",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",

@@ -133,13 +133,15 @@ export default function PlayerPage() {
       {/* Top bar with search */}
       <div style={styles.topBar}>
         <span style={styles.logo} onClick={() => window.location.href = "/"}>LoL Tracker</span>
-        <SearchBar
-          compact
-          initialRegion={region as Region}
-          initialGameName={decodeURIComponent(gameName || "")}
-          initialTag={decodeURIComponent(tag || "")}
-        />
-        <div style={{ marginLeft: "auto", flexShrink: 0 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <SearchBar
+            compact
+            initialRegion={region as Region}
+            initialGameName={decodeURIComponent(gameName || "")}
+            initialTag={decodeURIComponent(tag || "")}
+          />
+        </div>
+        <div style={{ flexShrink: 0 }}>
           {getAuthToken() ? (
             <button
               onClick={() => { setAuthToken(null); setTier(0); }}

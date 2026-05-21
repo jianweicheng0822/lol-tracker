@@ -1,77 +1,69 @@
-/**
- * @file RiotApiService.java
- * @description Service client for the Riot Games API with in-memory response caching.
- * @module backend.service
- */
 package com.jw.backend.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import com.jw.backend.region.RiotRegion;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Centralized Riot API client that caches responses in-memory to respect rate limits.
+ * Riot Games API client with Redis-backed response caching.
  *
- * <p>Riot enforces 20 req/s and 100 req/2min limits per API key. This service applies
- * per-endpoint TTL caching to minimize redundant calls. Match detail fetches are
- * parallelized via a fixed thread pool for improved latency on batch operations.</p>
+ * <p>Riot enforces strict rate limits (20 req/s, 100 req/2min per key). To stay within
+ * budget and keep response times low, every API call is cached in Redis with a
+ * per-endpoint TTL tuned to how often the underlying data actually changes:</p>
  *
- * <p>The simple TTL cache is sufficient for single-instance deployments. Swap for Redis
- * or similar if the application scales horizontally.</p>
+ * <ul>
+ *   <li>Account lookups — 24h (PUUIDs don't change)</li>
+ *   <li>Match IDs list — 30s (new games appear frequently)</li>
+ *   <li>Match details — 10min (immutable once the game ends)</li>
+ *   <li>Summoner/Ranked — 30min (changes infrequently)</li>
+ * </ul>
+ *
+ * <p>Using Redis (vs. in-process caching) means the cache survives container restarts
+ * and is shared across horizontal replicas — important for production on EC2.</p>
+ *
+ * <p>If Redis is temporarily unreachable, cache operations degrade gracefully to a
+ * cache-miss (we hit Riot directly) rather than failing the request.</p>
  */
 @Service
 public class RiotApiService {
 
+    private static final Logger log = LoggerFactory.getLogger(RiotApiService.class);
+
     private final String apiKey;
     private final ObjectMapper objectMapper;
+    private final StringRedisTemplate redisTemplate;
 
+    // Pools RestClient instances per base URL to reuse HTTP connections
     private final ConcurrentHashMap<String, RestClient> clientCache = new ConcurrentHashMap<>();
 
-    /**
-     * Initialize the service with the Riot API key and JSON mapper.
-     *
-     * @param apiKey       Riot Games API key from application properties
-     * @param objectMapper Jackson mapper for JSON parsing
-     */
-    public RiotApiService(@Value("${riot.api.key}") String apiKey, ObjectMapper objectMapper) {
+    public RiotApiService(@Value("${riot.api.key}") String apiKey,
+                          ObjectMapper objectMapper,
+                          StringRedisTemplate redisTemplate) {
         this.apiKey = apiKey;
         this.objectMapper = objectMapper;
+        this.redisTemplate = redisTemplate;
     }
 
-    /**
-     * Retrieve or create a RestClient for the given base URL.
-     *
-     * <p>Clients are cached to reuse underlying connection pools.</p>
-     *
-     * @param baseUrl the Riot API regional base URL
-     * @return a configured RestClient instance
-     */
     private RestClient getClient(String baseUrl) {
         return clientCache.computeIfAbsent(baseUrl, url ->
                 RestClient.builder().baseUrl(url).build());
     }
 
-    /**
-     * Look up a Riot account by game name and tag line via Account-v1.
-     *
-     * <p>Uses the routing region (americas/europe/asia). Account data is stable,
-     * so a 24-hour TTL is applied.</p>
-     *
-     * @param gameName the player's game name
-     * @param tagLine  the player's tag line
-     * @param region   the Riot region configuration
-     * @return raw JSON response from Account-v1
-     */
+    /** Account-v1 lookup. 24h TTL — PUUIDs and Riot IDs are effectively permanent. */
     public String getAccountByRiotId(String gameName, String tagLine, RiotRegion region) {
         long ttlMs = 24L * 60 * 60 * 1000;
 
@@ -91,29 +83,11 @@ public class RiotApiService {
         return result;
     }
 
-    /**
-     * Retrieve recent match IDs for a player via Match-v5.
-     *
-     * <p>Short 30-second TTL since new games appear frequently.</p>
-     *
-     * @param puuid  the player's unique identifier
-     * @param region the Riot region configuration
-     * @param count  number of match IDs to retrieve
-     * @return raw JSON array of match ID strings
-     */
+    /** Match-v5 IDs. 30s TTL — new games can appear any time. */
     public String getRecentMatchIds(String puuid, RiotRegion region, int count) {
         return getRecentMatchIds(puuid, region, count, 0);
     }
 
-    /**
-     * Retrieve recent match IDs with pagination offset via Match-v5.
-     *
-     * @param puuid  the player's unique identifier
-     * @param region the Riot region configuration
-     * @param count  number of match IDs to retrieve
-     * @param start  pagination offset index
-     * @return raw JSON array of match ID strings
-     */
     public String getRecentMatchIds(String puuid, RiotRegion region, int count, int start) {
         long ttlMs = 30_000;
 
@@ -133,15 +107,7 @@ public class RiotApiService {
         return result;
     }
 
-    /**
-     * Retrieve full match detail JSON via Match-v5.
-     *
-     * <p>Match data is immutable once completed; a conservative 10-minute TTL is used.</p>
-     *
-     * @param matchId the Riot match identifier (e.g., "NA1_4567890123")
-     * @param region  the Riot region configuration
-     * @return raw JSON match detail payload
-     */
+    /** Match-v5 detail. 10min TTL — match data is immutable once the game ends. */
     public String getMatchDetail(String matchId, RiotRegion region) {
         long ttlMs = 10L * 60 * 1000;
 
@@ -161,77 +127,28 @@ public class RiotApiService {
         return result;
     }
 
-    // -------------------------------------------------------------------------
-    // In-memory TTL cache
-    // -------------------------------------------------------------------------
+    // --- Redis cache-aside helpers ---
+    // On Redis failure, we log and degrade to a cache miss (hit Riot directly).
+    // This keeps the app functional even if Redis goes down temporarily.
 
-    /**
-     * Simple TTL cache entry holding a value and its expiration timestamp.
-     */
-    private static final class CacheEntry {
-        private final String value;
-        private final long expiresAtMs;
-
-        private CacheEntry(String value, long expiresAtMs) {
-            this.value = value;
-            this.expiresAtMs = expiresAtMs;
-        }
-
-        private boolean isExpired(long nowMs) {
-            return nowMs >= expiresAtMs;
-        }
-    }
-
-    private final ConcurrentHashMap<String, CacheEntry> cache = new ConcurrentHashMap<>();
-
-    /**
-     * Retrieve a cached value if present and not expired.
-     *
-     * @param key the cache key
-     * @return the cached value, or null if absent or expired
-     */
     private String getCached(String key) {
-        CacheEntry entry = cache.get(key);
-        if (entry == null) return null;
-
-        long now = System.currentTimeMillis();
-        if (entry.isExpired(now)) {
-            cache.remove(key);
+        try {
+            return redisTemplate.opsForValue().get(key);
+        } catch (Exception e) {
+            log.warn("Redis GET failed for key [{}], treating as cache miss", key, e);
             return null;
         }
-        return entry.value;
     }
 
-    /**
-     * Store a value in the cache with the specified TTL.
-     *
-     * <p>Performs lazy eviction of expired entries when the cache exceeds 1000 entries
-     * to prevent unbounded memory growth.</p>
-     *
-     * @param key    the cache key
-     * @param value  the value to cache
-     * @param ttlMs  time-to-live in milliseconds
-     */
     private void putCached(String key, String value, long ttlMs) {
-        if (cache.size() > 1000) {
-            long now = System.currentTimeMillis();
-            cache.entrySet().removeIf(e -> e.getValue().isExpired(now));
+        try {
+            redisTemplate.opsForValue().set(key, value, Duration.ofMillis(ttlMs));
+        } catch (Exception e) {
+            log.warn("Redis SET failed for key [{}], response will not be cached", key, e);
         }
-
-        long expiresAt = System.currentTimeMillis() + ttlMs;
-        cache.put(key, new CacheEntry(value, expiresAt));
     }
 
-    /**
-     * Retrieve summoner profile data by PUUID via Summoner-v4.
-     *
-     * <p>Uses the platform region (e.g., na1) rather than the routing region.
-     * A 30-minute TTL balances freshness with rate limit conservation.</p>
-     *
-     * @param puuid  the player's unique identifier
-     * @param region the Riot region configuration
-     * @return raw JSON response from Summoner-v4
-     */
+    /** Summoner-v4. 30min TTL — profile data changes infrequently. */
     public String getSummonerByPuuid(String puuid, RiotRegion region) {
         long ttlMs = 30L * 60 * 1000;
 
@@ -251,13 +168,7 @@ public class RiotApiService {
         return result;
     }
 
-    /**
-     * Retrieve ranked league entries for a player via League-v4.
-     *
-     * @param puuid  the player's unique identifier
-     * @param region the Riot region configuration
-     * @return raw JSON array of ranked entries
-     */
+    /** League-v4 ranked entries. 30min TTL — same rationale as summoner data. */
     public String getRankedEntriesByPuuid(String puuid, RiotRegion region) {
         long ttlMs = 30L * 60 * 1000;
 
@@ -279,31 +190,13 @@ public class RiotApiService {
 
     private final Executor riotExecutor = Executors.newFixedThreadPool(6);
 
-    /**
-     * Retrieve match summaries for a player's recent games (no pagination offset).
-     *
-     * @param puuid  the player's unique identifier
-     * @param region the Riot region configuration
-     * @param count  number of matches to retrieve
-     * @return list of parsed match summary DTOs
-     */
     public List<com.jw.backend.dto.MatchSummaryDto> getRecentMatchSummaries(String puuid, RiotRegion region, int count) {
         return getRecentMatchSummaries(puuid, region, count, 0);
     }
 
     /**
-     * Retrieve match summaries with parallel detail fetching for improved latency.
-     *
-     * <p>Match IDs are fetched first, then individual match details are retrieved
-     * concurrently using a fixed thread pool. Each detail response is extracted
-     * into the requesting player's perspective.</p>
-     *
-     * @param puuid  the player's unique identifier
-     * @param region the Riot region configuration
-     * @param count  number of matches to retrieve
-     * @param start  pagination offset index
-     * @return list of parsed match summary DTOs
-     * @throws RuntimeException if match ID JSON parsing fails
+     * Fetches match IDs, then fans out detail requests in parallel (6 threads) to
+     * keep latency reasonable when loading a page of 10-20 matches at once.
      */
     public List<com.jw.backend.dto.MatchSummaryDto> getRecentMatchSummaries(String puuid, RiotRegion region, int count, int start) {
         String idsJson = getRecentMatchIds(puuid, region, Math.max(count, 1), start);
@@ -331,16 +224,8 @@ public class RiotApiService {
     }
 
     /**
-     * Parse a full match detail JSON into a structured DTO with team groupings.
-     *
-     * <p>Maps Riot's flat participant array into teams with objectives data,
-     * and extracts detailed per-participant statistics including runes, items,
-     * and vision metrics.</p>
-     *
-     * @param detailJson raw JSON match detail from Match-v5
-     * @param matchId    the match identifier for error reporting
-     * @return fully structured match detail DTO
-     * @throws RuntimeException if JSON parsing fails
+     * Transforms the raw Match-v5 JSON blob into our structured DTO, grouping
+     * participants by team and extracting objectives, runes, items, and vision stats.
      */
     public com.jw.backend.dto.MatchDetailDto extractFullMatchDetail(String detailJson, String matchId) {
         try {
@@ -451,16 +336,8 @@ public class RiotApiService {
     }
 
     /**
-     * Extract a single player's perspective from a 10-player match detail payload.
-     *
-     * <p>Locates the requesting player by PUUID within the participants array, then
-     * partitions remaining participants into allies and enemies based on team ID.</p>
-     *
-     * @param detailJson raw JSON match detail from Match-v5
-     * @param puuid      the requesting player's unique identifier
-     * @param matchId    the match identifier for error reporting
-     * @return match summary from the player's perspective
-     * @throws RuntimeException if JSON parsing fails
+     * Extracts a single player's perspective from a full 10-player match payload,
+     * splitting participants into allies vs. enemies based on team ID.
      */
     private com.jw.backend.dto.MatchSummaryDto extractSummaryFromMatchDetail(String detailJson, String puuid, String matchId) {
         try {

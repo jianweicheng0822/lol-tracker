@@ -116,6 +116,21 @@ jobs:
               done
             fi
 
+            # --- Start Redis if not already running ---
+            if ! docker ps --format '{{.Names}}' | grep -q '^lol-redis$'; then
+              docker rm -f lol-redis 2>/dev/null || true
+              docker run -d \
+                --name lol-redis \
+                --network lol-net \
+                --restart unless-stopped \
+                redis:7-alpine
+              echo "Waiting for Redis..."
+              for i in $(seq 1 15); do
+                docker exec lol-redis redis-cli ping >/dev/null 2>&1 && break
+                sleep 1
+              done
+            fi
+
             # --- Stop & remove old app container ---
             docker stop lol-tracker 2>/dev/null || true
             docker rm lol-tracker 2>/dev/null || true
@@ -136,6 +151,7 @@ jobs:
               -e "DB_NAME=${DB_NAME:-lol_tracker}" \
               -e "DB_USER=${DB_USER:-postgres}" \
               -e "DB_PASSWORD=$DB_PASSWORD" \
+              -e "REDIS_HOST=lol-redis" \
               -e "JWT_SECRET=$JWT_SECRET" \
               "$IMAGE"
 

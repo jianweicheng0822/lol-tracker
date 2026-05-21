@@ -5,6 +5,7 @@
 ![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=flat&logo=postgresql&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-DC382D?style=flat&logo=redis&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![AWS](https://img.shields.io/badge/AWS_EC2-FF9900?style=flat&logo=amazonec2&logoColor=white)
 [![codecov](https://codecov.io/gh/jianweicheng0822/lol-tracker/graph/badge.svg)](https://codecov.io/gh/jianweicheng0822/lol-tracker)
@@ -61,6 +62,7 @@ graph TB
 
     subgraph Data
         DB[("PostgreSQL<br/>Flyway migrations")]
+        Redis[("Redis<br/>API response cache")]
     end
 
     subgraph External
@@ -72,6 +74,7 @@ graph TB
     Browser -->|"REST (JSON) + SSE"| Security
     Security --> API
     API --> DB
+    API -->|"Cache-aside reads"| Redis
     API -->|"Account / Match / Ranked"| Riot
     API -->|"Streaming analysis"| OpenAI
     Browser -->|"Icons & assets"| DDragon
@@ -87,6 +90,7 @@ graph TB
 | Spring Security + JWT | Stateless authentication (jjwt) |
 | Spring Data JPA | Database access (repositories) |
 | PostgreSQL | Production relational database |
+| Redis 7 | Distributed cache for Riot API responses (cache-aside, per-endpoint TTLs) |
 | Flyway | Database schema migrations |
 | Spring WebFlux | WebClient for OpenAI streaming |
 | Lombok | Reduces boilerplate in entities and DTOs |
@@ -116,7 +120,7 @@ git clone https://github.com/jianweicheng0822/lol-tracker.git
 cd lol-tracker
 cp .env.example .env   # Edit .env with your API keys
 
-# 2. Start PostgreSQL + app
+# 2. Start PostgreSQL + Redis + app
 docker compose up --build
 
 # 3. Open the app and API docs
@@ -142,6 +146,7 @@ Create a `backend/.env` file (or set env vars). The backend uses [spring-dotenv]
 | `RIOT_API_KEY` | Yes | — | Riot Games API key |
 | `OPENAI_API_KEY` | Yes | — | OpenAI API key for AI analysis |
 | `JWT_SECRET` | Yes | dev default | Secret for signing JWTs (min 32 chars) |
+| `REDIS_HOST` | No | `localhost` | Redis host (used for Riot API response caching) |
 | `DB_HOST` | No | `localhost` | PostgreSQL host |
 | `DB_PORT` | No | `5432` | PostgreSQL port |
 | `DB_NAME` | No | `lol_tracker` | PostgreSQL database name |
@@ -152,10 +157,11 @@ Create a `backend/.env` file (or set env vars). The backend uses [spring-dotenv]
 ### Running Locally
 
 ```bash
-# Start PostgreSQL (via Docker or local install)
+# Start PostgreSQL and Redis (via Docker or local install)
 docker run -d --name lol-pg -p 5432:5432 \
   -e POSTGRES_DB=lol_tracker -e POSTGRES_PASSWORD=postgres \
   postgres:16-alpine
+docker run -d --name lol-redis -p 6379:6379 redis:7-alpine
 
 # Backend — starts at http://localhost:8080
 cd backend
@@ -211,7 +217,7 @@ cd backend
 
 | Suite | Count | Database | Docker required |
 |-------|-------|----------|-----------------|
-| Unit tests | 157 | None (mocked) | No |
+| Unit tests | 156 | None (mocked) | No |
 | Integration tests | 11 | PostgreSQL (Testcontainers) | Yes |
 
 Unit tests use `@WebMvcTest` with MockMvc and mocked service layers — no database is involved. Integration tests use Testcontainers to spin up a real PostgreSQL container and run Flyway migrations, validating the full stack end-to-end.
@@ -244,6 +250,7 @@ docker run -p 8080:8080 \
   -e DB_NAME=lol_tracker \
   -e DB_USER=postgres \
   -e DB_PASSWORD=your-password \
+  -e REDIS_HOST=your-redis-host \
   lol-tracker
 ```
 
@@ -253,13 +260,13 @@ Automated via GitHub Actions (`.github/workflows/ci-cd.yml`):
 - **On PR to `master`** — runs lint, build, and tests
 - **On push to `master`** — builds Docker image, pushes to GHCR, deploys to EC2 via SSH
 
-Production requires a PostgreSQL instance (Docker container on EC2 or RDS).
+Production requires a PostgreSQL instance and a Redis instance (Docker containers on EC2, or managed services like RDS/ElastiCache).
 
 ## Project Structure
 
 ```
 lol-tracker/
-├── docker-compose.yml          # Local dev: PostgreSQL + app
+├── docker-compose.yml          # Local dev: PostgreSQL + Redis + app
 ├── .env.example                # Env var template
 ├── Dockerfile                  # Multi-stage build
 ├── backend/

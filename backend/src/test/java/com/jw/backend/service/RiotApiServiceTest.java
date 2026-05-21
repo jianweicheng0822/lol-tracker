@@ -1,8 +1,3 @@
-/**
- * @file RiotApiServiceTest.java
- * @description Unit tests for the Riot API service data extraction and caching logic.
- * @module backend.test
- */
 package com.jw.backend.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -10,26 +5,36 @@ import com.jw.backend.dto.MatchDetailDto;
 import com.jw.backend.dto.MatchSummaryDto;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.data.redis.core.ValueOperations;
 
 import java.lang.reflect.Method;
+import java.time.Duration;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
-
-/**
- * Validate the {@link RiotApiService} for extracting full match details, generating
- * match summaries, parsing participant data, and managing the in-memory cache.
- */
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
+@ExtendWith(MockitoExtension.class)
 class RiotApiServiceTest {
+
+    @Mock
+    private StringRedisTemplate redisTemplate;
+
+    @Mock
+    private ValueOperations<String, String> valueOperations;
 
     private RiotApiService riotApiService;
 
     @BeforeEach
     void setUp() {
-        riotApiService = new RiotApiService("fake-api-key", new ObjectMapper());
+        riotApiService = new RiotApiService("fake-api-key", new ObjectMapper(), redisTemplate);
     }
 
-    /** Verify that a full match detail JSON is parsed with all fields populated correctly. */
+    // -- Match detail parsing --
     @Test
     void extractFullMatchDetail_parsesCorrectly() {
         String json = """
@@ -149,7 +154,6 @@ class RiotApiServiceTest {
         assertTrue(p.win());
     }
 
-    /** Verify that empty teams and participants arrays are handled without error. */
     @Test
     void extractFullMatchDetail_withNoTeamsOrParticipants_handlesGracefully() {
         String json = """
@@ -172,14 +176,12 @@ class RiotApiServiceTest {
         assertTrue(result.participants().isEmpty());
     }
 
-    /** Verify that invalid JSON throws a RuntimeException. */
     @Test
     void extractFullMatchDetail_withInvalidJson_throwsException() {
         assertThrows(RuntimeException.class, () ->
             riotApiService.extractFullMatchDetail("not json", "NA1_123"));
     }
 
-    /** Verify that empty perks styles array defaults rune IDs to zero. */
     @Test
     void extractFullMatchDetail_withMinimalPerks_parsesDefaultRunes() {
         String json = """
@@ -275,7 +277,6 @@ class RiotApiServiceTest {
                            teamId == 100 ? 200 : 100, !win);
     }
 
-    /** Verify that summonerName falls back to the legacy field when riotIdGameName is absent. */
     @Test
     void extractFullMatchDetail_fallsBackToSummonerName() {
         String json = """
@@ -316,7 +317,6 @@ class RiotApiServiceTest {
         assertEquals("OldName", result.participants().get(0).summonerName());
     }
 
-    /** Verify that team bans and objectives are parsed with correct counts. */
     @Test
     void extractFullMatchDetail_withTeamBansAndObjectives() {
         String json = """
@@ -352,7 +352,6 @@ class RiotApiServiceTest {
         assertEquals(11, result.teams().get(0).objectives().towerKills());
     }
 
-    /** Verify that a single rune style (no secondary) defaults secondary to zero. */
     @Test
     void extractFullMatchDetail_withSingleRuneStyle_handlesGracefully() {
         String json = """
@@ -404,7 +403,7 @@ class RiotApiServiceTest {
         return (MatchSummaryDto) method.invoke(riotApiService, json, puuid, matchId);
     }
 
-    /** Verify that the summary extraction parses the target player data correctly. */
+    // -- Summary extraction --
     @Test
     void extractSummary_parsesPlayerCorrectly() throws Exception {
         String json = buildMatchDetailJson("my-puuid", "Ahri", 10, 2, 8, true, 100);
@@ -433,7 +432,6 @@ class RiotApiServiceTest {
         assertEquals(400, result.augments()[3]);
     }
 
-    /** Verify that allies and enemies are split by team ID correctly. */
     @Test
     void extractSummary_splitsAlliesAndEnemies() throws Exception {
         String json = buildMatchDetailJson("my-puuid", "Ahri", 10, 2, 8, true, 100);
@@ -446,7 +444,6 @@ class RiotApiServiceTest {
         assertEquals(15, result.teamTotalKills());
     }
 
-    /** Verify that a missing player returns default "Unknown" values. */
     @Test
     void extractSummary_playerNotFound_returnsDefaults() throws Exception {
         String json = buildMatchDetailJson("other-puuid", "Ahri", 10, 2, 8, true, 100);
@@ -458,69 +455,49 @@ class RiotApiServiceTest {
         assertFalse(result.win());
     }
 
-    /** Verify that invalid JSON causes an exception during summary extraction. */
     @Test
     void extractSummary_withInvalidJson_throws() {
         assertThrows(Exception.class, () ->
             invokeExtractSummary("not json", "puuid", "NA1_123"));
     }
 
-    /** Verify that cache put and get returns the stored value. */
+    // -- Redis cache delegation --
     @Test
-    void cache_putAndGet_returnsValue() throws Exception {
-        Method putMethod = RiotApiService.class.getDeclaredMethod("putCached", String.class, String.class, long.class);
-        putMethod.setAccessible(true);
+    void cache_getCached_delegatesToRedis() throws Exception {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get("test-key")).thenReturn("test-value");
+
         Method getMethod = RiotApiService.class.getDeclaredMethod("getCached", String.class);
         getMethod.setAccessible(true);
-
-        putMethod.invoke(riotApiService, "test-key", "test-value", 60000L);
         String result = (String) getMethod.invoke(riotApiService, "test-key");
+
         assertEquals("test-value", result);
+        verify(valueOperations).get("test-key");
     }
 
-    /** Verify that an expired cache entry returns null. */
-    @Test
-    void cache_expiredEntry_returnsNull() throws Exception {
-        Method putMethod = RiotApiService.class.getDeclaredMethod("putCached", String.class, String.class, long.class);
-        putMethod.setAccessible(true);
-        Method getMethod = RiotApiService.class.getDeclaredMethod("getCached", String.class);
-        getMethod.setAccessible(true);
-
-        putMethod.invoke(riotApiService, "expired-key", "value", 1L);
-        Thread.sleep(5);
-        String result = (String) getMethod.invoke(riotApiService, "expired-key");
-        assertNull(result);
-    }
-
-    /** Verify that a missing cache key returns null. */
     @Test
     void cache_missingKey_returnsNull() throws Exception {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get("nonexistent")).thenReturn(null);
+
         Method getMethod = RiotApiService.class.getDeclaredMethod("getCached", String.class);
         getMethod.setAccessible(true);
-
         String result = (String) getMethod.invoke(riotApiService, "nonexistent");
+
         assertNull(result);
     }
 
-    /** Verify that expired entries are evicted when the cache exceeds capacity. */
     @Test
-    void cache_evictsExpiredWhenOverCapacity() throws Exception {
+    void cache_putCached_delegatesToRedisWithTtl() throws Exception {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+
         Method putMethod = RiotApiService.class.getDeclaredMethod("putCached", String.class, String.class, long.class);
         putMethod.setAccessible(true);
+        putMethod.invoke(riotApiService, "test-key", "test-value", 60000L);
 
-        for (int i = 0; i < 1001; i++) {
-            putMethod.invoke(riotApiService, "key-" + i, "val", 1L);
-        }
-        Thread.sleep(5);
-
-        putMethod.invoke(riotApiService, "new-key", "new-value", 60000L);
-
-        Method getMethod = RiotApiService.class.getDeclaredMethod("getCached", String.class);
-        getMethod.setAccessible(true);
-        assertEquals("new-value", getMethod.invoke(riotApiService, "new-key"));
+        verify(valueOperations).set("test-key", "test-value", Duration.ofMillis(60000L));
     }
 
-    /** Verify that the service instance is initialized correctly. */
     @Test
     void getRecentMatchIds_withoutStart_delegatesToOverload() {
         assertNotNull(riotApiService);

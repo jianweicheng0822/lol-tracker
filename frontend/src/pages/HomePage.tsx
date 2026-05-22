@@ -4,6 +4,7 @@
  * @module frontend.pages
  */
 import { useCallback, useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import SearchBar from "../components/SearchBar";
 import AuthModal from "../components/AuthModal";
 import FavoritesList from "../components/FavoritesList";
@@ -15,7 +16,13 @@ import type { FavoritePlayer } from "../types";
  *
  * @returns the home page layout with centered search and favorites list
  */
+const DEMO_PLAYERS = [
+  { label: "LOVE3001 #lolxd", gameName: "LOVE3001", tag: "lolxd", region: "NA" },
+  { label: "EDG Viper #NA11", gameName: "EDG Viper", tag: "NA11", region: "NA" },
+] as const;
+
 export default function HomePage() {
+  const navigate = useNavigate();
   const [favorites, setFavorites] = useState<FavoritePlayer[]>([]);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [loggedIn, setLoggedIn] = useState(!!getAuthToken());
@@ -56,6 +63,19 @@ export default function HomePage() {
         <h1 style={styles.title}>LoL Tracker</h1>
         <p style={styles.subtitle}>Search for a player to view their match history</p>
         <SearchBar />
+        <div style={styles.demoBadges}>
+          {DEMO_PLAYERS.map((p) => (
+            <button
+              key={p.label}
+              style={styles.demoBadge}
+              onClick={() => navigate(`/player/${p.region}/${encodeURIComponent(p.gameName)}/${encodeURIComponent(p.tag)}`)}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#2563eb"; e.currentTarget.style.background = "#1e293b"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#334155"; e.currentTarget.style.background = "#0f172a"; }}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
         <FavoritesList favorites={favorites} onUpdate={loadFavorites} />
       </div>
     </div>
@@ -106,5 +126,23 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
     fontWeight: 600,
     fontSize: 13,
+  },
+  demoBadges: {
+    display: "flex",
+    gap: 10,
+    marginTop: 16,
+    flexWrap: "wrap",
+    justifyContent: "center",
+  },
+  demoBadge: {
+    padding: "6px 14px",
+    borderRadius: 20,
+    border: "1px solid #334155",
+    background: "#0f172a",
+    color: "#94a3b8",
+    cursor: "pointer",
+    fontSize: 13,
+    fontWeight: 500,
+    transition: "all 0.15s ease",
   },
 };

@@ -217,7 +217,7 @@ cd backend
 
 | Suite | Count | Database | Docker required |
 |-------|-------|----------|-----------------|
-| Unit tests | 156 | None (mocked) | No |
+| Unit tests | 181 | None (mocked) | No |
 | Integration tests | 11 | PostgreSQL (Testcontainers) | Yes |
 
 Unit tests use `@WebMvcTest` with MockMvc and mocked service layers — no database is involved. Integration tests use Testcontainers to spin up a real PostgreSQL container and run Flyway migrations, validating the full stack end-to-end.

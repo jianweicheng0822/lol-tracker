@@ -63,6 +63,26 @@ public class RiotApiService {
                 RestClient.builder().baseUrl(url).build());
     }
 
+    /** Account-v1 reverse lookup by PUUID. 24h TTL — same rationale as by-riot-id. */
+    public String getAccountByPuuid(String puuid, RiotRegion region) {
+        long ttlMs = 24L * 60 * 60 * 1000;
+
+        String baseUrl = "https://" + region.routing() + ".api.riotgames.com";
+        String cacheKey = "account-puuid:" + region.routing() + ":" + puuid;
+
+        String cached = getCached(cacheKey);
+        if (cached != null) return cached;
+
+        String result = getClient(baseUrl).get()
+                .uri("/riot/account/v1/accounts/by-puuid/{puuid}", puuid)
+                .header("X-Riot-Token", apiKey)
+                .retrieve()
+                .body(String.class);
+
+        putCached(cacheKey, result, ttlMs);
+        return result;
+    }
+
     /** Account-v1 lookup. 24h TTL — PUUIDs and Riot IDs are effectively permanent. */
     public String getAccountByRiotId(String gameName, String tagLine, RiotRegion region) {
         long ttlMs = 24L * 60 * 60 * 1000;

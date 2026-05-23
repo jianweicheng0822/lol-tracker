@@ -18,6 +18,7 @@ export default function App() {
     <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/player/:region/:gameName/:tag" element={<PlayerPage />} />
+      <Route path="/player/puuid/:region/:puuid" element={<PlayerPage />} />
       <Route path="/match/:region/:matchId" element={<MatchDetailPage />} />
     </Routes>
   );

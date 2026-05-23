@@ -61,22 +61,51 @@ public class SummonerController {
             @RequestParam RiotRegion region
     ) {
         try {
-            // Account-v1 lacks profileIconId; Summoner-v4 provides it via a second call.
             String accountJson = riotApiService.getAccountByRiotId(gameName, tag, region);
-            ObjectNode accountNode = (ObjectNode) objectMapper.readTree(accountJson);
-            String puuid = accountNode.path("puuid").asText();
-
-            String summonerJson = riotApiService.getSummonerByPuuid(puuid, region);
-            JsonNode summonerNode = objectMapper.readTree(summonerJson);
-            int profileIconId = summonerNode.path("profileIconId").asInt(0);
-
-            accountNode.put("profileIconId", profileIconId);
-
-            lpTrackingService.captureSnapshot(puuid, region);
-
-            return objectMapper.writeValueAsString(accountNode);
+            return enrichAccount(accountJson, region);
         } catch (Exception e) {
             throw new RuntimeException("Failed to enrich account data", e);
         }
+    }
+
+    /**
+     * Look up a summoner by PUUID and return enriched account data.
+     *
+     * <p>Resolves the PUUID to current gameName/tagLine via Account-v1, then enriches
+     * with profile icon and LP snapshot — identical response shape to the name-based endpoint.</p>
+     *
+     * @param puuid  the player's PUUID
+     * @param region the Riot platform region
+     * @return JSON string containing merged account and summoner data
+     */
+    @GetMapping("/by-puuid")
+    public String getSummonerByPuuid(
+            @RequestParam String puuid,
+            @RequestParam RiotRegion region
+    ) {
+        try {
+            String accountJson = riotApiService.getAccountByPuuid(puuid, region);
+            return enrichAccount(accountJson, region);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to enrich account data by PUUID", e);
+        }
+    }
+
+    /**
+     * Shared enrichment logic: adds profileIconId and captures an LP snapshot.
+     */
+    private String enrichAccount(String accountJson, RiotRegion region) throws Exception {
+        ObjectNode accountNode = (ObjectNode) objectMapper.readTree(accountJson);
+        String puuid = accountNode.path("puuid").asText();
+
+        String summonerJson = riotApiService.getSummonerByPuuid(puuid, region);
+        JsonNode summonerNode = objectMapper.readTree(summonerJson);
+        int profileIconId = summonerNode.path("profileIconId").asInt(0);
+
+        accountNode.put("profileIconId", profileIconId);
+
+        lpTrackingService.captureSnapshot(puuid, region);
+
+        return objectMapper.writeValueAsString(accountNode);
     }
 }

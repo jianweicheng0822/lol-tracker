@@ -17,12 +17,13 @@ import PerformanceTab from "../components/tabs/PerformanceTab";
 import ChampionsTab from "../components/tabs/ChampionsTab";
 import MatchHistoryTab from "../components/tabs/MatchHistoryTab";
 import { useTabNavigation } from "../hooks/useTabNavigation";
-import { fetchAccount, fetchMatchSummaries, fetchStats, fetchRanked, checkIsFavorite, addFavorite, removeFavorite, fetchTier, upgradeTier, getAuthToken, setAuthToken } from "../api";
+import { fetchAccount, fetchAccountByPuuid, fetchMatchSummaries, fetchStats, fetchRanked, checkIsFavorite, addFavorite, removeFavorite, fetchTier, upgradeTier, getAuthToken, setAuthToken } from "../api";
 import type { Region, Account, MatchSummary, PlayerStats, RankedEntry } from "../types";
 
 export default function PlayerPage() {
-  // Extract player identifiers from the URL route params (/player/:region/:gameName/:tag)
-  const { region, gameName, tag } = useParams<{ region: string; gameName: string; tag: string }>();
+  // Extract player identifiers from the URL route params
+  // Supports both /player/:region/:gameName/:tag and /player/puuid/:region/:puuid
+  const { region, gameName, tag, puuid: puuidParam } = useParams<{ region: string; gameName: string; tag: string; puuid: string }>();
   // Tab state synced with URL search params (?tab=overview) for browser back/forward support
   const [activeTab, setTab] = useTabNavigation();
 
@@ -42,7 +43,7 @@ export default function PlayerPage() {
 
   /** Fetches all player data in parallel. Called on mount and on manual refresh. */
   const load = useCallback(async (cancelled = { current: false }) => {
-    if (!region || !gameName || !tag) return;
+    if (!region || (!puuidParam && (!gameName || !tag))) return;
 
     setStatus("loading");
     setErrorMsg("");
@@ -55,7 +56,9 @@ export default function PlayerPage() {
 
     try {
       const [acc, tierData] = await Promise.all([
-        fetchAccount(gameName, tag, region),
+        puuidParam
+          ? fetchAccountByPuuid(puuidParam, region)
+          : fetchAccount(gameName!, tag!, region),
         fetchTier().catch(() => ({ tier: 0 })),
       ]);
       if (cancelled.current) return;
@@ -83,7 +86,7 @@ export default function PlayerPage() {
       setStatus("error");
       setErrorMsg(e instanceof Error ? e.message : "Something went wrong.");
     }
-  }, [region, gameName, tag]);
+  }, [region, gameName, tag, puuidParam]);
 
   useEffect(() => {
     const cancelled = { current: false };

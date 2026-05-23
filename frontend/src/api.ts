@@ -130,6 +130,22 @@ export async function fetchAccount(gameName: string, tag: string, region: string
 }
 
 /**
+ * Fetch a summoner account by PUUID and region.
+ *
+ * @param puuid - The player's PUUID.
+ * @param region - The Riot API region code.
+ * @returns The resolved account object including current gameName/tagLine and profile icon.
+ */
+export async function fetchAccountByPuuid(puuid: string, region: string) {
+  const res = await fetch(
+    `${BASE}/api/summoner/by-puuid?puuid=${encodeURIComponent(puuid)}&region=${region}`,
+    fetchOpts()
+  );
+  if (!res.ok) throw new Error(await readErrorMessage(res));
+  return res.json();
+}
+
+/**
  * Fetch paginated match summaries for a player.
  *
  * @param puuid - The player's PUUID from the Riot API.

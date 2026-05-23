@@ -17,8 +17,8 @@ import type { FavoritePlayer } from "../types";
  * @returns the home page layout with centered search and favorites list
  */
 const DEMO_PLAYERS = [
-  { label: "LOVE3001 #lolxd", gameName: "LOVE3001", tag: "lolxd", region: "NA" },
-  { label: "EDG Viper #NA11", gameName: "EDG Viper", tag: "NA11", region: "NA" },
+  { label: "duoking1 #freex", puuid: "JZsCBcQ18XWqlQS2NDBS0Vi9uuUnhJJjhIBdHvNFoTEM8qLzsvkMSTYbDneGtgqr6OOx7fCX0OeTXA", region: "NA" },
+  { label: "EDG Viper #NA11", puuid: "87RUqIRwJjjEFIW8qEK8fhiCjgB2uU9y6ZnPQK2H2h2GpyjzTN76r6JaXOXJAqrczw1d05y0putLfA", region: "NA" },
 ] as const;
 
 export default function HomePage() {
@@ -68,7 +68,7 @@ export default function HomePage() {
             <button
               key={p.label}
               style={styles.demoBadge}
-              onClick={() => navigate(`/player/${p.region}/${encodeURIComponent(p.gameName)}/${encodeURIComponent(p.tag)}`)}
+              onClick={() => navigate(`/player/puuid/${p.region}/${encodeURIComponent(p.puuid)}`)}
               onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#2563eb"; e.currentTarget.style.background = "#1e293b"; }}
               onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#334155"; e.currentTarget.style.background = "#0f172a"; }}
             >

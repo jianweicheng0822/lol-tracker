@@ -14,7 +14,7 @@ Full-stack League of Legends analytics dashboard with AI-powered match coaching.
 
 ## Demo
 
-**Live Demo:** [http://3.84.122.22](http://3.84.122.22)
+**Live Demo:** [https://loltracker.lol](https://loltracker.lol)
 
 > **Note:** The demo runs on an AWS EC2 instance and may be unavailable if the instance is stopped.
 

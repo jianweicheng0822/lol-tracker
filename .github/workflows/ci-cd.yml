@@ -160,6 +160,7 @@ jobs:
               -e "DB_PASSWORD=$DB_PASSWORD" \
               -e "REDIS_HOST=lol-redis" \
               -e "JWT_SECRET=$JWT_SECRET" \
+              -e "CORS_ORIGIN=https://loltracker.lol" \
               "$IMAGE"
 
             # --- Health check: wait for app to start ---

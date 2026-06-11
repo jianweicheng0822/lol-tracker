@@ -138,19 +138,20 @@ jobs:
               done
             fi
 
-            # --- Stop & remove old app container ---
+            # --- Stop & remove old containers ---
             docker stop lol-tracker 2>/dev/null || true
             docker rm lol-tracker 2>/dev/null || true
+            docker stop lol-nginx 2>/dev/null || true
+            docker rm lol-nginx 2>/dev/null || true
             # Clean up anything else on port 80
             PORT_CID=$(docker ps -q --filter publish=80)
             [ -n "$PORT_CID" ] && docker stop "$PORT_CID" && docker rm "$PORT_CID" || true
 
-            # --- Start new app container ---
+            # --- Start new app container (internal only, no host port) ---
             docker run -d \
               --name lol-tracker \
               --network lol-net \
               --restart unless-stopped \
-              -p 80:8080 \
               -e "RIOT_API_KEY=$RIOT_KEY" \
               -e "OPENAI_API_KEY=$OPENAI_KEY" \
               -e "DB_HOST=lol-db" \
@@ -163,10 +164,42 @@ jobs:
               -e "CORS_ORIGIN=https://loltracker.lol" \
               "$IMAGE"
 
+            # --- Write Nginx config ---
+            mkdir -p /tmp/lol-nginx
+            cat > /tmp/lol-nginx/default.conf << 'NGINX'
+            server {
+                listen 80 default_server;
+                server_name _;
+                return 301 https://loltracker.lol$request_uri;
+            }
+
+            server {
+                listen 80;
+                server_name loltracker.lol;
+
+                location / {
+                    proxy_pass http://lol-tracker:8080;
+                    proxy_set_header Host $host;
+                    proxy_set_header X-Real-IP $remote_addr;
+                    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+                    proxy_set_header X-Forwarded-Proto $scheme;
+                }
+            }
+            NGINX
+
+            # --- Start Nginx reverse proxy ---
+            docker run -d \
+              --name lol-nginx \
+              --network lol-net \
+              --restart unless-stopped \
+              -p 80:80 \
+              -v /tmp/lol-nginx/default.conf:/etc/nginx/conf.d/default.conf:ro \
+              nginx:alpine
+
             # --- Health check: wait for app to start ---
             echo "Waiting for app to start..."
             for i in $(seq 1 60); do
-              if curl -sf http://localhost/health >/dev/null 2>&1; then
+              if curl -sf -H "Host: loltracker.lol" http://localhost/health >/dev/null 2>&1; then
                 echo "App is healthy!"
                 exit 0
               fi
@@ -174,4 +207,5 @@ jobs:
             done
             echo "ERROR: App failed to start within 120s"
             docker logs lol-tracker --tail 50
+            docker logs lol-nginx --tail 20
             exit 1

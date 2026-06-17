@@ -105,6 +105,8 @@ graph TB
 | Vite | Dev server and bundler |
 | React Router DOM | Client-side routing |
 | Recharts | Trend charts |
+| Vitest | Unit and component test runner |
+| React Testing Library | Component rendering and interaction testing |
 
 ### External APIs
 - **[Riot Games API](https://developer.riotgames.com)** — Account, match, ranked, and summoner data
@@ -205,6 +207,8 @@ Interactive Swagger UI is available at `/swagger-ui.html` when the app is runnin
 
 ## Testing
 
+### Backend
+
 ```bash
 cd backend
 
@@ -222,7 +226,29 @@ cd backend
 
 Unit tests use `@WebMvcTest` with MockMvc and mocked service layers — no database is involved. Integration tests use Testcontainers to spin up a real PostgreSQL container and run Flyway migrations, validating the full stack end-to-end.
 
-> **Note:** Frontend tests are not yet implemented. The backend provides full coverage via the suites above.
+### Frontend
+
+```bash
+cd frontend
+
+# Run all tests
+npm test
+
+# Watch mode for development
+npm run test:watch
+
+# Run with coverage report
+npm run test:coverage
+```
+
+| Suite | Count | Description |
+|-------|-------|-------------|
+| Utility tests | 20 | `movingAverage`, `rollingWinRate`, `toAbsoluteLp` |
+| Component tests | 22 | SearchBar, RankBadge, AuthModal |
+| API module tests | 11 | Token management, login/register, error parsing |
+| Page tests | 7 | HomePage rendering and state |
+
+Frontend tests use Vitest with jsdom and React Testing Library. Components are tested for rendering, user interaction, form validation, and navigation. API tests mock `fetch` and `localStorage` to verify request construction and token handling.
 
 ## Database
 

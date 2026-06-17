@@ -7,6 +7,7 @@ package com.jw.backend;
 
 import com.jw.backend.region.RiotRegion;
 import com.jw.backend.service.LpTrackingService;
+import com.jw.backend.service.PlayerTrackingService;
 import com.jw.backend.service.RiotApiService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -39,6 +40,9 @@ class SummonerControllerTest {
 
     @MockitoBean
     private LpTrackingService lpTrackingService;
+
+    @MockitoBean
+    private PlayerTrackingService playerTrackingService;
 
     /** Verify that a valid gameName, tag, and region return a merged summoner profile. */
     @Test

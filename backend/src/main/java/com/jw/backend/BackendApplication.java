@@ -7,6 +7,7 @@ package com.jw.backend;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 /**
  * Bootstrap class for the Spring Boot application.
@@ -14,6 +15,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
  * <p>Triggers component scanning, auto-configuration, and embedded server startup.</p>
  */
 @SpringBootApplication
+@EnableScheduling
 public class BackendApplication {
 
 	/**

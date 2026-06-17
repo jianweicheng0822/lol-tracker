@@ -28,10 +28,12 @@ class RiotApiServiceTest {
     private ValueOperations<String, String> valueOperations;
 
     private RiotApiService riotApiService;
+    private RiotRateLimiter riotRateLimiter;
 
     @BeforeEach
     void setUp() {
-        riotApiService = new RiotApiService("fake-api-key", new ObjectMapper(), redisTemplate);
+        riotRateLimiter = new RiotRateLimiter();
+        riotApiService = new RiotApiService("fake-api-key", new ObjectMapper(), redisTemplate, riotRateLimiter);
     }
 
     // -- Match detail parsing --

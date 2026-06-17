@@ -39,6 +39,7 @@ public abstract class BaseIntegrationSupport {
     static void configureProperties(DynamicPropertyRegistry registry) {
         registry.add("spring.flyway.enabled", () -> true);
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
+        registry.add("ingestion.enabled", () -> false);
     }
 
     @MockitoBean

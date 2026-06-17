@@ -46,16 +46,19 @@ public class RiotApiService {
     private final String apiKey;
     private final ObjectMapper objectMapper;
     private final StringRedisTemplate redisTemplate;
+    private final RiotRateLimiter riotRateLimiter;
 
     // Pools RestClient instances per base URL to reuse HTTP connections
     private final ConcurrentHashMap<String, RestClient> clientCache = new ConcurrentHashMap<>();
 
     public RiotApiService(@Value("${riot.api.key}") String apiKey,
                           ObjectMapper objectMapper,
-                          StringRedisTemplate redisTemplate) {
+                          StringRedisTemplate redisTemplate,
+                          RiotRateLimiter riotRateLimiter) {
         this.apiKey = apiKey;
         this.objectMapper = objectMapper;
         this.redisTemplate = redisTemplate;
+        this.riotRateLimiter = riotRateLimiter;
     }
 
     private RestClient getClient(String baseUrl) {
@@ -73,6 +76,7 @@ public class RiotApiService {
         String cached = getCached(cacheKey);
         if (cached != null) return cached;
 
+        riotRateLimiter.acquire();
         String result = getClient(baseUrl).get()
                 .uri("/riot/account/v1/accounts/by-puuid/{puuid}", puuid)
                 .header("X-Riot-Token", apiKey)
@@ -93,6 +97,7 @@ public class RiotApiService {
         String cached = getCached(cacheKey);
         if (cached != null) return cached;
 
+        riotRateLimiter.acquire();
         String result = getClient(baseUrl).get()
                 .uri("/riot/account/v1/accounts/by-riot-id/{gameName}/{tagLine}", gameName, tagLine)
                 .header("X-Riot-Token", apiKey)
@@ -117,6 +122,7 @@ public class RiotApiService {
         String cached = getCached(cacheKey);
         if (cached != null) return cached;
 
+        riotRateLimiter.acquire();
         String result = getClient(baseUrl).get()
                 .uri("/lol/match/v5/matches/by-puuid/{puuid}/ids?start={start}&count={count}", puuid, start, count)
                 .header("X-Riot-Token", apiKey)
@@ -137,6 +143,7 @@ public class RiotApiService {
         String cached = getCached(cacheKey);
         if (cached != null) return cached;
 
+        riotRateLimiter.acquire();
         String result = getClient(baseUrl).get()
                 .uri("/lol/match/v5/matches/{matchId}", matchId)
                 .header("X-Riot-Token", apiKey)
@@ -178,6 +185,7 @@ public class RiotApiService {
         String cached = getCached(cacheKey);
         if (cached != null) return cached;
 
+        riotRateLimiter.acquire();
         String result = getClient(baseUrl).get()
                 .uri("/lol/summoner/v4/summoners/by-puuid/{puuid}", puuid)
                 .header("X-Riot-Token", apiKey)
@@ -198,6 +206,7 @@ public class RiotApiService {
         String cached = getCached(cacheKey);
         if (cached != null) return cached;
 
+        riotRateLimiter.acquire();
         String result = getClient(baseUrl).get()
                 .uri("/lol/league/v4/entries/by-puuid/{puuid}", puuid)
                 .header("X-Riot-Token", apiKey)

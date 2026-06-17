@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.jw.backend.region.RiotRegion;
 import com.jw.backend.service.LpTrackingService;
+import com.jw.backend.service.PlayerTrackingService;
 import com.jw.backend.service.RiotApiService;
 import org.springframework.web.bind.annotation.*;
 
@@ -26,19 +27,22 @@ public class SummonerController {
 
     private final RiotApiService riotApiService;
     private final LpTrackingService lpTrackingService;
+    private final PlayerTrackingService playerTrackingService;
     private final ObjectMapper objectMapper;
 
     /**
      * Construct the controller with required service dependencies.
      *
-     * @param riotApiService  service for Riot API communication
-     * @param lpTrackingService service for capturing LP snapshots
-     * @param objectMapper    Jackson mapper for JSON manipulation
+     * @param riotApiService       service for Riot API communication
+     * @param lpTrackingService    service for capturing LP snapshots
+     * @param playerTrackingService service for tracking searched players
+     * @param objectMapper         Jackson mapper for JSON manipulation
      */
     public SummonerController(RiotApiService riotApiService, LpTrackingService lpTrackingService,
-                              ObjectMapper objectMapper) {
+                              PlayerTrackingService playerTrackingService, ObjectMapper objectMapper) {
         this.riotApiService = riotApiService;
         this.lpTrackingService = lpTrackingService;
+        this.playerTrackingService = playerTrackingService;
         this.objectMapper = objectMapper;
     }
 
@@ -97,6 +101,8 @@ public class SummonerController {
     private String enrichAccount(String accountJson, RiotRegion region) throws Exception {
         ObjectNode accountNode = (ObjectNode) objectMapper.readTree(accountJson);
         String puuid = accountNode.path("puuid").asText();
+        String gameName = accountNode.path("gameName").asText("");
+        String tagLine = accountNode.path("tagLine").asText("");
 
         String summonerJson = riotApiService.getSummonerByPuuid(puuid, region);
         JsonNode summonerNode = objectMapper.readTree(summonerJson);
@@ -105,6 +111,7 @@ public class SummonerController {
         accountNode.put("profileIconId", profileIconId);
 
         lpTrackingService.captureSnapshot(puuid, region);
+        playerTrackingService.trackPlayer(puuid, region.name(), gameName, tagLine);
 
         return objectMapper.writeValueAsString(accountNode);
     }

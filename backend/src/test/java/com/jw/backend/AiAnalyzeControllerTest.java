@@ -8,6 +8,7 @@ package com.jw.backend;
 import com.jw.backend.dto.AiChatResponse;
 import com.jw.backend.security.JwtUtil;
 import com.jw.backend.service.AiAnalyzeService;
+import com.jw.backend.service.RateLimitService;
 import com.jw.backend.service.SubscriptionService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -42,6 +43,9 @@ class AiAnalyzeControllerTest {
 
     @MockitoBean
     private SubscriptionService subscriptionService;
+
+    @MockitoBean
+    private RateLimitService rateLimitService;
 
     private static final String VALID_REQUEST = """
         {

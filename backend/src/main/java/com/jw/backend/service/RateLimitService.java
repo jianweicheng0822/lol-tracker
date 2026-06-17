@@ -6,6 +6,7 @@
 package com.jw.backend.service;
 
 import com.jw.backend.exception.RateLimitException;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -26,7 +27,11 @@ public class RateLimitService {
     private static final int FREE_MAX_REQUESTS = 5;
     private static final long WINDOW_MS = 60_000;
 
+    private static final int AI_MAX_REQUESTS = 20;
+    private static final long AI_WINDOW_MS = 3_600_000;
+
     private final ConcurrentHashMap<String, List<Long>> requestLog = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, List<Long>> aiRequestLog = new ConcurrentHashMap<>();
 
     /**
      * Verify the user has not exceeded their rate limit within the current window.
@@ -53,5 +58,42 @@ public class RateLimitService {
         }
 
         timestamps.add(now);
+    }
+
+    /**
+     * Verify the user has not exceeded the AI endpoint rate limit (20 requests per hour).
+     *
+     * @param userIdentifier unique key for the user (username)
+     * @throws RateLimitException if the user exceeds the allowed AI request count
+     */
+    public void checkAiRateLimit(String userIdentifier) {
+        long now = System.currentTimeMillis();
+        long windowStart = now - AI_WINDOW_MS;
+
+        List<Long> timestamps = aiRequestLog.computeIfAbsent(userIdentifier, k -> new CopyOnWriteArrayList<>());
+
+        timestamps.removeIf(t -> t < windowStart);
+
+        if (timestamps.size() >= AI_MAX_REQUESTS) {
+            throw new RateLimitException("AI rate limit exceeded. Limited to " + AI_MAX_REQUESTS + " requests per hour.");
+        }
+
+        timestamps.add(now);
+    }
+
+    @Scheduled(fixedRate = 60000)
+    void evictStaleEntries() {
+        long now = System.currentTimeMillis();
+        evictFrom(requestLog, now - WINDOW_MS);
+        evictFrom(aiRequestLog, now - AI_WINDOW_MS);
+    }
+
+    private void evictFrom(ConcurrentHashMap<String, List<Long>> log, long cutoff) {
+        log.forEach((key, timestamps) -> {
+            timestamps.removeIf(t -> t < cutoff);
+            if (timestamps.isEmpty()) {
+                log.remove(key);
+            }
+        });
     }
 }

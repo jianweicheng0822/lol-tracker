@@ -60,11 +60,12 @@ class SubscriptionControllerTest {
             .andExpect(jsonPath("$.tier").value(1));
     }
 
-    /** Verify that the upgrade endpoint returns 401 for anonymous users. */
+    /** Verify that the upgrade endpoint returns 403 when upgrade is disabled (default). */
     @Test
-    void upgrade_returnsUnauthorizedForAnonymous() throws Exception {
+    void upgrade_returnsForbiddenWhenDisabled() throws Exception {
         mockMvc.perform(post("/api/upgrade"))
-            .andExpect(status().isUnauthorized());
+            .andExpect(status().isForbidden())
+            .andExpect(jsonPath("$.error").value("Upgrade is not available at this time"));
 
         verify(subscriptionService, never()).upgrade(any());
     }

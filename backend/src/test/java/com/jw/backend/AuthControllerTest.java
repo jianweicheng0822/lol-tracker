@@ -3,6 +3,7 @@ package com.jw.backend;
 import com.jw.backend.entity.AppUser;
 import com.jw.backend.repository.AppUserRepository;
 import com.jw.backend.security.JwtUtil;
+import com.jw.backend.service.RateLimitService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -35,6 +36,9 @@ class AuthControllerTest {
 
     @MockitoBean
     private JwtUtil jwtUtil;
+
+    @MockitoBean
+    private RateLimitService rateLimitService;
 
     // -- Register --
 
@@ -86,6 +90,17 @@ class AuthControllerTest {
                             """))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").exists());
+    }
+
+    @Test
+    void register_withShortPassword_returns400() throws Exception {
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {"username": "newuser", "password": "short"}
+                            """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Password must be at least 8 characters"));
     }
 
     @Test

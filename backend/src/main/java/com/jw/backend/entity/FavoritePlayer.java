@@ -5,6 +5,7 @@
  */
 package com.jw.backend.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -12,12 +13,19 @@ import java.time.LocalDateTime;
  * Persistent entity for a favorited player, keyed by PUUID for stability across name changes.
  */
 @Entity
-@Table(name = "favorite_players")
+@Table(name = "favorite_players", uniqueConstraints = {
+    @UniqueConstraint(columnNames = {"user_id", "puuid"})
+})
 public class FavoritePlayer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @JsonIgnore
+    private AppUser user;
 
     @Column(nullable = false)
     private String puuid;
@@ -60,6 +68,14 @@ public class FavoritePlayer {
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public AppUser getUser() {
+        return user;
+    }
+
+    public void setUser(AppUser user) {
+        this.user = user;
     }
 
     public String getPuuid() {

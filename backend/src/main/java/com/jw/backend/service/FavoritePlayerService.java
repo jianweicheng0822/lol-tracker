@@ -5,6 +5,7 @@
  */
 package com.jw.backend.service;
 
+import com.jw.backend.entity.AppUser;
 import com.jw.backend.entity.FavoritePlayer;
 import com.jw.backend.repository.FavoritePlayerRepository;
 import org.springframework.stereotype.Service;
@@ -13,7 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 
 /**
- * Provide CRUD operations for favorite players, keyed by PUUID for uniqueness.
+ * Provide CRUD operations for favorite players, scoped to the authenticated user.
  */
 @Service
 public class FavoritePlayerService {
@@ -30,53 +31,58 @@ public class FavoritePlayerService {
     }
 
     /**
-     * Retrieve all favorite players.
+     * Retrieve all favorite players for the given user.
      *
-     * @return complete list of persisted favorite player entries
+     * @param user the authenticated user
+     * @return list of the user's favorite player entries
      */
-    public List<FavoritePlayer> getAllFavorites() {
-        return repository.findAll();
+    public List<FavoritePlayer> getAllFavorites(AppUser user) {
+        return repository.findAllByUser(user);
     }
 
     /**
-     * Add a player to favorites if not already present.
+     * Add a player to the user's favorites if not already present.
      *
+     * @param user     the authenticated user
      * @param puuid    the player's globally unique identifier
      * @param gameName the player's display name
      * @param tagLine  the player's tag line
      * @param region   the Riot platform region
-     * @return the saved entity, or null if the player already exists in favorites
+     * @return the saved entity, or null if the player already exists in the user's favorites
      */
-    public FavoritePlayer addFavorite(String puuid, String gameName, String tagLine, String region) {
-        if (repository.existsByPuuid(puuid)) {
+    public FavoritePlayer addFavorite(AppUser user, String puuid, String gameName, String tagLine, String region) {
+        if (repository.existsByUserAndPuuid(user, puuid)) {
             return null;
         }
         FavoritePlayer favorite = new FavoritePlayer(puuid, gameName, tagLine, region);
+        favorite.setUser(user);
         return repository.save(favorite);
     }
 
     /**
-     * Remove a player from favorites by PUUID.
+     * Remove a player from the user's favorites by PUUID.
      *
+     * @param user  the authenticated user
      * @param puuid the player's globally unique identifier
      * @return true if the entry was found and deleted, false otherwise
      */
     @Transactional
-    public boolean removeFavorite(String puuid) {
-        if (!repository.existsByPuuid(puuid)) {
+    public boolean removeFavorite(AppUser user, String puuid) {
+        if (!repository.existsByUserAndPuuid(user, puuid)) {
             return false;
         }
-        repository.deleteByPuuid(puuid);
+        repository.deleteByUserAndPuuid(user, puuid);
         return true;
     }
 
     /**
-     * Check whether a player exists in the favorites list.
+     * Check whether a player exists in the user's favorites list.
      *
+     * @param user  the authenticated user
      * @param puuid the player's globally unique identifier
-     * @return true if the player is favorited
+     * @return true if the player is favorited by this user
      */
-    public boolean isFavorite(String puuid) {
-        return repository.existsByPuuid(puuid);
+    public boolean isFavorite(AppUser user, String puuid) {
+        return repository.existsByUserAndPuuid(user, puuid);
     }
 }

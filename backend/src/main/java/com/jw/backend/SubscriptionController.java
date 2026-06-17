@@ -7,6 +7,7 @@ package com.jw.backend;
 
 import com.jw.backend.entity.AppUser;
 import com.jw.backend.service.SubscriptionService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -28,6 +29,10 @@ import java.util.Map;
 public class SubscriptionController {
 
     private final SubscriptionService subscriptionService;
+
+    // Demo placeholder — enable via UPGRADE_ENABLED env var when payment integration is ready
+    @Value("${subscription.upgrade-enabled:false}")
+    private boolean upgradeEnabled;
 
     /**
      * Construct the controller with the subscription service dependency.
@@ -61,7 +66,11 @@ public class SubscriptionController {
      * @return map confirming the new tier value (1 = PRO), or 401 if not authenticated
      */
     @PostMapping("/upgrade")
-    public ResponseEntity<Map<String, Integer>> upgrade(Principal principal) {
+    public ResponseEntity<?> upgrade(Principal principal) {
+        if (!upgradeEnabled) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Upgrade is not available at this time"));
+        }
         if (principal == null) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
         }

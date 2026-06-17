@@ -10,6 +10,8 @@ import com.jw.backend.dto.AuthResponse;
 import com.jw.backend.entity.AppUser;
 import com.jw.backend.repository.AppUserRepository;
 import com.jw.backend.security.JwtUtil;
+import com.jw.backend.service.RateLimitService;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -34,6 +36,7 @@ public class AuthController {
     private final AppUserRepository appUserRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
+    private final RateLimitService rateLimitService;
 
     /**
      * Construct the controller with required authentication dependencies.
@@ -41,24 +44,34 @@ public class AuthController {
      * @param appUserRepository repository for user persistence operations
      * @param passwordEncoder   encoder for hashing and verifying passwords
      * @param jwtUtil           utility for generating signed JWT tokens
+     * @param rateLimitService  service for enforcing per-IP rate limits
      */
-    public AuthController(AppUserRepository appUserRepository, PasswordEncoder passwordEncoder, JwtUtil jwtUtil) {
+    public AuthController(AppUserRepository appUserRepository, PasswordEncoder passwordEncoder,
+                           JwtUtil jwtUtil, RateLimitService rateLimitService) {
         this.appUserRepository = appUserRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
+        this.rateLimitService = rateLimitService;
     }
 
     /**
      * Register a new user account and return a JWT token upon success.
      *
-     * @param request contains username and password credentials
+     * @param request        contains username and password credentials
+     * @param servletRequest HTTP request for extracting client IP
      * @return 201 with JWT token on success, 400 for invalid input, or 409 if username exists
      */
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody AuthRequest request) {
+    public ResponseEntity<?> register(@RequestBody AuthRequest request, HttpServletRequest servletRequest) {
+        rateLimitService.checkRateLimit(extractClientIp(servletRequest), 0);
+
         if (request.username() == null || request.username().isBlank()
                 || request.password() == null || request.password().isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Username and password are required"));
+        }
+
+        if (request.password().length() < 8) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Password must be at least 8 characters"));
         }
 
         if (appUserRepository.findByUsername(request.username()).isPresent()) {
@@ -76,11 +89,14 @@ public class AuthController {
     /**
      * Authenticate an existing user and return a JWT token upon valid credentials.
      *
-     * @param request contains username and password credentials
+     * @param request        contains username and password credentials
+     * @param servletRequest HTTP request for extracting client IP
      * @return 200 with JWT token on success, 400 for invalid input, or 401 for bad credentials
      */
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody AuthRequest request) {
+    public ResponseEntity<?> login(@RequestBody AuthRequest request, HttpServletRequest servletRequest) {
+        rateLimitService.checkRateLimit(extractClientIp(servletRequest), 0);
+
         if (request.username() == null || request.username().isBlank()
                 || request.password() == null || request.password().isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "Username and password are required"));
@@ -95,5 +111,17 @@ public class AuthController {
         AppUser user = optUser.get();
         String token = jwtUtil.generateToken(user.getUsername());
         return ResponseEntity.ok(new AuthResponse(token, user.getTier()));
+    }
+
+    private String extractClientIp(HttpServletRequest request) {
+        String xForwardedFor = request.getHeader("X-Forwarded-For");
+        if (xForwardedFor != null && !xForwardedFor.isBlank()) {
+            return xForwardedFor.split(",")[0].trim();
+        }
+        String xRealIp = request.getHeader("X-Real-IP");
+        if (xRealIp != null && !xRealIp.isBlank()) {
+            return xRealIp;
+        }
+        return request.getRemoteAddr();
     }
 }

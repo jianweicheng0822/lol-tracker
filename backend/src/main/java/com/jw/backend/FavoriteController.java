@@ -5,56 +5,52 @@
  */
 package com.jw.backend;
 
+import com.jw.backend.entity.AppUser;
 import com.jw.backend.entity.FavoritePlayer;
+import com.jw.backend.repository.AppUserRepository;
 import com.jw.backend.service.FavoritePlayerService;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.security.Principal;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * Manage CRUD operations for the authenticated user's favorite players.
  *
- * <p>Favorites are keyed by the player's PUUID to ensure uniqueness regardless
- * of name changes.</p>
+ * <p>Favorites are keyed by the player's PUUID and scoped to the authenticated user.</p>
  */
 @RestController
 @RequestMapping("/api/favorites")
 public class FavoriteController {
 
     private final FavoritePlayerService favoriteService;
+    private final AppUserRepository appUserRepository;
 
-    /**
-     * Construct the controller with the favorite player service.
-     *
-     * @param favoriteService service handling favorite player business logic
-     */
-    public FavoriteController(FavoritePlayerService favoriteService) {
+    public FavoriteController(FavoritePlayerService favoriteService, AppUserRepository appUserRepository) {
         this.favoriteService = favoriteService;
+        this.appUserRepository = appUserRepository;
     }
 
-    /**
-     * Retrieve all favorite players for the current user.
-     *
-     * @return list of all persisted favorite player entries
-     */
     @GetMapping
-    public List<FavoritePlayer> getAllFavorites() {
-        return favoriteService.getAllFavorites();
+    public ResponseEntity<?> getAllFavorites(Principal principal) {
+        AppUser user = resolveUser(principal);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required"));
+        }
+        return ResponseEntity.ok(favoriteService.getAllFavorites(user));
     }
 
-    /**
-     * Add a player to the favorites list.
-     *
-     * <p>Rejects duplicates at the service layer, returning a 400 response
-     * if the player is already favorited.</p>
-     *
-     * @param body request body containing puuid, gameName, tagLine, and region fields
-     * @return the persisted FavoritePlayer entity, or an error response
-     */
     @PostMapping
-    public ResponseEntity<?> addFavorite(@RequestBody Map<String, String> body) {
+    public ResponseEntity<?> addFavorite(@RequestBody Map<String, String> body, Principal principal) {
+        AppUser user = resolveUser(principal);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required"));
+        }
+
         String puuid = body.get("puuid");
         String gameName = body.get("gameName");
         String tagLine = body.get("tagLine");
@@ -66,7 +62,7 @@ public class FavoriteController {
             ));
         }
 
-        FavoritePlayer saved = favoriteService.addFavorite(puuid, gameName, tagLine, region);
+        FavoritePlayer saved = favoriteService.addFavorite(user, puuid, gameName, tagLine, region);
 
         if (saved == null) {
             return ResponseEntity.badRequest().body(Map.of(
@@ -77,17 +73,14 @@ public class FavoriteController {
         return ResponseEntity.ok(saved);
     }
 
-    /**
-     * Remove a player from favorites by PUUID.
-     *
-     * <p>Operation is idempotent — returns 404 only if the entry was not found.</p>
-     *
-     * @param puuid the player's unique identifier
-     * @return success message or 404 if not found
-     */
     @DeleteMapping("/{puuid}")
-    public ResponseEntity<?> removeFavorite(@PathVariable String puuid) {
-        boolean removed = favoriteService.removeFavorite(puuid);
+    public ResponseEntity<?> removeFavorite(@PathVariable String puuid, Principal principal) {
+        AppUser user = resolveUser(principal);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required"));
+        }
+
+        boolean removed = favoriteService.removeFavorite(user, puuid);
 
         if (!removed) {
             return ResponseEntity.notFound().build();
@@ -96,17 +89,22 @@ public class FavoriteController {
         return ResponseEntity.ok(Map.of("message", "Removed from favorites"));
     }
 
-    /**
-     * Check whether a player is in the current user's favorites.
-     *
-     * <p>Used by the UI to toggle the favorite icon state without fetching the full list.</p>
-     *
-     * @param puuid the player's unique identifier
-     * @return map containing a single "isFavorite" boolean flag
-     */
     @GetMapping("/check/{puuid}")
-    public Map<String, Boolean> checkFavorite(@PathVariable String puuid) {
-        boolean isFavorite = favoriteService.isFavorite(puuid);
-        return Map.of("isFavorite", isFavorite);
+    public ResponseEntity<?> checkFavorite(@PathVariable String puuid, Principal principal) {
+        AppUser user = resolveUser(principal);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required"));
+        }
+
+        boolean isFavorite = favoriteService.isFavorite(user, puuid);
+        return ResponseEntity.ok(Map.of("isFavorite", isFavorite));
+    }
+
+    private AppUser resolveUser(Principal principal) {
+        if (principal == null) {
+            return null;
+        }
+        Optional<AppUser> optUser = appUserRepository.findByUsername(principal.getName());
+        return optUser.orElse(null);
     }
 }

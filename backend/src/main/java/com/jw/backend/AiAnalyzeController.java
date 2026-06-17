@@ -8,6 +8,7 @@ package com.jw.backend;
 import com.jw.backend.dto.AiChatRequest;
 import com.jw.backend.dto.AiChatResponse;
 import com.jw.backend.service.AiAnalyzeService;
+import com.jw.backend.service.RateLimitService;
 import com.jw.backend.service.SubscriptionService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -29,16 +30,20 @@ public class AiAnalyzeController {
 
     private final AiAnalyzeService aiAnalyzeService;
     private final SubscriptionService subscriptionService;
+    private final RateLimitService rateLimitService;
 
     /**
      * Construct the controller with required service dependencies.
      *
      * @param aiAnalyzeService    service responsible for AI inference logic
      * @param subscriptionService service that validates subscription tier access
+     * @param rateLimitService    service for enforcing per-user AI rate limits
      */
-    public AiAnalyzeController(AiAnalyzeService aiAnalyzeService, SubscriptionService subscriptionService) {
+    public AiAnalyzeController(AiAnalyzeService aiAnalyzeService, SubscriptionService subscriptionService,
+                                RateLimitService rateLimitService) {
         this.aiAnalyzeService = aiAnalyzeService;
         this.subscriptionService = subscriptionService;
+        this.rateLimitService = rateLimitService;
     }
 
     /**
@@ -53,6 +58,9 @@ public class AiAnalyzeController {
         String username = principal != null ? principal.getName() : null;
         if (!subscriptionService.hasAiAccess(username)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        if (username != null) {
+            rateLimitService.checkAiRateLimit(username);
         }
         if (request.matchData() == null || request.messages() == null) {
             return ResponseEntity.badRequest().build();
@@ -76,6 +84,9 @@ public class AiAnalyzeController {
         String username = principal != null ? principal.getName() : null;
         if (!subscriptionService.hasAiAccess(username)) {
             return Flux.just("[Error: AI analysis requires PRO subscription]");
+        }
+        if (username != null) {
+            rateLimitService.checkAiRateLimit(username);
         }
         if (request.matchData() == null || request.messages() == null) {
             return Flux.just("[Error: matchData and messages are required]");

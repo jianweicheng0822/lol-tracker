@@ -32,7 +32,7 @@ class SubscriptionIntegrationTest extends BaseIntegrationSupport {
     @Test
     void authenticatedUser_canUpgrade() throws Exception {
         String regBody = """
-            {"username": "upgradeuser", "password": "pass123"}
+            {"username": "upgradeuser", "password": "password123"}
             """;
         MvcResult regResult = mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)

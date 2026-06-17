@@ -82,7 +82,7 @@ class AuthIntegrationTest extends BaseIntegrationSupport {
     void login_withWrongPassword_returnsUnauthorized() throws Exception {
         // Seed user for the login assertion below
         String regBody = """
-            {"username": "wrongpassuser", "password": "correct"}
+            {"username": "wrongpassuser", "password": "correct1"}
             """;
         mockMvc.perform(post("/api/auth/register")
                 .contentType(MediaType.APPLICATION_JSON)

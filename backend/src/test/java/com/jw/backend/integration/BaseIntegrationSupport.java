@@ -6,6 +6,8 @@
 package com.jw.backend.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jw.backend.service.RateLimitService;
+import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -40,14 +42,23 @@ public abstract class BaseIntegrationSupport {
         registry.add("spring.flyway.enabled", () -> true);
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
         registry.add("ingestion.enabled", () -> false);
+        registry.add("subscription.upgrade-enabled", () -> true);
     }
 
     @MockitoBean
     protected StringRedisTemplate redisTemplate;
 
     @Autowired
+    protected RateLimitService rateLimitService;
+
+    @Autowired
     protected MockMvc mockMvc;
 
     @Autowired
     protected ObjectMapper objectMapper;
+
+    @BeforeEach
+    void resetRateLimiter() {
+        rateLimitService.reset();
+    }
 }

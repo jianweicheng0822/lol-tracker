@@ -81,6 +81,11 @@ public class RateLimitService {
         timestamps.add(now);
     }
 
+    public void reset() {
+        requestLog.clear();
+        aiRequestLog.clear();
+    }
+
     @Scheduled(fixedRate = 60000)
     void evictStaleEntries() {
         long now = System.currentTimeMillis();

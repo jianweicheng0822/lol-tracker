@@ -2,7 +2,9 @@ import { useState } from "react";
 import type { PlayerStats, MatchSummary, RankedEntry, TabId } from "../../types";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import OverviewSidebar from "../sidebar/OverviewSidebar";
+import StatsBar from "../StatsBar";
 import MatchList from "../MatchList";
+import LpSparkline from "../sidebar/LpSparkline";
 import PerformanceModal from "../PerformanceModal";
 import { getAuthToken, upgradeTier } from "../../api";
 
@@ -61,6 +63,10 @@ export default function OverviewTab({
                 </button>
               )}
             </div>
+          )}
+          {stats && <StatsBar stats={stats} matches={matches} />}
+          {isMobile && (
+            <LpSparkline puuid={puuid} onClick={() => setShowPerformanceModal(true)} />
           )}
           <MatchList
             matches={matches}

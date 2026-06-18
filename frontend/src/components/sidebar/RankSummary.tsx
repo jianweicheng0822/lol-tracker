@@ -22,6 +22,25 @@ function formatTier(tier: string): string {
   return tier.charAt(0) + tier.slice(1).toLowerCase();
 }
 
+const TIER_TINTS: Record<string, string> = {
+  IRON: "rgba(120,100,90,0.08)",
+  BRONZE: "rgba(140,100,60,0.08)",
+  SILVER: "rgba(160,170,180,0.08)",
+  GOLD: "rgba(200,170,60,0.10)",
+  PLATINUM: "rgba(80,180,160,0.08)",
+  EMERALD: "rgba(40,180,100,0.08)",
+  DIAMOND: "rgba(100,140,220,0.10)",
+  MASTER: "rgba(160,100,220,0.10)",
+  GRANDMASTER: "rgba(220,80,80,0.10)",
+  CHALLENGER: "rgba(240,200,80,0.10)",
+};
+
+function winRateColor(wr: number): string {
+  if (wr >= 55) return "#3a9e72";
+  if (wr >= 45) return "#94a3b8";
+  return "#d06060";
+}
+
 type Props = { entries: RankedEntry[] };
 
 export default function RankSummary({ entries }: Props) {
@@ -44,7 +63,10 @@ export default function RankSummary({ entries }: Props) {
   }
 
   return (
-    <div style={styles.card}>
+    <div style={{
+      ...styles.card,
+      background: TIER_TINTS[relevant[0].tier] || styles.card.background,
+    }}>
       {relevant.map((entry) => {
         const label = QUEUE_LABELS[entry.queueType] || entry.queueType;
         const total = entry.wins + entry.losses;
@@ -62,7 +84,10 @@ export default function RankSummary({ entries }: Props) {
                   </span>
                   <span style={styles.lp}>{entry.leaguePoints} LP</span>
                 </div>
-                <div style={styles.record}>{entry.wins}W {entry.losses}L &middot; {wr}%</div>
+                <div style={styles.record}>
+                  {entry.wins}W {entry.losses}L &middot;{" "}
+                  <span style={{ color: winRateColor(wr) }}>{wr}%</span>
+                </div>
               </div>
             </div>
           </div>
@@ -77,11 +102,11 @@ const styles: Record<string, React.CSSProperties> = {
     background: "rgba(30,41,59,0.45)",
     border: "1px solid rgba(148,163,184,0.1)",
     borderRadius: 10,
-    padding: 16,
+    padding: 20,
     marginBottom: 12,
     display: "flex",
     flexDirection: "column",
-    gap: 12,
+    gap: 14,
   },
   badge: {},
   queueLabel: {
@@ -89,32 +114,32 @@ const styles: Record<string, React.CSSProperties> = {
     textTransform: "uppercase",
     letterSpacing: 1,
     color: "#94a3b8",
-    marginBottom: 6,
+    marginBottom: 8,
   },
   iconRow: {
     display: "flex",
     alignItems: "center",
-    gap: 10,
+    gap: 12,
   },
-  tierIcon: { width: 40, height: 40 },
+  tierIcon: { width: 56, height: 56 },
   tierRow: {
     display: "flex",
     alignItems: "baseline",
-    gap: 6,
+    gap: 8,
   },
   tier: {
-    fontSize: 16,
-    fontWeight: 700,
+    fontSize: 20,
+    fontWeight: 800,
     color: "#f8fafc",
   },
   lp: {
-    fontSize: 13,
+    fontSize: 16,
     color: "#a5b4fc",
-    fontWeight: 600,
+    fontWeight: 700,
   },
   record: {
-    fontSize: 11,
+    fontSize: 12,
     color: "#94a3b8",
-    marginTop: 2,
+    marginTop: 3,
   },
 };

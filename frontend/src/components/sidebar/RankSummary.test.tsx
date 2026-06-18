@@ -49,12 +49,36 @@ describe("RankSummary", () => {
   it("calculates and displays win rate", () => {
     render(<RankSummary entries={[makeRankedEntry({ wins: 60, losses: 40 })]} />);
     expect(screen.getByText(/60W 40L/)).toBeInTheDocument();
-    expect(screen.getByText(/60%/)).toBeInTheDocument();
+    expect(screen.getByText("60%")).toBeInTheDocument();
   });
 
-  it("renders tier icon with correct src", () => {
+  it("renders tier icon with correct src and 56px size", () => {
     render(<RankSummary entries={[makeRankedEntry({ tier: "DIAMOND" })]} />);
     const img = screen.getByAltText("DIAMOND") as HTMLImageElement;
     expect(img.src).toContain("diamond.png");
+    expect(img.style.width).toBe("56px");
+    expect(img.style.height).toBe("56px");
+  });
+
+  it("renders tier name at 20px font-weight 800", () => {
+    render(<RankSummary entries={[makeRankedEntry()]} />);
+    const tierEl = screen.getByText("Gold II");
+    expect(tierEl).toHaveStyle({ fontSize: "20px", fontWeight: "800" });
+  });
+
+  it("renders LP at 16px", () => {
+    render(<RankSummary entries={[makeRankedEntry()]} />);
+    const lp = screen.getByText("45 LP");
+    expect(lp).toHaveStyle({ fontSize: "16px" });
+  });
+
+  it("color-codes win rate green for >=55%", () => {
+    render(<RankSummary entries={[makeRankedEntry({ wins: 60, losses: 40 })]} />);
+    expect(screen.getByText("60%")).toHaveStyle({ color: "#3a9e72" });
+  });
+
+  it("color-codes win rate red for <45%", () => {
+    render(<RankSummary entries={[makeRankedEntry({ wins: 30, losses: 70 })]} />);
+    expect(screen.getByText("30%")).toHaveStyle({ color: "#d06060" });
   });
 });

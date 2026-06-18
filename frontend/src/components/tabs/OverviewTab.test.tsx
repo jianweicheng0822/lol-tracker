@@ -11,8 +11,18 @@ vi.mock("../sidebar/OverviewSidebar", () => ({
   default: () => <div data-testid="overview-sidebar">Sidebar</div>,
 }));
 
+vi.mock("../StatsBar", () => ({
+  default: () => <div data-testid="stats-bar">StatsBar</div>,
+}));
+
 vi.mock("../MatchList", () => ({
   default: () => <div data-testid="match-list">MatchList</div>,
+}));
+
+vi.mock("../sidebar/LpSparkline", () => ({
+  default: ({ onClick }: { onClick: () => void }) => (
+    <div data-testid="lp-sparkline-mobile" onClick={onClick}>LpSparkline</div>
+  ),
 }));
 
 vi.mock("../PerformanceModal", () => ({
@@ -59,6 +69,11 @@ describe("OverviewTab", () => {
     expect(screen.getByTestId("match-list")).toBeInTheDocument();
   });
 
+  it("renders stats bar when stats exist", () => {
+    render(<OverviewTab {...defaultProps} />);
+    expect(screen.getByTestId("stats-bar")).toBeInTheDocument();
+  });
+
   it("does not show upgrade banner when tier > 0", () => {
     render(<OverviewTab {...defaultProps} tier={1} />);
     expect(screen.queryByText(/FREE tier/)).not.toBeInTheDocument();
@@ -102,5 +117,16 @@ describe("OverviewTab", () => {
     vi.mocked(useIsMobile).mockReturnValue(true);
     rerender(<OverviewTab {...defaultProps} />);
     expect((container.firstChild as HTMLElement).style.display).toBe("flex");
+  });
+
+  it("does not show LP sparkline on desktop", () => {
+    render(<OverviewTab {...defaultProps} />);
+    expect(screen.queryByTestId("lp-sparkline-mobile")).not.toBeInTheDocument();
+  });
+
+  it("shows LP sparkline on mobile", () => {
+    vi.mocked(useIsMobile).mockReturnValue(true);
+    render(<OverviewTab {...defaultProps} />);
+    expect(screen.getByTestId("lp-sparkline-mobile")).toBeInTheDocument();
   });
 });

@@ -1,10 +1,5 @@
-/**
- * @file ProfileHeader.tsx
- * @description Render the player profile header with summoner icon, Riot ID, region label,
- *   and action buttons (refresh data, toggle favorite). Always visible above the tab bar.
- * @module frontend.components
- */
 import type { Account } from "../types";
+import type { Streak } from "../utils/playerInsights";
 import { useDdragonVersion } from "../utils/ddragon";
 
 type Props = {
@@ -13,16 +8,11 @@ type Props = {
   isFav: boolean;
   onToggleFavorite: () => void;
   onRefresh: () => void;
+  streak?: Streak | null;
+  climbStatus?: "climbing" | "falling" | "stable" | null;
 };
 
-/**
- * Render the player profile header displaying the summoner icon, Riot ID with tag,
- * region label, and action buttons for refreshing data and toggling favorite status.
- *
- * @param props - Account data, region, favorite state, and action callbacks.
- * @returns The profile header element.
- */
-export default function ProfileHeader({ account, region, isFav, onToggleFavorite, onRefresh }: Props) {
+export default function ProfileHeader({ account, region, isFav, onToggleFavorite, onRefresh, streak, climbStatus }: Props) {
   const ddVersion = useDdragonVersion();
 
   return (
@@ -38,15 +28,35 @@ export default function ProfileHeader({ account, region, isFav, onToggleFavorite
             {account.gameName}
             <span style={{ color: "#64748b", fontWeight: 400 }}> #{account.tagLine}</span>
           </h2>
-          <div style={{ fontSize: 13, opacity: 0.5, marginTop: 4 }}>{region}</div>
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
+            <span style={{ fontSize: 13, opacity: 0.5 }}>{region}</span>
+            {streak && streak.count >= 2 && (
+              <span style={{
+                fontSize: 12,
+                fontWeight: 600,
+                padding: "2px 8px",
+                borderRadius: 4,
+                background: streak.type === "win" ? "rgba(58,158,114,0.15)" : "rgba(208,96,96,0.15)",
+                color: streak.type === "win" ? "#3a9e72" : "#d06060",
+              }}>
+                {streak.type === "win" ? "\u2191" : "\u2193"} {streak.count}{streak.type === "win" ? "W" : "L"} Streak
+              </span>
+            )}
+            {climbStatus === "climbing" && (
+              <span style={styles.climbBadge}>{"\u2191"} Climbing</span>
+            )}
+            {climbStatus === "falling" && (
+              <span style={styles.fallBadge}>{"\u2193"} Falling</span>
+            )}
+          </div>
         </div>
       </div>
       <div style={{ display: "flex", gap: 8 }}>
         <button style={styles.refreshBtn} onClick={onRefresh} title="Refresh data">
-          ↻
+          {"\u21BB"}
         </button>
         <button style={isFav ? styles.favBtnActive : styles.favBtn} onClick={onToggleFavorite}>
-          {isFav ? "★ Favorited" : "☆ Favorite"}
+          {isFav ? "\u2605 Favorited" : "\u2606 Favorite"}
         </button>
       </div>
     </div>
@@ -92,5 +102,21 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 16,
     fontWeight: 600,
     lineHeight: 1,
+  },
+  climbBadge: {
+    fontSize: 12,
+    fontWeight: 600,
+    padding: "2px 8px",
+    borderRadius: 4,
+    background: "rgba(58,158,114,0.15)",
+    color: "#3a9e72",
+  },
+  fallBadge: {
+    fontSize: 12,
+    fontWeight: 600,
+    padding: "2px 8px",
+    borderRadius: 4,
+    background: "rgba(208,96,96,0.15)",
+    color: "#d06060",
   },
 };

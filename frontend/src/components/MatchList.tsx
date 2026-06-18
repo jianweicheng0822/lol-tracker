@@ -733,23 +733,47 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                   </div>
                 </div>
 
-                {/* RIGHT — team rosters + chevron */}
-                <div
-                  style={{
-                    display: "flex",
-                    alignItems: "center",
-                    flexShrink: 0,
-                  }}
-                >
+                {/* RIGHT — action buttons */}
+                {region && puuid && (
                   <div
                     style={{
-                      width: 252,
                       display: "flex",
-                      gap: 0,
-                      borderLeft: "1px solid rgba(255,255,255,0.04)",
-                      paddingLeft: 12,
+                      alignItems: "center",
+                      flexShrink: 0,
                     }}
                   >
+                    {tier === 1 && (
+                      <AiButton
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setAiMatch(m);
+                        }}
+                      />
+                    )}
+                    <ChevronButton
+                      expanded={isExpanded}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setExpandedId(isExpanded ? null : m.matchId);
+                      }}
+                    />
+                  </div>
+                )}
+              </MatchCard>
+
+              {/* Expanded section: team rosters + inline scoreboard */}
+              {isExpanded && region && (
+                <div
+                  style={{
+                    background: "rgba(15,23,42,0.95)",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                    borderTop: "none",
+                    borderRadius: "0 0 6px 6px",
+                    padding: "8px 12px",
+                    marginTop: -2,
+                  }}
+                >
+                  <div style={{ display: "flex", gap: 0, marginBottom: 8, paddingBottom: 8, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
                     <TeamColumn
                       players={
                         puuid
@@ -763,41 +787,6 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                     <div style={{ width: 1, background: "rgba(255,255,255,0.05)", margin: "4px 8px" }} />
                     <TeamColumn players={m.enemies} imgBase={imgBase} highlightPuuid={puuid} region={region} />
                   </div>
-
-                  {region && puuid && (
-                    <>
-                      {tier === 1 && (
-                        <AiButton
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setAiMatch(m);
-                          }}
-                        />
-                      )}
-                      <ChevronButton
-                        expanded={isExpanded}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setExpandedId(isExpanded ? null : m.matchId);
-                        }}
-                      />
-                    </>
-                  )}
-                </div>
-              </MatchCard>
-
-              {/* Inline scoreboard */}
-              {isExpanded && region && (
-                <div
-                  style={{
-                    background: "rgba(15,23,42,0.95)",
-                    border: "1px solid rgba(255,255,255,0.06)",
-                    borderTop: "none",
-                    borderRadius: "0 0 6px 6px",
-                    padding: "8px 12px",
-                    marginTop: -2,
-                  }}
-                >
                   <InlineScoreboard
                     matchId={m.matchId}
                     region={region}

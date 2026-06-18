@@ -35,21 +35,21 @@ describe("ProfileHeader", () => {
     expect(img.src).toContain("4567.png");
   });
 
-  it("shows '☆ Favorite' when not favorited", () => {
+  it("shows '\u2606 Favorite' when not favorited", () => {
     render(<ProfileHeader {...defaultProps} />);
-    expect(screen.getByText("☆ Favorite")).toBeInTheDocument();
+    expect(screen.getByText("\u2606 Favorite")).toBeInTheDocument();
   });
 
-  it("shows '★ Favorited' when favorited", () => {
+  it("shows '\u2605 Favorited' when favorited", () => {
     render(<ProfileHeader {...defaultProps} isFav={true} />);
-    expect(screen.getByText("★ Favorited")).toBeInTheDocument();
+    expect(screen.getByText("\u2605 Favorited")).toBeInTheDocument();
   });
 
   it("calls onToggleFavorite when favorite button is clicked", async () => {
     const user = userEvent.setup();
     const handler = vi.fn();
     render(<ProfileHeader {...defaultProps} onToggleFavorite={handler} />);
-    await user.click(screen.getByText("☆ Favorite"));
+    await user.click(screen.getByText("\u2606 Favorite"));
     expect(handler).toHaveBeenCalledOnce();
   });
 
@@ -59,5 +59,36 @@ describe("ProfileHeader", () => {
     render(<ProfileHeader {...defaultProps} onRefresh={handler} />);
     await user.click(screen.getByTitle("Refresh data"));
     expect(handler).toHaveBeenCalledOnce();
+  });
+
+  it("shows win streak badge when streak >= 2", () => {
+    render(<ProfileHeader {...defaultProps} streak={{ type: "win", count: 5 }} />);
+    expect(screen.getByText(/5W Streak/)).toBeInTheDocument();
+  });
+
+  it("shows loss streak badge when streak >= 2", () => {
+    render(<ProfileHeader {...defaultProps} streak={{ type: "loss", count: 3 }} />);
+    expect(screen.getByText(/3L Streak/)).toBeInTheDocument();
+  });
+
+  it("does not show streak badge when streak is null", () => {
+    render(<ProfileHeader {...defaultProps} streak={null} />);
+    expect(screen.queryByText(/Streak/)).not.toBeInTheDocument();
+  });
+
+  it("shows climbing indicator", () => {
+    render(<ProfileHeader {...defaultProps} climbStatus="climbing" />);
+    expect(screen.getByText(/Climbing/)).toBeInTheDocument();
+  });
+
+  it("shows falling indicator", () => {
+    render(<ProfileHeader {...defaultProps} climbStatus="falling" />);
+    expect(screen.getByText(/Falling/)).toBeInTheDocument();
+  });
+
+  it("does not show climb indicator when stable", () => {
+    render(<ProfileHeader {...defaultProps} climbStatus="stable" />);
+    expect(screen.queryByText(/Climbing/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Falling/)).not.toBeInTheDocument();
   });
 });

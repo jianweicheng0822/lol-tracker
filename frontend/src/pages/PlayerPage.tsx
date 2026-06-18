@@ -17,6 +17,7 @@ import ChampionsTab from "../components/tabs/ChampionsTab";
 import { useTabNavigation } from "../hooks/useTabNavigation";
 import { fetchAccount, fetchAccountByPuuid, fetchMatchSummaries, fetchStats, fetchRanked, checkIsFavorite, addFavorite, removeFavorite, fetchTier, getAuthToken, setAuthToken } from "../api";
 import type { Region, Account, MatchSummary, PlayerStats, RankedEntry } from "../types";
+import { computeStreak, computeClimbStatus } from "../utils/playerInsights";
 
 export default function PlayerPage() {
   // Extract player identifiers from the URL route params
@@ -188,6 +189,8 @@ export default function PlayerPage() {
               isFav={isFav}
               onToggleFavorite={toggleFavorite}
               onRefresh={handleRefresh}
+              streak={computeStreak(matches)}
+              climbStatus={computeClimbStatus(ranked)}
             />
 
             <TabBar activeTab={activeTab} onTabChange={setTab} />

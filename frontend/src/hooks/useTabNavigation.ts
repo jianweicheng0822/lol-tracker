@@ -17,7 +17,7 @@ import { useSearchParams } from "react-router-dom";
 import type { TabId } from "../types";
 
 /** Whitelist of valid tab IDs — anything else falls back to "overview". */
-const VALID_TABS: TabId[] = ["overview", "performance", "champions", "match-history"];
+const VALID_TABS: TabId[] = ["overview", "champions"];
 
 export function useTabNavigation(): [TabId, (tab: TabId) => void] {
   const [searchParams, setSearchParams] = useSearchParams();

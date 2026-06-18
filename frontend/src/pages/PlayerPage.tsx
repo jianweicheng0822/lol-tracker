@@ -13,11 +13,9 @@ import AuthModal from "../components/AuthModal";
 import ProfileHeader from "../components/ProfileHeader";
 import TabBar from "../components/TabBar";
 import OverviewTab from "../components/tabs/OverviewTab";
-import PerformanceTab from "../components/tabs/PerformanceTab";
 import ChampionsTab from "../components/tabs/ChampionsTab";
-import MatchHistoryTab from "../components/tabs/MatchHistoryTab";
 import { useTabNavigation } from "../hooks/useTabNavigation";
-import { fetchAccount, fetchAccountByPuuid, fetchMatchSummaries, fetchStats, fetchRanked, checkIsFavorite, addFavorite, removeFavorite, fetchTier, upgradeTier, getAuthToken, setAuthToken } from "../api";
+import { fetchAccount, fetchAccountByPuuid, fetchMatchSummaries, fetchStats, fetchRanked, checkIsFavorite, addFavorite, removeFavorite, fetchTier, getAuthToken, setAuthToken } from "../api";
 import type { Region, Account, MatchSummary, PlayerStats, RankedEntry } from "../types";
 
 export default function PlayerPage() {
@@ -196,41 +194,24 @@ export default function PlayerPage() {
 
             {/* Conditionally render the active tab's content */}
             {activeTab === "overview" && (
-              <OverviewTab stats={stats} matches={matches} ranked={ranked} />
-            )}
-            {activeTab === "performance" && (
-              <PerformanceTab puuid={account.puuid} />
+              <OverviewTab
+                stats={stats}
+                matches={matches}
+                ranked={ranked}
+                region={region!}
+                puuid={account.puuid}
+                gameName={account.gameName}
+                onLoadMore={loadMore}
+                isLoadingMore={isLoadingMore}
+                hasMore={hasMore}
+                tier={tier}
+                onTabChange={setTab}
+                onShowAuth={() => setShowAuthModal(true)}
+                onTierChange={setTier}
+              />
             )}
             {activeTab === "champions" && (
               <ChampionsTab puuid={account.puuid} />
-            )}
-            {activeTab === "match-history" && (
-              <>
-                {tier === 0 && (
-                  <div style={styles.upgradeBanner}>
-                    FREE tier: 20 matches max, no AI analysis.{" "}
-                    {getAuthToken() ? (
-                      <button style={styles.upgradeBtn} onClick={async () => { const d = await upgradeTier(); setTier(d.tier); }}>
-                        Upgrade to PRO
-                      </button>
-                    ) : (
-                      <button style={{ ...styles.upgradeBtn, background: "#4f46e5" }} onClick={() => setShowAuthModal(true)}>
-                        Log in to upgrade
-                      </button>
-                    )}
-                  </div>
-                )}
-                <MatchHistoryTab
-                  matches={matches}
-                  region={region!}
-                  puuid={account.puuid}
-                  gameName={account.gameName}
-                  onLoadMore={loadMore}
-                  isLoadingMore={isLoadingMore}
-                  hasMore={hasMore}
-                  tier={tier}
-                />
-              </>
             )}
           </>
         )}
@@ -239,7 +220,7 @@ export default function PlayerPage() {
   );
 }
 
-// --- Styles: dark slate theme, wider content area (1060px) for 2-column tab layouts ---
+// --- Styles: dark slate theme, wider content area (1200px) for sidebar + match list layout ---
 const styles: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "100vh",
@@ -263,7 +244,7 @@ const styles: Record<string, React.CSSProperties> = {
     flexShrink: 0,
   },
   content: {
-    maxWidth: 1060,
+    maxWidth: 1200,
     margin: "0 auto",
     padding: "30px 20px",
   },
@@ -278,27 +259,6 @@ const styles: Record<string, React.CSSProperties> = {
     color: "#fecaca",
     padding: 15,
     borderRadius: 8,
-  },
-  upgradeBanner: {
-    background: "#1e3a5f",
-    color: "#93c5fd",
-    padding: "10px 16px",
-    borderRadius: 8,
-    marginBottom: 12,
-    fontSize: 14,
-    display: "flex",
-    alignItems: "center",
-    gap: 10,
-  },
-  upgradeBtn: {
-    background: "#3b82f6",
-    color: "#fff",
-    border: "none",
-    borderRadius: 6,
-    padding: "6px 14px",
-    cursor: "pointer",
-    fontWeight: 600,
-    fontSize: 13,
   },
   authBtn: {
     background: "transparent",

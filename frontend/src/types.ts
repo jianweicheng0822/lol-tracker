@@ -135,7 +135,7 @@ export type MatchDetail = {
 };
 
 /** Valid tab IDs for the player dashboard — used by useTabNavigation hook and TabBar component. */
-export type TabId = "overview" | "performance" | "champions" | "match-history";
+export type TabId = "overview" | "champions";
 
 /** Per-champion aggregated stats — returned by GET /api/trends/champions. */
 export type ChampionStats = {

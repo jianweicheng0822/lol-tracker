@@ -16,9 +16,7 @@ type Props = {
 /** Tab definitions — order controls the visual tab layout. */
 const TABS: { id: TabId; label: string }[] = [
   { id: "overview", label: "Overview" },
-  { id: "performance", label: "Performance" },
   { id: "champions", label: "Champions" },
-  { id: "match-history", label: "Match History" },
 ];
 
 /**

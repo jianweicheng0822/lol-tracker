@@ -56,7 +56,7 @@ export default function OverviewTab({
                 </button>
               ) : (
                 <button
-                  style={{ ...styles.upgradeBtn, background: "#4f46e5" }}
+                  style={{ ...styles.upgradeBtn, background: "#059669" }}
                   onClick={onShowAuth}
                 >
                   Log in to upgrade
@@ -100,10 +100,10 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 16,
   },
   upgradeBanner: {
-    background: "#1e3a5f",
-    color: "#93c5fd",
+    background: "#0d2818",
+    color: "#6ee7b7",
     padding: "10px 16px",
-    borderRadius: 8,
+    borderRadius: 6,
     marginBottom: 12,
     fontSize: 14,
     display: "flex",
@@ -111,7 +111,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 10,
   },
   upgradeBtn: {
-    background: "#3b82f6",
+    background: "#059669",
     color: "#fff",
     border: "none",
     borderRadius: 6,

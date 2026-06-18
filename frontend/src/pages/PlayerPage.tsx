@@ -223,12 +223,12 @@ export default function PlayerPage() {
   );
 }
 
-// --- Styles: dark slate theme, wider content area (1200px) for sidebar + match list layout ---
+// --- Styles: emerald theme on neutral dark background ---
 const styles: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "100vh",
-    background: "#0f172a",
-    color: "#f8fafc",
+    background: "#0d1117",
+    color: "#e6edf3",
     fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
   },
   topBar: {
@@ -236,8 +236,8 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     gap: 20,
     padding: "12px 24px",
-    background: "#1e293b",
-    borderBottom: "1px solid #334155",
+    background: "#161b22",
+    borderBottom: "1px solid #21262d",
   },
   logo: {
     fontWeight: 800,
@@ -258,15 +258,15 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 16,
   },
   errorBox: {
-    background: "#7f1d1d",
-    color: "#fecaca",
+    background: "#3d1111",
+    color: "#fca5a5",
     padding: 15,
-    borderRadius: 8,
+    borderRadius: 6,
   },
   authBtn: {
     background: "transparent",
-    color: "#94a3b8",
-    border: "1px solid #334155",
+    color: "#8b949e",
+    border: "1px solid #21262d",
     borderRadius: 6,
     padding: "6px 14px",
     cursor: "pointer",

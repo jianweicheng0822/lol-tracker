@@ -126,8 +126,8 @@ export default function AiChatModal({ match, onClose }: Props) {
         style={{
           width: 520,
           maxHeight: "85vh",
-          background: "#1e293b",
-          borderRadius: 12,
+          background: "#161b22",
+          borderRadius: 10,
           display: "flex",
           flexDirection: "column",
           border: "1px solid rgba(255,255,255,0.08)",
@@ -145,20 +145,20 @@ export default function AiChatModal({ match, onClose }: Props) {
           }}
         >
           <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: "#e2e8f0" }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#e6edf3" }}>
               {match.championName}
               <span
                 style={{
                   marginLeft: 8,
                   fontSize: 12,
                   fontWeight: 500,
-                  color: isWin ? "#4ade80" : "#f87171",
+                  color: isWin ? "#38bdf8" : "#f87171",
                 }}
               >
                 {isWin ? "Victory" : "Defeat"}
               </span>
             </div>
-            <div style={{ fontSize: 12, color: "#64748b", marginTop: 2 }}>
+            <div style={{ fontSize: 12, color: "#484f58", marginTop: 2 }}>
               {match.kills}/{match.deaths}/{match.assists} ({kda} KDA)
             </div>
           </div>
@@ -167,7 +167,7 @@ export default function AiChatModal({ match, onClose }: Props) {
             style={{
               background: "none",
               border: "none",
-              color: "#64748b",
+              color: "#484f58",
               cursor: "pointer",
               fontSize: 20,
               lineHeight: 1,
@@ -192,7 +192,7 @@ export default function AiChatModal({ match, onClose }: Props) {
           }}
         >
           {messages.length === 0 && !isLoading && (
-            <div style={{ textAlign: "center", color: "#475569", fontSize: 13, marginTop: 40 }}>
+            <div style={{ textAlign: "center", color: "#484f58", fontSize: 13, marginTop: 40 }}>
               Ask about this match — e.g. "How did I perform?" or "What should I improve?"
             </div>
           )}
@@ -209,8 +209,8 @@ export default function AiChatModal({ match, onClose }: Props) {
                 style={{
                   padding: "10px 14px",
                   borderRadius: msg.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
-                  background: msg.role === "user" ? "#4f46e5" : "#334155",
-                  color: "#e2e8f0",
+                  background: msg.role === "user" ? "#059669" : "#21262d",
+                  color: "#e6edf3",
                   fontSize: 13,
                   lineHeight: 1.5,
                   whiteSpace: "pre-wrap",
@@ -228,8 +228,8 @@ export default function AiChatModal({ match, onClose }: Props) {
                 style={{
                   padding: "10px 14px",
                   borderRadius: "14px 14px 14px 4px",
-                  background: "#334155",
-                  color: "#e2e8f0",
+                  background: "#21262d",
+                  color: "#e6edf3",
                   fontSize: 13,
                   lineHeight: 1.5,
                   whiteSpace: "pre-wrap",
@@ -247,7 +247,7 @@ export default function AiChatModal({ match, onClose }: Props) {
                 style={{
                   padding: "10px 14px",
                   borderRadius: "14px 14px 14px 4px",
-                  background: "#334155",
+                  background: "#21262d",
                   display: "flex",
                   gap: 4,
                   alignItems: "center",
@@ -260,7 +260,7 @@ export default function AiChatModal({ match, onClose }: Props) {
                       width: 6,
                       height: 6,
                       borderRadius: "50%",
-                      background: "#64748b",
+                      background: "#484f58",
                       display: "inline-block",
                       animation: `dotPulse 1.4s ease-in-out ${i * 0.2}s infinite`,
                     }}
@@ -295,10 +295,10 @@ export default function AiChatModal({ match, onClose }: Props) {
             style={{
               flex: 1,
               padding: "10px 14px",
-              borderRadius: 8,
+              borderRadius: 6,
               border: "1px solid rgba(255,255,255,0.1)",
-              background: "#0f172a",
-              color: "#e2e8f0",
+              background: "#0d1117",
+              color: "#e6edf3",
               fontSize: 13,
               outline: "none",
             }}
@@ -308,10 +308,10 @@ export default function AiChatModal({ match, onClose }: Props) {
             disabled={isLoading || !input.trim()}
             style={{
               padding: "10px 18px",
-              borderRadius: 8,
+              borderRadius: 6,
               border: "none",
-              background: isLoading || !input.trim() ? "#334155" : "#4f46e5",
-              color: isLoading || !input.trim() ? "#64748b" : "#fff",
+              background: isLoading || !input.trim() ? "#21262d" : "#059669",
+              color: isLoading || !input.trim() ? "#484f58" : "#fff",
               cursor: isLoading || !input.trim() ? "not-allowed" : "pointer",
               fontSize: 13,
               fontWeight: 600,

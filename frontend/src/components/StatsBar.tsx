@@ -8,11 +8,11 @@ type StatsBarProps = {
 };
 
 function wrColor(wr: number): string {
-  return wr >= 60 ? "#4a8fd4" : wr >= 50 ? "#8b9bb0" : "#b05050";
+  return wr >= 60 ? "#34d399" : wr >= 50 ? "#8b949e" : "#f87171";
 }
 
 function kdaColor(kda: number): string {
-  return kda >= 3 ? "#3a9e72" : kda >= 2 ? "#c9981a" : "#b05050";
+  return kda >= 3 ? "#34d399" : kda >= 2 ? "#fbbf24" : "#f87171";
 }
 
 export default function StatsBar({ stats, matches }: StatsBarProps) {
@@ -46,11 +46,11 @@ export default function StatsBar({ stats, matches }: StatsBarProps) {
             {stats.averageKda.toFixed(2)}
           </div>
           <div style={styles.subtext}>
-            <span style={{ color: "#5b9ae6" }}>{stats.averageKills}</span>
-            <span style={{ color: "#3d4a5c" }}> / </span>
-            <span style={{ color: "#d06060" }}>{stats.averageDeaths}</span>
-            <span style={{ color: "#3d4a5c" }}> / </span>
-            <span style={{ color: "#45b5a8" }}>{stats.averageAssists}</span>
+            <span style={{ color: "#38bdf8" }}>{stats.averageKills}</span>
+            <span style={{ color: "#2e3844" }}> / </span>
+            <span style={{ color: "#f87171" }}>{stats.averageDeaths}</span>
+            <span style={{ color: "#2e3844" }}> / </span>
+            <span style={{ color: "#34d399" }}>{stats.averageAssists}</span>
           </div>
         </div>
 
@@ -64,7 +64,7 @@ export default function StatsBar({ stats, matches }: StatsBarProps) {
                 fontSize: 24,
                 fontWeight: 800,
                 lineHeight: 1,
-                color: streak.type === "win" ? "#3a9e72" : "#d06060",
+                color: streak.type === "win" ? "#38bdf8" : "#f87171",
               }}>
                 {streak.type === "win" ? "\u2191" : "\u2193"} {streak.count}{streak.type === "win" ? "W" : "L"}
               </div>
@@ -72,7 +72,7 @@ export default function StatsBar({ stats, matches }: StatsBarProps) {
             </>
           ) : (
             <>
-              <div style={{ fontSize: 24, fontWeight: 800, lineHeight: 1, color: "#546378" }}>
+              <div style={{ fontSize: 24, fontWeight: 800, lineHeight: 1, color: "#484f58" }}>
                 &mdash;
               </div>
               <div style={styles.subtext}>No streak</div>
@@ -94,7 +94,7 @@ export default function StatsBar({ stats, matches }: StatsBarProps) {
                 onError={hideOnError}
               />
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#cbd5e1", lineHeight: 1.2 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#c9d1d9", lineHeight: 1.2 }}>
                   {mainChamp.name}
                 </div>
                 <div style={styles.subtext}>
@@ -103,7 +103,7 @@ export default function StatsBar({ stats, matches }: StatsBarProps) {
               </div>
             </>
           ) : (
-            <div style={{ fontSize: 13, color: "#546378" }}>&mdash;</div>
+            <div style={{ fontSize: 13, color: "#484f58" }}>&mdash;</div>
           )}
         </div>
 
@@ -119,7 +119,7 @@ export default function StatsBar({ stats, matches }: StatsBarProps) {
                   width: 10,
                   height: 10,
                   borderRadius: "50%",
-                  background: m.win ? "#3a9e72" : "#d06060",
+                  background: m.win ? "#34d399" : "#f87171",
                 }}
               />
             ))}
@@ -135,9 +135,9 @@ export default function StatsBar({ stats, matches }: StatsBarProps) {
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    background: "rgba(30,41,59,0.45)",
-    border: "1px solid rgba(148,163,184,0.1)",
-    borderRadius: 10,
+    background: "rgba(22,27,34,0.65)",
+    border: "1px solid rgba(52,211,153,0.08)",
+    borderRadius: 6,
     padding: 16,
     marginBottom: 16,
   },
@@ -160,7 +160,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   subtext: {
     fontSize: 11,
-    color: "#7e8fa6",
+    color: "#484f58",
     marginTop: 4,
   },
 };

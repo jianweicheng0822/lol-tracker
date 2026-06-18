@@ -81,18 +81,18 @@ export default function MatchDetailPage() {
         {status === "done" && match && (
           <>
             {/* Match header */}
-            <div style={{ ...styles.header, borderLeftColor: myWin ? "#2563eb" : "#dc2626" }}>
+            <div style={{ ...styles.header, borderLeftColor: myWin ? "#38bdf8" : "#dc2626" }}>
               <div>
                 <span style={{ fontSize: 20, fontWeight: 700 }}>{queueName}</span>
-                <span style={{ fontSize: 14, color: "#94a3b8", marginLeft: 12 }}>
+                <span style={{ fontSize: 14, color: "#8b949e", marginLeft: 12 }}>
                   {formatDuration(match.gameDurationSec)}
                 </span>
-                <span style={{ fontSize: 14, color: "#94a3b8", marginLeft: 12 }}>
+                <span style={{ fontSize: 14, color: "#8b949e", marginLeft: 12 }}>
                   {timeAgo(match.gameEndTimestamp)}
                 </span>
               </div>
               {myParticipant && (
-                <span style={{ fontSize: 18, fontWeight: 700, color: myWin ? "#60a5fa" : "#f87171" }}>
+                <span style={{ fontSize: 18, fontWeight: 700, color: myWin ? "#38bdf8" : "#f87171" }}>
                   {myWin ? "Victory" : "Defeat"}
                 </span>
               )}
@@ -132,8 +132,8 @@ export default function MatchDetailPage() {
 const styles: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "100vh",
-    background: "#0f172a",
-    color: "#f8fafc",
+    background: "#0d1117",
+    color: "#e6edf3",
     fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
   },
   topBar: {
@@ -141,8 +141,8 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     gap: 20,
     padding: "12px 24px",
-    background: "#1e293b",
-    borderBottom: "1px solid #334155",
+    background: "#161b22",
+    borderBottom: "1px solid #21262d",
   },
   logo: {
     fontWeight: 800,
@@ -155,8 +155,8 @@ const styles: Record<string, React.CSSProperties> = {
     padding: "6px 14px",
     borderRadius: 6,
     background: "rgba(255,255,255,0.08)",
-    border: "1px solid #334155",
-    color: "#cbd5e1",
+    border: "1px solid #21262d",
+    color: "#c9d1d9",
     cursor: "pointer",
     fontSize: 13,
   },
@@ -172,8 +172,8 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: 24,
     padding: "16px 20px",
     background: "rgba(255,255,255,0.03)",
-    borderRadius: 8,
-    borderLeft: "4px solid #334155",
+    borderRadius: 6,
+    borderLeft: "4px solid #21262d",
   },
   loadingBox: {
     textAlign: "center",
@@ -182,9 +182,9 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 16,
   },
   errorBox: {
-    background: "#7f1d1d",
-    color: "#fecaca",
+    background: "#3d1111",
+    color: "#fca5a5",
     padding: 15,
-    borderRadius: 8,
+    borderRadius: 6,
   },
 };

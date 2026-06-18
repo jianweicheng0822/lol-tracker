@@ -74,11 +74,11 @@ describe("RankSummary", () => {
 
   it("color-codes win rate green for >=55%", () => {
     render(<RankSummary entries={[makeRankedEntry({ wins: 60, losses: 40 })]} />);
-    expect(screen.getByText("60%")).toHaveStyle({ color: "#3a9e72" });
+    expect(screen.getByText("60%")).toHaveStyle({ color: "#34d399" });
   });
 
   it("color-codes win rate red for <45%", () => {
     render(<RankSummary entries={[makeRankedEntry({ wins: 30, losses: 70 })]} />);
-    expect(screen.getByText("30%")).toHaveStyle({ color: "#d06060" });
+    expect(screen.getByText("30%")).toHaveStyle({ color: "#f87171" });
   });
 });

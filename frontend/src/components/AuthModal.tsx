@@ -56,19 +56,19 @@ export default function AuthModal({ onSuccess, onClose }: Props) {
         onClick={(e) => e.stopPropagation()}
         style={{
           width: 380,
-          background: "#1e293b",
-          borderRadius: 12,
+          background: "#161b22",
+          borderRadius: 10,
           border: "1px solid rgba(255,255,255,0.08)",
           boxShadow: "0 24px 48px rgba(0,0,0,0.5)",
           padding: "28px 24px",
         }}
       >
-        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#e2e8f0", textAlign: "center" }}>
+        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#e6edf3", textAlign: "center" }}>
           {mode === "login" ? "Log In" : "Create Account"}
         </h2>
 
         {/* Toggle between login/register */}
-        <div style={{ textAlign: "center", marginTop: 8, fontSize: 13, color: "#64748b" }}>
+        <div style={{ textAlign: "center", marginTop: 8, fontSize: 13, color: "#484f58" }}>
           {mode === "login" ? "Don't have an account? " : "Already have an account? "}
           <button
             type="button"
@@ -76,7 +76,7 @@ export default function AuthModal({ onSuccess, onClose }: Props) {
             style={{
               background: "none",
               border: "none",
-              color: "#818cf8",
+              color: "#34d399",
               cursor: "pointer",
               fontSize: 13,
               textDecoration: "underline",
@@ -112,10 +112,10 @@ export default function AuthModal({ onSuccess, onClose }: Props) {
             disabled={loading || !username.trim() || !password.trim()}
             style={{
               padding: "10px 0",
-              borderRadius: 8,
+              borderRadius: 6,
               border: "none",
-              background: loading || !username.trim() || !password.trim() ? "#334155" : "#4f46e5",
-              color: loading || !username.trim() || !password.trim() ? "#64748b" : "#fff",
+              background: loading || !username.trim() || !password.trim() ? "#21262d" : "#059669",
+              color: loading || !username.trim() || !password.trim() ? "#484f58" : "#fff",
               cursor: loading || !username.trim() || !password.trim() ? "not-allowed" : "pointer",
               fontSize: 14,
               fontWeight: 600,
@@ -132,10 +132,10 @@ export default function AuthModal({ onSuccess, onClose }: Props) {
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 14px",
-  borderRadius: 8,
+  borderRadius: 6,
   border: "1px solid rgba(255,255,255,0.1)",
-  background: "#0f172a",
-  color: "#e2e8f0",
+  background: "#0d1117",
+  color: "#e6edf3",
   fontSize: 14,
   outline: "none",
 };

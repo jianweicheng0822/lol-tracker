@@ -46,8 +46,8 @@ export default function ChampionsTab({ puuid }: Props) {
   return (
     <div style={styles.grid}>
       {champions.map((c) => {
-        const wrColor = c.winRate >= 60 ? "#4ade80" : c.winRate >= 50 ? "#94a3b8" : "#f87171";
-        const kdaColor = c.avgKda >= 3 ? "#3a9e72" : c.avgKda >= 2 ? "#c9981a" : "#b05050";
+        const wrColor = c.winRate >= 60 ? "#34d399" : c.winRate >= 50 ? "#8b949e" : "#f87171";
+        const kdaColor = c.avgKda >= 3 ? "#34d399" : c.avgKda >= 2 ? "#fbbf24" : "#f87171";
 
         return (
           <div key={c.championName} style={styles.card}>
@@ -60,27 +60,27 @@ export default function ChampionsTab({ puuid }: Props) {
                 onError={hideOnError}
               />
               <div>
-                <div style={{ fontSize: 14, fontWeight: 700, color: "#e2e8f0" }}>{c.championName}</div>
-                <div style={{ fontSize: 11, color: "#7e8fa6" }}>{c.games} games</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#e6edf3" }}>{c.championName}</div>
+                <div style={{ fontSize: 11, color: "#484f58" }}>{c.games} games</div>
               </div>
             </div>
             <div style={styles.statsRow}>
               <div style={{ textAlign: "center" }}>
                 <div style={{ fontSize: 16, fontWeight: 700, color: wrColor }}>{c.winRate}%</div>
                 <div style={styles.statLabel}>Win Rate</div>
-                <div style={{ fontSize: 10, color: "#546378" }}>{c.wins}W {c.games - c.wins}L</div>
+                <div style={{ fontSize: 10, color: "#484f58" }}>{c.wins}W {c.games - c.wins}L</div>
               </div>
               <div style={{ textAlign: "center" }}>
                 <div style={{ fontSize: 16, fontWeight: 700, color: kdaColor }}>{c.avgKda.toFixed(2)}</div>
                 <div style={styles.statLabel}>KDA</div>
-                <div style={{ fontSize: 10, color: "#546378" }}>{c.avgKills}/{c.avgDeaths}/{c.avgAssists}</div>
+                <div style={{ fontSize: 10, color: "#484f58" }}>{c.avgKills}/{c.avgDeaths}/{c.avgAssists}</div>
               </div>
               <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 16, fontWeight: 700, color: "#e2e8f0" }}>{Math.round(c.avgDamage).toLocaleString()}</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: "#e6edf3" }}>{Math.round(c.avgDamage).toLocaleString()}</div>
                 <div style={styles.statLabel}>Avg Dmg</div>
               </div>
               <div style={{ textAlign: "center" }}>
-                <div style={{ fontSize: 16, fontWeight: 700, color: "#e2e8f0" }}>{c.avgCs}</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: "#e6edf3" }}>{c.avgCs}</div>
                 <div style={styles.statLabel}>Avg CS</div>
               </div>
             </div>
@@ -98,9 +98,9 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 12,
   },
   card: {
-    background: "rgba(30,41,59,0.45)",
-    border: "1px solid rgba(148,163,184,0.1)",
-    borderRadius: 10,
+    background: "rgba(22,27,34,0.65)",
+    border: "1px solid rgba(52,211,153,0.08)",
+    borderRadius: 6,
     padding: 16,
   },
   statsRow: {
@@ -110,7 +110,7 @@ const styles: Record<string, React.CSSProperties> = {
   statLabel: {
     fontSize: 9,
     textTransform: "uppercase",
-    color: "#7e8fa6",
+    color: "#484f58",
     letterSpacing: 0.4,
     marginTop: 1,
   },

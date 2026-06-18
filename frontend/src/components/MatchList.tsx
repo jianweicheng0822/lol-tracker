@@ -114,13 +114,13 @@ function getPerformanceTag(
   const kda = deaths === 0 ? kills + assists : (kills + assists) / deaths;
 
   if (kda >= 5 && killParticipation >= 60)
-    return { label: "MVP", color: "#b08a2e" };
+    return { label: "MVP", color: "#fbbf24" };
   if (kda >= 3.5 || (kda >= 2.5 && killParticipation >= 55))
-    return { label: "Strong", color: "#2a8a66" };
+    return { label: "Strong", color: "#34d399" };
   if (kda < 1 || (deaths >= 8 && kda < 1.5))
-    return { label: "Struggled", color: "#6b7585" };
+    return { label: "Struggled", color: "#484f58" };
   if (win && kda >= 1.5 && killParticipation >= 35)
-    return { label: "Balanced", color: "#5a6575" };
+    return { label: "Balanced", color: "#484f58" };
 
   return null;
 }
@@ -162,14 +162,14 @@ function PlayerRow({
         alignItems: "center",
         gap: 5,
         fontSize: 11,
-        color: isMe ? "#e2e8f0" : hovered ? "#cbd5e1" : "#94a3b8",
+        color: isMe ? "#e6edf3" : hovered ? "#c9d1d9" : "#8b949e",
         fontWeight: isMe ? 600 : 400,
         background: isMe
-          ? "rgba(99,102,241,0.07)"
+          ? "rgba(52,211,153,0.07)"
           : hovered
             ? "rgba(255,255,255,0.03)"
             : undefined,
-        borderLeft: isMe ? "2px solid rgba(99,102,241,0.45)" : "2px solid transparent",
+        borderLeft: isMe ? "2px solid rgba(52,211,153,0.45)" : "2px solid transparent",
         borderRadius: 2,
         padding: "2px 5px",
         marginLeft: -5,
@@ -196,7 +196,7 @@ function PlayerRow({
         {player.summonerName}
       </span>
       {isMe && (
-        <span style={{ color: "#6b72a8", fontSize: 9, flexShrink: 0, opacity: 0.8 }}>
+        <span style={{ color: "#34d399", fontSize: 9, flexShrink: 0, opacity: 0.8 }}>
           (You)
         </span>
       )}
@@ -325,10 +325,10 @@ function AiButton({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: hovered ? "rgba(79,70,229,0.2)" : "rgba(255,255,255,0.04)",
+        background: hovered ? "rgba(52,211,153,0.2)" : "rgba(255,255,255,0.04)",
         border: "1px solid rgba(255,255,255,0.08)",
         borderRadius: 4,
-        color: hovered ? "#a5b4fc" : "#64748b",
+        color: hovered ? "#34d399" : "#484f58",
         cursor: "pointer",
         padding: "4px 8px",
         fontSize: 12,
@@ -367,7 +367,7 @@ function ChevronButton({
         background: hovered ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.04)",
         border: "1px solid rgba(255,255,255,0.08)",
         borderRadius: 4,
-        color: hovered ? "#cbd5e1" : "#64748b",
+        color: hovered ? "#c9d1d9" : "#484f58",
         cursor: "pointer",
         padding: "4px 8px",
         fontSize: 12,
@@ -421,7 +421,7 @@ function InlineScoreboard({
 
   if (status === "loading") {
     return (
-      <div style={{ padding: "16px 12px", textAlign: "center", color: "#64748b", fontSize: 13 }}>
+      <div style={{ padding: "16px 12px", textAlign: "center", color: "#484f58", fontSize: 13 }}>
         Loading scoreboard...
       </div>
     );
@@ -524,12 +524,12 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
           const isArena = m.queueId === 1700;
           const isWin = isArena ? (m.placement >= 1 && m.placement <= 4) : m.win;
 
-          const winColor = isWin ? "#2d6ab5" : "#a83232";
-          const winTextColor = isWin ? "#4d8ad0" : "#cc5555";
+          const winColor = isWin ? "#38bdf8" : "#f87171";
+          const winTextColor = isWin ? "#38bdf8" : "#f87171";
           const winText = isWin ? "Victory" : "Defeat";
           const winBg = isWin
-            ? "linear-gradient(135deg, rgba(30,60,110,0.18) 0%, rgba(20,40,80,0.08) 100%)"
-            : "linear-gradient(135deg, rgba(110,30,30,0.18) 0%, rgba(80,20,20,0.08) 100%)";
+            ? "linear-gradient(135deg, rgba(56,189,248,0.12) 0%, rgba(56,189,248,0.04) 100%)"
+            : "linear-gradient(135deg, rgba(248,113,113,0.12) 0%, rgba(248,113,113,0.04) 100%)";
 
           const queueName =
             QUEUE_NAMES[m.queueId] || "Normal";
@@ -563,12 +563,12 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                         bottom: -2,
                         left: "50%",
                         transform: "translateX(-50%)",
-                        background: "#0f172a",
+                        background: "#0d1117",
                         fontSize: 9,
                         padding: "0 4px",
                         borderRadius: 4,
                         fontWeight: 600,
-                        color: "#6b7a8e",
+                        color: "#484f58",
                         lineHeight: "14px",
                       }}
                     >
@@ -589,7 +589,7 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                            height: 22,
                            borderRadius: 4,
                            overflow: "hidden",
-                           background: "rgba(30,41,59,0.6)",
+                           background: "rgba(22,27,34,0.6)",
                            border: "1px solid rgba(255,255,255,0.15)",
                            boxShadow: "0 0 6px rgba(255,255,255,0.15)",
                          }}
@@ -656,11 +656,11 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                   }}
                 >
                   <div style={{ fontSize: 21, fontWeight: 800, letterSpacing: -0.5, lineHeight: 1 }}>
-                    <span style={{ color: "#6ba3d6" }}>{m.kills}</span>
+                    <span style={{ color: "#38bdf8" }}>{m.kills}</span>
                     <span style={{ color: "#2e3844", fontWeight: 400 }}> / </span>
-                    <span style={{ color: "#d06060" }}>{m.deaths}</span>
+                    <span style={{ color: "#f87171" }}>{m.deaths}</span>
                     <span style={{ color: "#2e3844", fontWeight: 400 }}> / </span>
-                    <span style={{ color: "#4aab9e" }}>{m.assists}</span>
+                    <span style={{ color: "#34d399" }}>{m.assists}</span>
                   </div>
 
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -668,7 +668,7 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                       style={{
                         fontSize: 13,
                         fontWeight: 700,
-                        color: kda === "Perfect" ? "#a88520" : "#3a8a64",
+                        color: kda === "Perfect" ? "#fbbf24" : "#34d399",
                       }}
                     >
                       {kda} KDA
@@ -710,12 +710,12 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                       display: "flex",
                       gap: 7,
                       fontSize: 10,
-                      color: "#3f4e5f",
+                      color: "#484f58",
                       alignItems: "center",
                       opacity: 0.85,
                     }}
                   >
-                    <span style={{ fontWeight: 500, color: "#4e5e70" }}>{queueName}</span>
+                    <span style={{ fontWeight: 500, color: "#484f58" }}>{queueName}</span>
                     <span>&middot;</span>
                     <span>{formatDuration(m.gameDurationSec)}</span>
                     <span>&middot;</span>
@@ -765,7 +765,7 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
               {isExpanded && region && (
                 <div
                   style={{
-                    background: "rgba(15,23,42,0.95)",
+                    background: "rgba(13,17,23,0.95)",
                     border: "1px solid rgba(255,255,255,0.06)",
                     borderTop: "none",
                     borderRadius: "0 0 6px 6px",
@@ -810,8 +810,8 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
               padding: "10px 32px",
               borderRadius: 6,
               background: isLoadingMore ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.08)",
-              border: "1px solid #334155",
-              color: isLoadingMore ? "#64748b" : "#cbd5e1",
+              border: "1px solid #21262d",
+              color: isLoadingMore ? "#484f58" : "#c9d1d9",
               cursor: isLoadingMore ? "not-allowed" : "pointer",
               fontSize: 13,
               fontWeight: 600,

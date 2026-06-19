@@ -30,17 +30,17 @@ describe("StatsBar", () => {
 
   it("color-codes KDA (green for >=3)", () => {
     render(<StatsBar stats={makePlayerStats({ averageKda: 3.5 })} matches={[makeMatchSummary()]} />);
-    expect(screen.getByText("3.50")).toHaveStyle({ color: "#34d399" });
+    expect(screen.getByText("3.50")).toHaveStyle({ color: "#D4A017" });
   });
 
   it("color-codes KDA (yellow for >=2 and <3)", () => {
     render(<StatsBar stats={makePlayerStats({ averageKda: 2.5 })} matches={[makeMatchSummary()]} />);
-    expect(screen.getByText("2.50")).toHaveStyle({ color: "#fbbf24" });
+    expect(screen.getByText("2.50")).toHaveStyle({ color: "#E8C84A" });
   });
 
   it("color-codes KDA (red for <2)", () => {
     render(<StatsBar stats={makePlayerStats({ averageKda: 1.5 })} matches={[makeMatchSummary()]} />);
-    expect(screen.getByText("1.50")).toHaveStyle({ color: "#f87171" });
+    expect(screen.getByText("1.50")).toHaveStyle({ color: "#C44040" });
   });
 
   it("shows streak when consecutive wins", () => {

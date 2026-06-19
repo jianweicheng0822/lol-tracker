@@ -36,9 +36,9 @@ const TIER_TINTS: Record<string, string> = {
 };
 
 function winRateColor(wr: number): string {
-  if (wr >= 55) return "#34d399";
-  if (wr >= 45) return "#8b949e";
-  return "#f87171";
+  if (wr >= 55) return "#D4A017";
+  if (wr >= 45) return "#7A7060";
+  return "#C44040";
 }
 
 type Props = { entries: RankedEntry[] };
@@ -99,8 +99,8 @@ export default function RankSummary({ entries }: Props) {
 
 const styles: Record<string, React.CSSProperties> = {
   card: {
-    background: "rgba(22,27,34,0.65)",
-    border: "1px solid rgba(52,211,153,0.08)",
+    background: "rgba(20,18,14,0.65)",
+    border: "1px solid rgba(212,160,23,0.10)",
     borderRadius: 6,
     padding: 20,
     marginBottom: 12,
@@ -113,7 +113,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 11,
     textTransform: "uppercase",
     letterSpacing: 1,
-    color: "#8b949e",
+    color: "#7A7060",
     marginBottom: 8,
   },
   iconRow: {
@@ -130,16 +130,16 @@ const styles: Record<string, React.CSSProperties> = {
   tier: {
     fontSize: 20,
     fontWeight: 800,
-    color: "#e6edf3",
+    color: "#EDE4D3",
   },
   lp: {
     fontSize: 16,
-    color: "#34d399",
+    color: "#D4A017",
     fontWeight: 700,
   },
   record: {
     fontSize: 12,
-    color: "#8b949e",
+    color: "#7A7060",
     marginTop: 3,
   },
 };

@@ -44,7 +44,7 @@ export default function LpSparkline({ puuid, onClick }: Props) {
       <div style={styles.title}>LP Trend</div>
       <ResponsiveContainer width="100%" height={80}>
         <LineChart data={data}>
-          <Line type="monotone" dataKey="lp" stroke="#34d399" strokeWidth={2} dot={false} />
+          <Line type="monotone" dataKey="lp" stroke="#D4A017" strokeWidth={2} dot={false} />
         </LineChart>
       </ResponsiveContainer>
     </div>
@@ -53,8 +53,8 @@ export default function LpSparkline({ puuid, onClick }: Props) {
 
 const styles: Record<string, React.CSSProperties> = {
   card: {
-    background: "rgba(22,27,34,0.65)",
-    border: "1px solid rgba(52,211,153,0.08)",
+    background: "rgba(20,18,14,0.65)",
+    border: "1px solid rgba(212,160,23,0.10)",
     borderRadius: 6,
     padding: 12,
     marginBottom: 12,
@@ -63,13 +63,13 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 11,
     textTransform: "uppercase",
     letterSpacing: 0.8,
-    color: "#484f58",
+    color: "#4A4540",
     fontWeight: 500,
     marginBottom: 8,
   },
   empty: {
     fontSize: 12,
-    color: "#484f58",
+    color: "#4A4540",
     padding: "8px 0",
   },
 };

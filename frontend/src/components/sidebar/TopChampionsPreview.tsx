@@ -63,7 +63,7 @@ function ChampRow({ champ, imgBase }: { champ: ChampPerf; imgBase: string }) {
   const kda = champ.deaths === 0
     ? (champ.kills + champ.assists).toFixed(1)
     : ((champ.kills + champ.assists) / champ.deaths).toFixed(2);
-  const wrColor = wr >= 60 ? "#34d399" : wr >= 50 ? "#8b949e" : "#f87171";
+  const wrColor = wr >= 60 ? "#D4A017" : wr >= 50 ? "#7A7060" : "#C44040";
 
   return (
     <div
@@ -86,19 +86,19 @@ function ChampRow({ champ, imgBase }: { champ: ChampPerf; imgBase: string }) {
         style={{ borderRadius: "50%", flexShrink: 0 }}
         onError={hideOnError}
       />
-      <div style={{ flex: 1, minWidth: 0, fontSize: 12, fontWeight: 600, color: "#c9d1d9", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+      <div style={{ flex: 1, minWidth: 0, fontSize: 12, fontWeight: 600, color: "#B8A88A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
         {champ.championName}
       </div>
       <div style={{ fontSize: 11, fontWeight: 700, color: wrColor, flexShrink: 0 }}>{wr}%</div>
-      <div style={{ fontSize: 10, color: "#484f58", flexShrink: 0 }}>{kda}</div>
+      <div style={{ fontSize: 10, color: "#4A4540", flexShrink: 0 }}>{kda}</div>
     </div>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
   card: {
-    background: "rgba(22,27,34,0.65)",
-    border: "1px solid rgba(52,211,153,0.08)",
+    background: "rgba(20,18,14,0.65)",
+    border: "1px solid rgba(212,160,23,0.10)",
     borderRadius: 6,
     padding: 12,
     marginBottom: 12,
@@ -107,14 +107,14 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 11,
     textTransform: "uppercase",
     letterSpacing: 0.8,
-    color: "#484f58",
+    color: "#4A4540",
     fontWeight: 500,
     marginBottom: 8,
   },
   viewAll: {
     background: "none",
     border: "none",
-    color: "#34d399",
+    color: "#D4A017",
     fontSize: 12,
     fontWeight: 600,
     cursor: "pointer",

@@ -69,8 +69,8 @@ export default function HomePage() {
               key={p.label}
               style={styles.demoBadge}
               onClick={() => navigate(`/player/puuid/${p.region}/${encodeURIComponent(p.puuid)}`)}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#34d399"; e.currentTarget.style.background = "#161b22"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#21262d"; e.currentTarget.style.background = "#0d1117"; }}
+              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#D4A017"; e.currentTarget.style.background = "#111110"; }}
+              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#1e1c18"; e.currentTarget.style.background = "#0a0a0a"; }}
             >
               {p.label}
             </button>
@@ -89,8 +89,8 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     justifyContent: "center",
     minHeight: "100vh",
-    background: "#0d1117",
-    color: "#e6edf3",
+    background: "#0a0a0a",
+    color: "#EDE4D3",
     fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
   },
   center: {
@@ -119,8 +119,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   authBtn: {
     background: "transparent",
-    color: "#8b949e",
-    border: "1px solid #21262d",
+    color: "#7A7060",
+    border: "1px solid #1e1c18",
     borderRadius: 6,
     padding: "6px 14px",
     cursor: "pointer",
@@ -137,9 +137,9 @@ const styles: Record<string, React.CSSProperties> = {
   demoBadge: {
     padding: "6px 14px",
     borderRadius: 20,
-    border: "1px solid #21262d",
-    background: "#0d1117",
-    color: "#8b949e",
+    border: "1px solid #1e1c18",
+    background: "#0a0a0a",
+    color: "#7A7060",
     cursor: "pointer",
     fontSize: 13,
     fontWeight: 500,

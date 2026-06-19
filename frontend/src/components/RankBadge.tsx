@@ -126,8 +126,8 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: 20,
   },
   badge: {
-    background: "#161b22",
-    border: "1px solid #21262d",
+    background: "#111110",
+    border: "1px solid #1e1c18",
     borderRadius: 6,
     padding: "12px 20px",
     minWidth: 180,
@@ -136,7 +136,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 11,
     textTransform: "uppercase",
     letterSpacing: 1,
-    color: "#8b949e",
+    color: "#7A7060",
     marginBottom: 8,
   },
   iconRow: {
@@ -156,16 +156,16 @@ const styles: Record<string, React.CSSProperties> = {
   tier: {
     fontSize: 18,
     fontWeight: 700,
-    color: "#e6edf3",
+    color: "#EDE4D3",
   },
   lp: {
     fontSize: 14,
-    color: "#34d399",
+    color: "#D4A017",
     fontWeight: 600,
   },
   record: {
     fontSize: 12,
-    color: "#8b949e",
+    color: "#7A7060",
     marginTop: 4,
   },
 };

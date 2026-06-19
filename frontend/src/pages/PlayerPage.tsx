@@ -223,12 +223,12 @@ export default function PlayerPage() {
   );
 }
 
-// --- Styles: emerald theme on neutral dark background ---
+// --- Styles: black-gold theme ---
 const styles: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "100vh",
-    background: "#0d1117",
-    color: "#e6edf3",
+    background: "#0a0a0a",
+    color: "#EDE4D3",
     fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
   },
   topBar: {
@@ -236,8 +236,8 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     gap: 20,
     padding: "12px 24px",
-    background: "#161b22",
-    borderBottom: "1px solid #21262d",
+    background: "#111110",
+    borderBottom: "1px solid #1e1c18",
   },
   logo: {
     fontWeight: 800,
@@ -258,15 +258,15 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 16,
   },
   errorBox: {
-    background: "#3d1111",
-    color: "#fca5a5",
+    background: "#2d1111",
+    color: "#E88A8A",
     padding: 15,
     borderRadius: 6,
   },
   authBtn: {
     background: "transparent",
-    color: "#8b949e",
-    border: "1px solid #21262d",
+    color: "#7A7060",
+    border: "1px solid #1e1c18",
     borderRadius: 6,
     padding: "6px 14px",
     cursor: "pointer",

@@ -20,17 +20,17 @@ describe("RecentStatsPreview", () => {
 
   it("uses green color for win rate >= 60", () => {
     render(<RecentStatsPreview stats={makePlayerStats({ winRate: 65 })} onClick={vi.fn()} />);
-    expect(screen.getByText("65%")).toHaveStyle({ color: "#34d399" });
+    expect(screen.getByText("65%")).toHaveStyle({ color: "#D4A017" });
   });
 
   it("uses neutral color for win rate between 50 and 59", () => {
     render(<RecentStatsPreview stats={makePlayerStats({ winRate: 55 })} onClick={vi.fn()} />);
-    expect(screen.getByText("55%")).toHaveStyle({ color: "#8b949e" });
+    expect(screen.getByText("55%")).toHaveStyle({ color: "#7A7060" });
   });
 
   it("uses red color for win rate below 50", () => {
     render(<RecentStatsPreview stats={makePlayerStats({ winRate: 40 })} onClick={vi.fn()} />);
-    expect(screen.getByText("40%")).toHaveStyle({ color: "#f87171" });
+    expect(screen.getByText("40%")).toHaveStyle({ color: "#C44040" });
   });
 
   it("calls onClick when card is clicked", async () => {

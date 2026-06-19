@@ -21,12 +21,12 @@ export default function ProfileHeader({ account, region, isFav, onToggleFavorite
         <img
           src={`https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/profileicon/${account.profileIconId}.png`}
           alt="Profile Icon"
-          style={{ width: 56, height: 56, borderRadius: "50%", border: "2px solid #21262d" }}
+          style={{ width: 56, height: 56, borderRadius: "50%", border: "2px solid #1e1c18" }}
         />
         <div>
           <h2 style={{ margin: 0, fontSize: 28 }}>
             {account.gameName}
-            <span style={{ color: "#484f58", fontWeight: 400 }}> #{account.tagLine}</span>
+            <span style={{ color: "#4A4540", fontWeight: 400 }}> #{account.tagLine}</span>
           </h2>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
             <span style={{ fontSize: 13, opacity: 0.5 }}>{region}</span>
@@ -36,8 +36,8 @@ export default function ProfileHeader({ account, region, isFav, onToggleFavorite
                 fontWeight: 600,
                 padding: "2px 8px",
                 borderRadius: 4,
-                background: streak.type === "win" ? "rgba(56,189,248,0.12)" : "rgba(248,113,113,0.12)",
-                color: streak.type === "win" ? "#38bdf8" : "#f87171",
+                background: streak.type === "win" ? "rgba(212,160,23,0.12)" : "rgba(196,64,64,0.12)",
+                color: streak.type === "win" ? "#D4A017" : "#C44040",
               }}>
                 {streak.type === "win" ? "\u2191" : "\u2193"} {streak.count}{streak.type === "win" ? "W" : "L"} Streak
               </span>
@@ -70,14 +70,14 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: "space-between",
     marginBottom: 24,
     paddingBottom: 16,
-    borderBottom: "1px solid #21262d",
+    borderBottom: "1px solid #1e1c18",
   },
   favBtn: {
     padding: "8px 16px",
     borderRadius: 6,
-    background: "rgba(52,211,153,0.1)",
-    border: "1px solid rgba(52,211,153,0.3)",
-    color: "#34d399",
+    background: "rgba(212,160,23,0.1)",
+    border: "1px solid rgba(212,160,23,0.3)",
+    color: "#D4A017",
     cursor: "pointer",
     fontSize: 13,
     fontWeight: 600,
@@ -85,9 +85,9 @@ const styles: Record<string, React.CSSProperties> = {
   favBtnActive: {
     padding: "8px 16px",
     borderRadius: 6,
-    background: "rgba(52,211,153,0.25)",
-    border: "1px solid rgba(52,211,153,0.5)",
-    color: "#6ee7b7",
+    background: "rgba(212,160,23,0.25)",
+    border: "1px solid rgba(212,160,23,0.5)",
+    color: "#E8C84A",
     cursor: "pointer",
     fontSize: 13,
     fontWeight: 600,
@@ -95,9 +95,9 @@ const styles: Record<string, React.CSSProperties> = {
   refreshBtn: {
     padding: "8px 12px",
     borderRadius: 6,
-    background: "rgba(52,211,153,0.1)",
-    border: "1px solid rgba(52,211,153,0.3)",
-    color: "#34d399",
+    background: "rgba(212,160,23,0.1)",
+    border: "1px solid rgba(212,160,23,0.3)",
+    color: "#D4A017",
     cursor: "pointer",
     fontSize: 16,
     fontWeight: 600,
@@ -108,15 +108,15 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     padding: "2px 8px",
     borderRadius: 4,
-    background: "rgba(52,211,153,0.15)",
-    color: "#34d399",
+    background: "rgba(212,160,23,0.15)",
+    color: "#D4A017",
   },
   fallBadge: {
     fontSize: 12,
     fontWeight: 600,
     padding: "2px 8px",
     borderRadius: 4,
-    background: "rgba(248,113,113,0.15)",
-    color: "#f87171",
+    background: "rgba(196,64,64,0.15)",
+    color: "#C44040",
   },
 };

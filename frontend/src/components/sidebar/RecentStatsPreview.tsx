@@ -8,8 +8,8 @@ type Props = {
 export default function RecentStatsPreview({ stats, onClick }: Props) {
   if (stats.totalGames === 0) return null;
 
-  const wrColor = stats.winRate >= 60 ? "#34d399" : stats.winRate >= 50 ? "#8b949e" : "#f87171";
-  const kdaColor = stats.averageKda >= 3 ? "#34d399" : stats.averageKda >= 2 ? "#fbbf24" : "#f87171";
+  const wrColor = stats.winRate >= 60 ? "#D4A017" : stats.winRate >= 50 ? "#7A7060" : "#C44040";
+  const kdaColor = stats.averageKda >= 3 ? "#D4A017" : stats.averageKda >= 2 ? "#E8C84A" : "#C44040";
 
   return (
     <div style={{ ...styles.card, cursor: "pointer" }} onClick={onClick}>
@@ -34,8 +34,8 @@ export default function RecentStatsPreview({ stats, onClick }: Props) {
 
 const styles: Record<string, React.CSSProperties> = {
   card: {
-    background: "rgba(22,27,34,0.65)",
-    border: "1px solid rgba(52,211,153,0.08)",
+    background: "rgba(20,18,14,0.65)",
+    border: "1px solid rgba(212,160,23,0.10)",
     borderRadius: 6,
     padding: 12,
     marginBottom: 12,
@@ -44,7 +44,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 11,
     textTransform: "uppercase",
     letterSpacing: 0.8,
-    color: "#484f58",
+    color: "#4A4540",
     fontWeight: 500,
     marginBottom: 8,
   },
@@ -56,11 +56,11 @@ const styles: Record<string, React.CSSProperties> = {
   value: {
     fontSize: 18,
     fontWeight: 700,
-    color: "#e6edf3",
+    color: "#EDE4D3",
   },
   label: {
     fontSize: 10,
-    color: "#484f58",
+    color: "#4A4540",
     marginTop: 2,
   },
 };

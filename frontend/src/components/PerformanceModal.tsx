@@ -69,7 +69,7 @@ export default function PerformanceModal({ puuid, onClose }: Props) {
     { id: "damage", label: "Damage" },
   ];
 
-  const tooltipStyle = { background: "#161b22", border: "1px solid #21262d", borderRadius: 6, fontSize: 12, color: "#e6edf3" };
+  const tooltipStyle = { background: "#111110", border: "1px solid #1e1c18", borderRadius: 6, fontSize: 12, color: "#EDE4D3" };
 
   return (
     <div style={styles.overlay} onClick={onClose}>
@@ -86,8 +86,8 @@ export default function PerformanceModal({ puuid, onClose }: Props) {
               onClick={() => setActiveChart(t.id)}
               style={{
                 ...styles.pill,
-                background: activeChart === t.id ? "#34d399" : "transparent",
-                color: activeChart === t.id ? "#0d1117" : "#8b949e",
+                background: activeChart === t.id ? "#D4A017" : "transparent",
+                color: activeChart === t.id ? "#0a0a0a" : "#7A7060",
               }}
             >
               {t.label}
@@ -106,14 +106,14 @@ export default function PerformanceModal({ puuid, onClose }: Props) {
             lpChartData.length > 1 ? (
               <ResponsiveContainer width="100%" height={280}>
                 <LineChart data={lpChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#161b22" />
-                  <XAxis dataKey="idx" tick={{ fill: "#484f58", fontSize: 10 }} />
-                  <YAxis tick={{ fill: "#484f58", fontSize: 10 }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#111110" />
+                  <XAxis dataKey="idx" tick={{ fill: "#4A4540", fontSize: 10 }} />
+                  <YAxis tick={{ fill: "#4A4540", fontSize: 10 }} />
                   <Tooltip
                     contentStyle={tooltipStyle}
                     formatter={(_v, _name, props: Payload<number, string>) => [(props.payload as Record<string, string>).label, "LP"]}
                   />
-                  <Line type="monotone" dataKey="lp" stroke="#34d399" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="lp" stroke="#D4A017" strokeWidth={2} dot={false} />
                 </LineChart>
               </ResponsiveContainer>
             ) : <div style={styles.placeholder}>Not enough LP data for chart</div>
@@ -123,12 +123,12 @@ export default function PerformanceModal({ puuid, onClose }: Props) {
             wrChartData.some((d) => d.winRate !== null) ? (
               <ResponsiveContainer width="100%" height={280}>
                 <LineChart data={wrChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#161b22" />
-                  <XAxis dataKey="idx" tick={{ fill: "#484f58", fontSize: 10 }} />
-                  <YAxis domain={[0, 100]} tick={{ fill: "#484f58", fontSize: 10 }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#111110" />
+                  <XAxis dataKey="idx" tick={{ fill: "#4A4540", fontSize: 10 }} />
+                  <YAxis domain={[0, 100]} tick={{ fill: "#4A4540", fontSize: 10 }} />
                   <Tooltip contentStyle={tooltipStyle} formatter={(v) => [v != null ? `${v}%` : "\u2014", "Win Rate"]} />
-                  <ReferenceLine y={50} stroke="#21262d" strokeDasharray="3 3" />
-                  <Line type="monotone" dataKey="winRate" stroke="#34d399" strokeWidth={2} dot={false} connectNulls />
+                  <ReferenceLine y={50} stroke="#1e1c18" strokeDasharray="3 3" />
+                  <Line type="monotone" dataKey="winRate" stroke="#D4A017" strokeWidth={2} dot={false} connectNulls />
                 </LineChart>
               </ResponsiveContainer>
             ) : <div style={styles.placeholder}>Not enough data for win rate chart</div>
@@ -138,15 +138,15 @@ export default function PerformanceModal({ puuid, onClose }: Props) {
             kdaChartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
                 <LineChart data={kdaChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#161b22" />
-                  <XAxis dataKey="idx" tick={{ fill: "#484f58", fontSize: 10 }} />
-                  <YAxis tick={{ fill: "#484f58", fontSize: 10 }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#111110" />
+                  <XAxis dataKey="idx" tick={{ fill: "#4A4540", fontSize: 10 }} />
+                  <YAxis tick={{ fill: "#4A4540", fontSize: 10 }} />
                   <Tooltip
                     contentStyle={tooltipStyle}
                     formatter={(v, name) => [Number(v ?? 0).toFixed(2), name === "ma" ? "5-game avg" : "KDA"]}
                   />
-                  <Line type="monotone" dataKey="kda" stroke="#34d399" strokeWidth={1} dot={false} />
-                  <Line type="monotone" dataKey="ma" stroke="#fbbf24" strokeWidth={2} dot={false} connectNulls />
+                  <Line type="monotone" dataKey="kda" stroke="#D4A017" strokeWidth={1} dot={false} />
+                  <Line type="monotone" dataKey="ma" stroke="#E8C84A" strokeWidth={2} dot={false} connectNulls />
                 </LineChart>
               </ResponsiveContainer>
             ) : <div style={styles.placeholder}>Not enough data for KDA chart</div>
@@ -156,15 +156,15 @@ export default function PerformanceModal({ puuid, onClose }: Props) {
             dmgChartData.length > 0 ? (
               <ResponsiveContainer width="100%" height={280}>
                 <LineChart data={dmgChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#161b22" />
-                  <XAxis dataKey="idx" tick={{ fill: "#484f58", fontSize: 10 }} />
-                  <YAxis tick={{ fill: "#484f58", fontSize: 10 }} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="#111110" />
+                  <XAxis dataKey="idx" tick={{ fill: "#4A4540", fontSize: 10 }} />
+                  <YAxis tick={{ fill: "#4A4540", fontSize: 10 }} />
                   <Tooltip
                     contentStyle={tooltipStyle}
                     formatter={(v, name) => [Number(v ?? 0).toLocaleString(), name === "ma" ? "5-game avg" : "Damage"]}
                   />
-                  <Line type="monotone" dataKey="damage" stroke="#f87171" strokeWidth={1} dot={false} />
-                  <Line type="monotone" dataKey="ma" stroke="#fbbf24" strokeWidth={2} dot={false} connectNulls />
+                  <Line type="monotone" dataKey="damage" stroke="#C44040" strokeWidth={1} dot={false} />
+                  <Line type="monotone" dataKey="ma" stroke="#E8C84A" strokeWidth={2} dot={false} connectNulls />
                 </LineChart>
               </ResponsiveContainer>
             ) : <div style={styles.placeholder}>Not enough data for damage chart</div>
@@ -186,8 +186,8 @@ const styles: Record<string, React.CSSProperties> = {
     zIndex: 1000,
   },
   modal: {
-    background: "#0d1117",
-    border: "1px solid #21262d",
+    background: "#0a0a0a",
+    border: "1px solid #1e1c18",
     borderRadius: 10,
     maxWidth: 900,
     width: "90vw",
@@ -204,12 +204,12 @@ const styles: Record<string, React.CSSProperties> = {
   headerTitle: {
     fontSize: 16,
     fontWeight: 700,
-    color: "#e6edf3",
+    color: "#EDE4D3",
   },
   closeBtn: {
     background: "none",
     border: "none",
-    color: "#8b949e",
+    color: "#7A7060",
     fontSize: 24,
     cursor: "pointer",
     lineHeight: 1,
@@ -220,7 +220,7 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: 20,
   },
   pill: {
-    border: "1px solid #21262d",
+    border: "1px solid #1e1c18",
     borderRadius: 20,
     padding: "6px 16px",
     fontSize: 13,
@@ -236,6 +236,6 @@ const styles: Record<string, React.CSSProperties> = {
     padding: 40,
     opacity: 0.5,
     fontSize: 14,
-    color: "#8b949e",
+    color: "#7A7060",
   },
 };

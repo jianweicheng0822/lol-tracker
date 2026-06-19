@@ -8,11 +8,11 @@ type StatsBarProps = {
 };
 
 function wrColor(wr: number): string {
-  return wr >= 60 ? "#34d399" : wr >= 50 ? "#8b949e" : "#f87171";
+  return wr >= 60 ? "#D4A017" : wr >= 50 ? "#7A7060" : "#C44040";
 }
 
 function kdaColor(kda: number): string {
-  return kda >= 3 ? "#34d399" : kda >= 2 ? "#fbbf24" : "#f87171";
+  return kda >= 3 ? "#D4A017" : kda >= 2 ? "#E8C84A" : "#C44040";
 }
 
 export default function StatsBar({ stats, matches }: StatsBarProps) {
@@ -46,11 +46,11 @@ export default function StatsBar({ stats, matches }: StatsBarProps) {
             {stats.averageKda.toFixed(2)}
           </div>
           <div style={styles.subtext}>
-            <span style={{ color: "#38bdf8" }}>{stats.averageKills}</span>
-            <span style={{ color: "#2e3844" }}> / </span>
-            <span style={{ color: "#f87171" }}>{stats.averageDeaths}</span>
-            <span style={{ color: "#2e3844" }}> / </span>
-            <span style={{ color: "#34d399" }}>{stats.averageAssists}</span>
+            <span style={{ color: "#D4A017" }}>{stats.averageKills}</span>
+            <span style={{ color: "#2e2a22" }}> / </span>
+            <span style={{ color: "#C44040" }}>{stats.averageDeaths}</span>
+            <span style={{ color: "#2e2a22" }}> / </span>
+            <span style={{ color: "#D4A017" }}>{stats.averageAssists}</span>
           </div>
         </div>
 
@@ -64,7 +64,7 @@ export default function StatsBar({ stats, matches }: StatsBarProps) {
                 fontSize: 24,
                 fontWeight: 800,
                 lineHeight: 1,
-                color: streak.type === "win" ? "#38bdf8" : "#f87171",
+                color: streak.type === "win" ? "#D4A017" : "#C44040",
               }}>
                 {streak.type === "win" ? "\u2191" : "\u2193"} {streak.count}{streak.type === "win" ? "W" : "L"}
               </div>
@@ -72,7 +72,7 @@ export default function StatsBar({ stats, matches }: StatsBarProps) {
             </>
           ) : (
             <>
-              <div style={{ fontSize: 24, fontWeight: 800, lineHeight: 1, color: "#484f58" }}>
+              <div style={{ fontSize: 24, fontWeight: 800, lineHeight: 1, color: "#4A4540" }}>
                 &mdash;
               </div>
               <div style={styles.subtext}>No streak</div>
@@ -94,7 +94,7 @@ export default function StatsBar({ stats, matches }: StatsBarProps) {
                 onError={hideOnError}
               />
               <div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#c9d1d9", lineHeight: 1.2 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: "#B8A88A", lineHeight: 1.2 }}>
                   {mainChamp.name}
                 </div>
                 <div style={styles.subtext}>
@@ -103,7 +103,7 @@ export default function StatsBar({ stats, matches }: StatsBarProps) {
               </div>
             </>
           ) : (
-            <div style={{ fontSize: 13, color: "#484f58" }}>&mdash;</div>
+            <div style={{ fontSize: 13, color: "#4A4540" }}>&mdash;</div>
           )}
         </div>
 
@@ -119,7 +119,7 @@ export default function StatsBar({ stats, matches }: StatsBarProps) {
                   width: 10,
                   height: 10,
                   borderRadius: "50%",
-                  background: m.win ? "#34d399" : "#f87171",
+                  background: m.win ? "#D4A017" : "#C44040",
                 }}
               />
             ))}
@@ -135,8 +135,8 @@ export default function StatsBar({ stats, matches }: StatsBarProps) {
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    background: "rgba(22,27,34,0.65)",
-    border: "1px solid rgba(52,211,153,0.08)",
+    background: "rgba(20,18,14,0.65)",
+    border: "1px solid rgba(212,160,23,0.10)",
     borderRadius: 6,
     padding: 16,
     marginBottom: 16,
@@ -160,7 +160,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   subtext: {
     fontSize: 11,
-    color: "#484f58",
+    color: "#4A4540",
     marginTop: 4,
   },
 };

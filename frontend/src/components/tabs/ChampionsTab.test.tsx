@@ -51,8 +51,8 @@ describe("ChampionsTab", () => {
     ]);
     render(<ChampionsTab puuid="test" />);
     await waitFor(() => {
-      expect(screen.getByText("70%")).toHaveStyle({ color: "#34d399" });
-      expect(screen.getByText("40%")).toHaveStyle({ color: "#f87171" });
+      expect(screen.getByText("70%")).toHaveStyle({ color: "#D4A017" });
+      expect(screen.getByText("40%")).toHaveStyle({ color: "#C44040" });
     });
   });
 
@@ -63,8 +63,8 @@ describe("ChampionsTab", () => {
     ]);
     render(<ChampionsTab puuid="test" />);
     await waitFor(() => {
-      expect(screen.getByText("4.00")).toHaveStyle({ color: "#34d399" });
-      expect(screen.getByText("1.50")).toHaveStyle({ color: "#f87171" });
+      expect(screen.getByText("4.00")).toHaveStyle({ color: "#D4A017" });
+      expect(screen.getByText("1.50")).toHaveStyle({ color: "#C44040" });
     });
   });
 

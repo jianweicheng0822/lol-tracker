@@ -56,19 +56,19 @@ export default function AuthModal({ onSuccess, onClose }: Props) {
         onClick={(e) => e.stopPropagation()}
         style={{
           width: 380,
-          background: "#161b22",
+          background: "#111110",
           borderRadius: 10,
           border: "1px solid rgba(255,255,255,0.08)",
           boxShadow: "0 24px 48px rgba(0,0,0,0.5)",
           padding: "28px 24px",
         }}
       >
-        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#e6edf3", textAlign: "center" }}>
+        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#EDE4D3", textAlign: "center" }}>
           {mode === "login" ? "Log In" : "Create Account"}
         </h2>
 
         {/* Toggle between login/register */}
-        <div style={{ textAlign: "center", marginTop: 8, fontSize: 13, color: "#484f58" }}>
+        <div style={{ textAlign: "center", marginTop: 8, fontSize: 13, color: "#4A4540" }}>
           {mode === "login" ? "Don't have an account? " : "Already have an account? "}
           <button
             type="button"
@@ -76,7 +76,7 @@ export default function AuthModal({ onSuccess, onClose }: Props) {
             style={{
               background: "none",
               border: "none",
-              color: "#34d399",
+              color: "#D4A017",
               cursor: "pointer",
               fontSize: 13,
               textDecoration: "underline",
@@ -104,7 +104,7 @@ export default function AuthModal({ onSuccess, onClose }: Props) {
           />
 
           {error && (
-            <div style={{ color: "#f87171", fontSize: 13, padding: "6px 0" }}>{error}</div>
+            <div style={{ color: "#C44040", fontSize: 13, padding: "6px 0" }}>{error}</div>
           )}
 
           <button
@@ -114,8 +114,8 @@ export default function AuthModal({ onSuccess, onClose }: Props) {
               padding: "10px 0",
               borderRadius: 6,
               border: "none",
-              background: loading || !username.trim() || !password.trim() ? "#21262d" : "#059669",
-              color: loading || !username.trim() || !password.trim() ? "#484f58" : "#fff",
+              background: loading || !username.trim() || !password.trim() ? "#1e1c18" : "#B8860B",
+              color: loading || !username.trim() || !password.trim() ? "#4A4540" : "#fff",
               cursor: loading || !username.trim() || !password.trim() ? "not-allowed" : "pointer",
               fontSize: 14,
               fontWeight: 600,
@@ -134,8 +134,8 @@ const inputStyle: React.CSSProperties = {
   padding: "10px 14px",
   borderRadius: 6,
   border: "1px solid rgba(255,255,255,0.1)",
-  background: "#0d1117",
-  color: "#e6edf3",
+  background: "#0a0a0a",
+  color: "#EDE4D3",
   fontSize: 14,
   outline: "none",
 };

@@ -36,10 +36,10 @@ function formatNumber(n: number) {
  */
 function MultiKillBadges({ p }: { p: MatchDetailParticipant }) {
   const badges: { label: string; color: string }[] = [];
-  if (p.pentaKills > 0) badges.push({ label: "PENTA", color: "#fbbf24" });
+  if (p.pentaKills > 0) badges.push({ label: "PENTA", color: "#E8C84A" });
   else if (p.quadraKills > 0) badges.push({ label: "QUADRA", color: "#a78bfa" });
-  else if (p.tripleKills > 0) badges.push({ label: "TRIPLE", color: "#38bdf8" });
-  else if (p.doubleKills > 0) badges.push({ label: "DOUBLE", color: "#8b949e" });
+  else if (p.tripleKills > 0) badges.push({ label: "TRIPLE", color: "#D4A017" });
+  else if (p.doubleKills > 0) badges.push({ label: "DOUBLE", color: "#7A7060" });
   if (badges.length === 0) return null;
   return (
     <span style={{ fontSize: 9, fontWeight: 700, padding: "1px 4px", borderRadius: 3, background: badges[0].color + "22", color: badges[0].color, marginLeft: 4 }}>
@@ -50,13 +50,13 @@ function MultiKillBadges({ p }: { p: MatchDetailParticipant }) {
 
 const PLACEMENT_COLORS: Record<number, string> = {
   1: "#c9952c",
-  2: "#38bdf8",
-  3: "#38bdf8",
-  4: "#38bdf8",
-  5: "#f87171",
-  6: "#f87171",
-  7: "#f87171",
-  8: "#f87171",
+  2: "#D4A017",
+  3: "#D4A017",
+  4: "#D4A017",
+  5: "#C44040",
+  6: "#C44040",
+  7: "#C44040",
+  8: "#C44040",
 };
 
 /**
@@ -113,7 +113,7 @@ export function ArenaScoreboard({
     <div>
       {sortedTeams.map(([subteamId, players]) => {
         const placement = players[0]?.placement || 0;
-        const plColor = PLACEMENT_COLORS[placement] || "#484f58";
+        const plColor = PLACEMENT_COLORS[placement] || "#4A4540";
         const hasHighlight = players.some((p) => p.puuid === highlightPuuid);
         const isFirst = placement === 1;
 
@@ -144,7 +144,7 @@ export function ArenaScoreboard({
             </div>
 
             {/* Column headers */}
-            <div style={{ display: "grid", gridTemplateColumns: gridCols, gap: 4, padding: "4px 8px", fontSize: 10, color: "#484f58", fontWeight: 600, textTransform: "uppercase" }}>
+            <div style={{ display: "grid", gridTemplateColumns: gridCols, gap: 4, padding: "4px 8px", fontSize: 10, color: "#4A4540", fontWeight: 600, textTransform: "uppercase" }}>
               <span>Champion</span>
               <span style={{ textAlign: "center" }}>KDA</span>
               <span style={{ textAlign: "center" }}>Damage</span>
@@ -210,16 +210,16 @@ function ArenaPlayerRow({
         gap: 4,
         padding: "6px 8px",
         alignItems: "center",
-        background: isMe ? "rgba(52,211,153,0.1)" : undefined,
+        background: isMe ? "rgba(212,160,23,0.1)" : undefined,
         borderRadius: 4,
-        borderLeft: isMe ? "2px solid #34d399" : "2px solid transparent",
+        borderLeft: isMe ? "2px solid #D4A017" : "2px solid transparent",
       }}
     >
       {/* Champion icon with level badge + summoner spells + clickable name */}
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
         <div style={{ position: "relative", flexShrink: 0 }}>
           <img src={championIconUrl(p.championName, imgBase)} width={32} height={32} style={{ borderRadius: "50%" }} onError={hideOnError} />
-          <div style={{ position: "absolute", bottom: -2, right: -2, background: "#0d1117", fontSize: 9, padding: "0 3px", borderRadius: 4, fontWeight: 700 }}>{p.championLevel}</div>
+          <div style={{ position: "absolute", bottom: -2, right: -2, background: "#0a0a0a", fontSize: 9, padding: "0 3px", borderRadius: 4, fontWeight: 700 }}>{p.championLevel}</div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <div style={{ display: "flex", gap: 3 }}>
@@ -242,9 +242,9 @@ function ArenaPlayerRow({
       {/* KDA */}
       <div style={{ textAlign: "center" }}>
         <div style={{ fontSize: 13, fontWeight: 700 }}>
-          {p.kills}<span style={{ color: "#484f58" }}>/</span><span style={{ color: "#f87171" }}>{p.deaths}</span><span style={{ color: "#484f58" }}>/</span>{p.assists}
+          {p.kills}<span style={{ color: "#4A4540" }}>/</span><span style={{ color: "#C44040" }}>{p.deaths}</span><span style={{ color: "#4A4540" }}>/</span>{p.assists}
         </div>
-        <div style={{ fontSize: 10, color: kda === "Perfect" ? "#fbbf24" : "#34d399" }}>
+        <div style={{ fontSize: 10, color: kda === "Perfect" ? "#E8C84A" : "#D4A017" }}>
           {kda} <MultiKillBadges p={p} />
         </div>
       </div>
@@ -252,7 +252,7 @@ function ArenaPlayerRow({
       {/* Damage dealt and taken */}
       <div style={{ textAlign: "center", fontSize: 11 }}>
         <div>{formatNumber(p.totalDamageDealtToChampions)}</div>
-        <div style={{ color: "#484f58", fontSize: 10 }}>{formatNumber(p.totalDamageTaken)}</div>
+        <div style={{ color: "#4A4540", fontSize: 10 }}>{formatNumber(p.totalDamageTaken)}</div>
       </div>
 
       {/* Damage bar relative to highest damage dealer */}
@@ -304,7 +304,7 @@ export function ScoreboardTeamTable({
   const isAram = queueId === 450;
   const showWards = !isAram;
 
-  const teamColor = team.win ? "#38bdf8" : "#f87171";
+  const teamColor = team.win ? "#D4A017" : "#C44040";
   const teamLabel = team.win ? "Victory" : "Defeat";
 
   const maxDamage = Math.max(...participants.map((p) => p.totalDamageDealtToChampions), 1);
@@ -316,12 +316,12 @@ export function ScoreboardTeamTable({
   return (
     <div style={{ marginBottom: 24 }}>
       {/* Team header */}
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8, padding: "8px 12px", borderLeft: `4px solid ${teamColor}`, background: team.win ? "rgba(56,189,248,0.08)" : "rgba(248,113,113,0.08)", borderRadius: "0 6px 6px 0" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8, padding: "8px 12px", borderLeft: `4px solid ${teamColor}`, background: team.win ? "rgba(212,160,23,0.08)" : "rgba(196,64,64,0.08)", borderRadius: "0 6px 6px 0" }}>
         <span style={{ fontWeight: 700, color: teamColor, fontSize: 14 }}>{teamLabel}</span>
       </div>
 
       {/* Column headers */}
-      <div style={{ display: "grid", gridTemplateColumns: gridCols, gap: 4, padding: "4px 8px", fontSize: 10, color: "#484f58", fontWeight: 600, textTransform: "uppercase" }}>
+      <div style={{ display: "grid", gridTemplateColumns: gridCols, gap: 4, padding: "4px 8px", fontSize: 10, color: "#4A4540", fontWeight: 600, textTransform: "uppercase" }}>
         <span>Champion</span>
         <span style={{ textAlign: "center" }}>KDA</span>
         <span style={{ textAlign: "center" }}>Damage</span>
@@ -349,16 +349,16 @@ export function ScoreboardTeamTable({
               gap: 4,
               padding: "6px 8px",
               alignItems: "center",
-              background: isMe ? "rgba(52,211,153,0.1)" : undefined,
+              background: isMe ? "rgba(212,160,23,0.1)" : undefined,
               borderRadius: 4,
-              borderLeft: isMe ? "2px solid #34d399" : "2px solid transparent",
+              borderLeft: isMe ? "2px solid #D4A017" : "2px solid transparent",
             }}
           >
             {/* Champion icon with level badge + spells/runes + clickable name */}
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <div style={{ position: "relative", flexShrink: 0 }}>
                 <img src={championIconUrl(p.championName, imgBase)} width={32} height={32} style={{ borderRadius: "50%" }} onError={hideOnError} />
-                <div style={{ position: "absolute", bottom: -2, right: -2, background: "#0d1117", fontSize: 9, padding: "0 3px", borderRadius: 4, fontWeight: 700 }}>{p.championLevel}</div>
+                <div style={{ position: "absolute", bottom: -2, right: -2, background: "#0a0a0a", fontSize: 9, padding: "0 3px", borderRadius: 4, fontWeight: 700 }}>{p.championLevel}</div>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 <div style={{ display: "flex", gap: 3 }}>
@@ -383,9 +383,9 @@ export function ScoreboardTeamTable({
             {/* KDA */}
             <div style={{ textAlign: "center" }}>
               <div style={{ fontSize: 13, fontWeight: 700 }}>
-                {p.kills}<span style={{ color: "#484f58" }}>/</span><span style={{ color: "#f87171" }}>{p.deaths}</span><span style={{ color: "#484f58" }}>/</span>{p.assists}
+                {p.kills}<span style={{ color: "#4A4540" }}>/</span><span style={{ color: "#C44040" }}>{p.deaths}</span><span style={{ color: "#4A4540" }}>/</span>{p.assists}
               </div>
-              <div style={{ fontSize: 10, color: kda === "Perfect" ? "#fbbf24" : "#34d399" }}>
+              <div style={{ fontSize: 10, color: kda === "Perfect" ? "#E8C84A" : "#D4A017" }}>
                 {kda} <MultiKillBadges p={p} />
               </div>
             </div>
@@ -397,7 +397,7 @@ export function ScoreboardTeamTable({
 
             {/* Damage bar */}
             <div style={{ height: 8, background: "rgba(255,255,255,0.06)", borderRadius: 4, overflow: "hidden" }}>
-              <div style={{ height: "100%", width: `${dmgPct}%`, background: team.win ? "#38bdf8" : "#f87171", borderRadius: 4 }} />
+              <div style={{ height: "100%", width: `${dmgPct}%`, background: team.win ? "#D4A017" : "#C44040", borderRadius: 4 }} />
             </div>
 
             {/* Gold */}
@@ -421,7 +421,7 @@ export function ScoreboardTeamTable({
 
             {/* Wards: placed / killed / control wards bought */}
             {showWards && (
-              <div style={{ textAlign: "center", fontSize: 11, color: "#8b949e" }}>
+              <div style={{ textAlign: "center", fontSize: 11, color: "#7A7060" }}>
                 {p.wardsPlaced}/{p.wardsKilled}/{p.visionWardsBoughtInGame}
               </div>
             )}
@@ -471,7 +471,7 @@ function PlayerName({
         whiteSpace: "nowrap",
         cursor: canNavigate ? "pointer" : undefined,
         textDecoration: canNavigate && hovered ? "underline" : undefined,
-        color: canNavigate && hovered ? "#34d399" : undefined,
+        color: canNavigate && hovered ? "#D4A017" : undefined,
         transition: "color 0.15s",
       }}
     >

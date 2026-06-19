@@ -7,9 +7,13 @@ vi.mock("../../api", () => ({
   fetchLpHistory: vi.fn(),
 }));
 
-vi.mock("../../utils/lp", () => ({
-  toAbsoluteLp: (_tier: string, _rank: string, lp: number) => lp,
-}));
+vi.mock("../../utils/lp", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../utils/lp")>();
+  return {
+    ...actual,
+    toAbsoluteLp: (_tier: string, _rank: string, lp: number) => lp,
+  };
+});
 
 import { fetchLpHistory } from "../../api";
 

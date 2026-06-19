@@ -3,9 +3,9 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine,
 } from "recharts";
-import type { Payload } from "recharts/types/component/DefaultTooltipContent";
 import { fetchMatchTrends, fetchLpHistory } from "../api";
-import { toAbsoluteLp } from "../utils/lp";
+import { toAbsoluteLp, LP_TIME_RANGES, pickDefaultRange, filterByRange, countInRange } from "../utils/lp";
+import type { LpTimeRange } from "../utils/lp";
 import { movingAverage, rollingWinRate } from "../utils/trends";
 import type { MatchTrendPoint, LpSnapshot } from "../types";
 
@@ -21,6 +21,7 @@ export default function PerformanceModal({ puuid, onClose }: Props) {
   const [trends, setTrends] = useState<MatchTrendPoint[]>([]);
   const [lpData, setLpData] = useState<LpSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
+  const [lpRange, setLpRange] = useState<LpTimeRange>(30);
 
   useEffect(() => {
     let cancelled = false;
@@ -30,7 +31,9 @@ export default function PerformanceModal({ puuid, onClose }: Props) {
     ]).then(([t, lp]) => {
       if (cancelled) return;
       setTrends(Array.isArray(t) ? t : []);
-      setLpData(Array.isArray(lp) ? lp : []);
+      const lpArr = Array.isArray(lp) ? lp : [];
+      setLpData(lpArr);
+      setLpRange(pickDefaultRange(lpArr));
       setLoading(false);
     });
     return () => { cancelled = true; };
@@ -56,11 +59,17 @@ export default function PerformanceModal({ puuid, onClose }: Props) {
   const dmgMA = movingAverage(trends.map((t) => t.totalDamageDealtToChampions), 5);
   const dmgChartData = trends.map((t, i) => ({ idx: i + 1, damage: t.totalDamageDealtToChampions, ma: dmgMA[i], win: t.win }));
 
-  const lpChartData = lpData.map((s, i) => ({
-    idx: i + 1,
-    lp: toAbsoluteLp(s.tier, s.rankDivision, s.leaguePoints),
-    label: `${s.tier.charAt(0)}${s.tier.slice(1).toLowerCase()} ${s.rankDivision} ${s.leaguePoints}LP`,
-  }));
+  const filteredLpData = filterByRange(lpData, lpRange);
+  const lpChartData = filteredLpData.map((s) => {
+    const d = new Date(s.capturedAt);
+    return {
+      date: `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`,
+      fullDate: `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}/${d.getFullYear()}`,
+      lp: toAbsoluteLp(s.tier, s.rankDivision, s.leaguePoints),
+      tier: s.tier.toUpperCase(),
+      label: `${s.tier.charAt(0)}${s.tier.slice(1).toLowerCase()} ${s.rankDivision} ${s.leaguePoints}LP`,
+    };
+  });
 
   const tabs: { id: ChartTab; label: string }[] = [
     { id: "lp", label: "LP" },
@@ -70,6 +79,41 @@ export default function PerformanceModal({ puuid, onClose }: Props) {
   ];
 
   const tooltipStyle = { background: "#111110", border: "1px solid #1e1c18", borderRadius: 6, fontSize: 12, color: "#EDE4D3" };
+
+  const tierTicks = [0, 400, 800, 1200, 1600, 2000, 2400, 2800];
+  const tierNames: Record<number, string> = {
+    0: "Iron", 400: "Bronze", 800: "Silver", 1200: "Gold",
+    1600: "Plat", 2000: "Emerald", 2400: "Diamond", 2800: "Master",
+  };
+  const tierDotColors: Record<string, string> = {
+    IRON: "#78645A", BRONZE: "#8C6440", SILVER: "#A0AAB4",
+    GOLD: "#C8AA3C", PLATINUM: "#50B4A0", EMERALD: "#28B464",
+    DIAMOND: "#6490DC", MASTER: "#A064DC", GRANDMASTER: "#DC5050",
+    CHALLENGER: "#F0C850",
+  };
+
+  const renderLpDot = (props: { cx?: number; cy?: number; index?: number }) => {
+    const { cx, cy, index } = props;
+    if (cx == null || cy == null || index == null) return null;
+    const point = lpChartData[index];
+    if (!point) return null;
+    const color = tierDotColors[point.tier] ?? "#D4A017";
+    return <circle cx={cx} cy={cy} r={4} fill={color} stroke="#121210" strokeWidth={1} />;
+  };
+
+  /* eslint-disable @typescript-eslint/no-explicit-any */
+  const renderLpTooltip = ({ active, payload }: any) => {
+    if (!active || !payload?.[0]) return null;
+    const d = payload[0].payload as (typeof lpChartData)[number];
+    const color = tierDotColors[d.tier] ?? "#D4A017";
+    return (
+      <div style={{ ...tooltipStyle, padding: "8px 12px" }}>
+        <div style={{ color, fontWeight: 700, marginBottom: 2 }}>{d.label}</div>
+        <div style={{ color: "#7A7060" }}>{d.fullDate}</div>
+      </div>
+    );
+  };
+  /* eslint-enable @typescript-eslint/no-explicit-any */
 
   return (
     <div style={styles.overlay} onClick={onClose}>
@@ -104,18 +148,42 @@ export default function PerformanceModal({ puuid, onClose }: Props) {
 
           {!loading && activeChart === "lp" && (
             lpChartData.length > 1 ? (
+              <>
+              <div style={styles.rangePills}>
+                {LP_TIME_RANGES.map((r) => {
+                  const disabled = countInRange(lpData, r) < 2;
+                  return (
+                    <button
+                      key={r}
+                      disabled={disabled}
+                      onClick={() => setLpRange(r)}
+                      style={{
+                        ...styles.rangePill,
+                        background: lpRange === r ? "#D4A017" : "transparent",
+                        color: lpRange === r ? "#121210" : disabled ? "#2a2820" : "#7A7060",
+                        cursor: disabled ? "default" : "pointer",
+                      }}
+                    >
+                      {r}D
+                    </button>
+                  );
+                })}
+              </div>
               <ResponsiveContainer width="100%" height={280}>
                 <LineChart data={lpChartData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#111110" />
-                  <XAxis dataKey="idx" tick={{ fill: "#4A4540", fontSize: 10 }} />
-                  <YAxis tick={{ fill: "#4A4540", fontSize: 10 }} />
-                  <Tooltip
-                    contentStyle={tooltipStyle}
-                    formatter={(_v, _name, props: Payload<number, string>) => [(props.payload as Record<string, string>).label, "LP"]}
+                  <XAxis dataKey="date" tick={{ fill: "#4A4540", fontSize: 10 }} />
+                  <YAxis
+                    ticks={tierTicks}
+                    tickFormatter={(v: number) => tierNames[v] ?? ""}
+                    tick={{ fill: "#4A4540", fontSize: 10 }}
+                    domain={["dataMin - 100", "dataMax + 100"]}
                   />
-                  <Line type="monotone" dataKey="lp" stroke="#D4A017" strokeWidth={2} dot={false} />
+                  <Tooltip content={renderLpTooltip} />
+                  <Line type="monotone" dataKey="lp" stroke="#D4A017" strokeWidth={2} dot={renderLpDot} />
                 </LineChart>
               </ResponsiveContainer>
+              </>
             ) : <div style={styles.placeholder}>Not enough LP data for chart</div>
           )}
 
@@ -230,6 +298,20 @@ const styles: Record<string, React.CSSProperties> = {
   },
   chartArea: {
     minHeight: 280,
+  },
+  rangePills: {
+    display: "flex",
+    gap: 4,
+    marginBottom: 10,
+    justifyContent: "flex-end",
+  },
+  rangePill: {
+    border: "1px solid #1e1c18",
+    borderRadius: 12,
+    padding: "3px 10px",
+    fontSize: 11,
+    fontWeight: 600,
+    transition: "background 0.15s, color 0.15s",
   },
   placeholder: {
     textAlign: "center",

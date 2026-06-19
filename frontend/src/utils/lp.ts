@@ -13,7 +13,7 @@
  */
 
 /** Base LP value for each tier — each non-apex tier is 400 LP wide. */
-const TIER_VALUES: Record<string, number> = {
+export const TIER_VALUES: Record<string, number> = {
   IRON: 0,
   BRONZE: 400,
   SILVER: 800,
@@ -45,4 +45,34 @@ export function toAbsoluteLp(tier: string, rank: string, lp: number): number {
   // Apex tiers (Master+) have no divisions — LP stacks directly on the base
   const isApex = ["MASTER", "GRANDMASTER", "CHALLENGER"].includes(tier.toUpperCase());
   return tierBase + (isApex ? lp : rankBase + lp);
+}
+
+/** Available time ranges (in days) for LP charts. */
+export const LP_TIME_RANGES = [30, 60, 90, 180] as const;
+export type LpTimeRange = (typeof LP_TIME_RANGES)[number];
+
+/**
+ * Returns the number of items in `snapshots` whose `capturedAt` falls
+ * within the last `days` days from now.
+ */
+export function countInRange(snapshots: { capturedAt: number }[], days: number): number {
+  const cutoff = Date.now() - days * 86_400_000;
+  return snapshots.filter((s) => s.capturedAt >= cutoff).length;
+}
+
+/**
+ * Picks the first time range that contains >= 2 data points.
+ * Falls back to 180 (largest range) if none qualifies.
+ */
+export function pickDefaultRange(snapshots: { capturedAt: number }[]): LpTimeRange {
+  for (const r of LP_TIME_RANGES) {
+    if (countInRange(snapshots, r) >= 2) return r;
+  }
+  return 180;
+}
+
+/** Filters snapshots to only those within the last `days` days. */
+export function filterByRange<T extends { capturedAt: number }>(snapshots: T[], days: number): T[] {
+  const cutoff = Date.now() - days * 86_400_000;
+  return snapshots.filter((s) => s.capturedAt >= cutoff);
 }

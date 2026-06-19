@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { fetchLpHistory } from "../../api";
-import { toAbsoluteLp } from "../../utils/lp";
+import { toAbsoluteLp, pickDefaultRange, filterByRange } from "../../utils/lp";
 import type { LpSnapshot } from "../../types";
 
 type Props = {
@@ -47,7 +47,9 @@ export default function LpSparkline({ puuid, onClick }: Props) {
     fetchLpHistory(puuid)
       .then((snapshots: LpSnapshot[]) => {
         if (cancelled) return;
-        const arr = Array.isArray(snapshots) ? snapshots : [];
+        const all = Array.isArray(snapshots) ? snapshots : [];
+        const range = pickDefaultRange(all);
+        const arr = filterByRange(all, range);
         const points: DataPoint[] = arr.map((s, i) => {
           const lp = toAbsoluteLp(s.tier, s.rankDivision, s.leaguePoints);
           const prevLp = i > 0 ? toAbsoluteLp(arr[i - 1].tier, arr[i - 1].rankDivision, arr[i - 1].leaguePoints) : lp;

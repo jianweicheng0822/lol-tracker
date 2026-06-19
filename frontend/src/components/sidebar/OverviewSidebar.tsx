@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { PlayerStats, MatchSummary, RankedEntry } from "../../types";
 import { useIsMobile } from "../../hooks/useIsMobile";
+import RankSummary from "./RankSummary";
 import LpSparkline from "./LpSparkline";
 import RecentStatsPreview from "./RecentStatsPreview";
 import TopChampionsPreview from "./TopChampionsPreview";
@@ -14,18 +15,19 @@ type Props = {
   onViewChampions: () => void;
 };
 
-export default function OverviewSidebar({ stats, matches, puuid, onOpenPerformance, onViewChampions }: Props) {
+export default function OverviewSidebar({ stats, matches, ranked, puuid, onOpenPerformance, onViewChampions }: Props) {
   const isMobile = useIsMobile();
   const [statsOpen, setStatsOpen] = useState(false);
   const [champsOpen, setChampsOpen] = useState(false);
 
   return (
     <div style={isMobile ? undefined : { position: "sticky", top: 20 }}>
+      <RankSummary entries={ranked} />
       {!isMobile && <LpSparkline puuid={puuid} onClick={onOpenPerformance} />}
 
       {isMobile ? (
         <>
-          <Accordion label="Recent 10 Games" open={statsOpen} onToggle={() => setStatsOpen(!statsOpen)}>
+          <Accordion label={`Recent ${stats?.totalGames ?? 20} Ranked ${stats?.totalGames === 1 ? "Game" : "Games"}`} open={statsOpen} onToggle={() => setStatsOpen(!statsOpen)}>
             {stats && <RecentStatsPreview stats={stats} matches={matches} onClick={onOpenPerformance} />}
           </Accordion>
           <Accordion label="Top Champions" open={champsOpen} onToggle={() => setChampsOpen(!champsOpen)}>

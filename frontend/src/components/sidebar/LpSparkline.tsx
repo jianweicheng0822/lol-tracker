@@ -125,10 +125,7 @@ export default function LpSparkline({ puuid, onClick }: Props) {
   return (
     <div style={styles.card}>
       <div style={styles.titleRow}>
-        <div>
-          <div style={styles.title}>LP History</div>
-          <div style={styles.subtitle}>Last {data.length} ranked games</div>
-        </div>
+        <div style={styles.title}>LP History</div>
       </div>
 
       {/* Current / hovered point info */}
@@ -201,11 +198,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 14,
     fontWeight: 700,
     color: "#EDE4D3",
-  },
-  subtitle: {
-    fontSize: 11,
-    color: "#4A4540",
-    marginTop: 2,
   },
   infoRow: {
     display: "flex",

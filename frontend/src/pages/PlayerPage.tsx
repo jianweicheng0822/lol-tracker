@@ -64,10 +64,10 @@ export default function PlayerPage() {
       setAccount(acc);
       setTier(tierData.tier);
 
-      const matchCount = tierData.tier === 1 ? 10 : 10;
+      const matchCount = 20;
       const [matchData, statsData, rankedData, favStatus] = await Promise.all([
         fetchMatchSummaries(acc.puuid, region, matchCount),
-        fetchStats(acc.puuid, region, 10),
+        fetchStats(acc.puuid, region, 20),
         fetchRanked(acc.puuid, region).catch((e) => { console.error("Ranked fetch failed:", e); return []; }),
         checkIsFavorite(acc.puuid),
       ]);
@@ -75,7 +75,7 @@ export default function PlayerPage() {
       if (cancelled.current) return;
       const matchList = Array.isArray(matchData) ? matchData : [];
       setMatches(matchList);
-      setHasMore(matchList.length >= 10);
+      setHasMore(matchList.length >= 20);
       setStats(statsData);
       setRanked(Array.isArray(rankedData) ? rankedData : []);
       setIsFav(favStatus);

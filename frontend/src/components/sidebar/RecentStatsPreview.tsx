@@ -40,7 +40,7 @@ export default function RecentStatsPreview({ stats, matches, onClick }: Props) {
 
   return (
     <div style={{ ...styles.card, cursor: "pointer" }} onClick={onClick}>
-      <div style={styles.title}>Recent 10 Games</div>
+      <div style={styles.title}>Recent {stats.totalGames} Ranked {stats.totalGames === 1 ? "Game" : "Games"}</div>
       <div style={styles.row}>
         <div>
           <div style={{ ...styles.value, color: wrColor }}>{stats.winRate}%</div>

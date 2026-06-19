@@ -42,7 +42,7 @@ describe("HomePage", () => {
   it("renders the title and subtitle", () => {
     render(<HomePage />);
     expect(screen.getByText("LoL Tracker")).toBeInTheDocument();
-    expect(screen.getByText("Search for a player to view their match history")).toBeInTheDocument();
+    expect(screen.getByText("Track LP progression, analyze match history, and discover champion trends.")).toBeInTheDocument();
   });
 
   it("renders the search bar", () => {

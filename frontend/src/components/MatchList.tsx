@@ -563,7 +563,7 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                         bottom: -2,
                         left: "50%",
                         transform: "translateX(-50%)",
-                        background: "#0a0a0a",
+                        background: "#121210",
                         fontSize: 9,
                         padding: "0 4px",
                         borderRadius: 4,

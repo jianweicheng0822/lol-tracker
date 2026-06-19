@@ -227,7 +227,7 @@ export default function PlayerPage() {
 const styles: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "100vh",
-    background: "#0a0a0a",
+    background: "#121210",
     color: "#EDE4D3",
     fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
   },

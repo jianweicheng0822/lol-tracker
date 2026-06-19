@@ -11,11 +11,6 @@ import FavoritesList from "../components/FavoritesList";
 import { fetchFavorites, getAuthToken, setAuthToken } from "../api";
 import type { FavoritePlayer } from "../types";
 
-/**
- * Render the application landing page with search bar and saved favorites.
- *
- * @returns the home page layout with centered search and favorites list
- */
 const DEMO_PLAYERS = [
   { label: "duoking1 #freex", puuid: "JZsCBcQ18XWqlQS2NDBS0Vi9uuUnhJJjhIBdHvNFoTEM8qLzsvkMSTYbDneGtgqr6OOx7fCX0OeTXA", region: "NA" },
   { label: "EDG Viper #NA11", puuid: "87RUqIRwJjjEFIW8qEK8fhiCjgB2uU9y6ZnPQK2H2h2GpyjzTN76r6JaXOXJAqrczw1d05y0putLfA", region: "NA" },
@@ -61,21 +56,31 @@ export default function HomePage() {
       )}
       <div style={styles.center}>
         <h1 style={styles.title}>LoL Tracker</h1>
-        <p style={styles.subtitle}>Search for a player to view their match history</p>
-        <SearchBar />
-        <div style={styles.demoBadges}>
-          {DEMO_PLAYERS.map((p) => (
-            <button
-              key={p.label}
-              style={styles.demoBadge}
-              onClick={() => navigate(`/player/puuid/${p.region}/${encodeURIComponent(p.puuid)}`)}
-              onMouseEnter={(e) => { e.currentTarget.style.borderColor = "#D4A017"; e.currentTarget.style.background = "#111110"; }}
-              onMouseLeave={(e) => { e.currentTarget.style.borderColor = "#1e1c18"; e.currentTarget.style.background = "#0a0a0a"; }}
-            >
-              {p.label}
-            </button>
-          ))}
+        <p style={styles.subtitle}>
+          Track LP progression, analyze match history, and discover champion trends.
+        </p>
+        <div style={styles.searchWrapper}>
+          <SearchBar />
         </div>
+
+        {/* Try searching */}
+        <div style={styles.trySection}>
+          <span style={styles.tryLabel}>Try searching</span>
+          <div style={styles.demoBadges}>
+            {DEMO_PLAYERS.map((p) => (
+              <button
+                key={p.label}
+                style={styles.demoBadge}
+                onClick={() => navigate(`/player/puuid/${p.region}/${encodeURIComponent(p.puuid)}`)}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(212,160,23,0.45)"; e.currentTarget.style.background = "rgba(212,160,23,0.08)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(212,160,23,0.18)"; e.currentTarget.style.background = "transparent"; }}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         <FavoritesList favorites={favorites} onUpdate={loadFavorites} />
       </div>
     </div>
@@ -89,7 +94,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     justifyContent: "center",
     minHeight: "100vh",
-    background: "#0a0a0a",
+    background: "radial-gradient(circle at 50% 40%, rgba(212,160,23,0.08), transparent 50%), #121210",
     color: "#EDE4D3",
     fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
   },
@@ -99,18 +104,57 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     padding: "40px 20px",
     width: "100%",
+    maxWidth: 720,
   },
   title: {
-    fontSize: 48,
+    fontSize: 60,
     fontWeight: 800,
     margin: 0,
-    letterSpacing: -1,
+    letterSpacing: -1.5,
+    color: "#EDE4D3",
   },
   subtitle: {
     fontSize: 16,
-    opacity: 0.5,
-    marginTop: 8,
-    marginBottom: 32,
+    color: "#7A7060",
+    marginTop: 12,
+    marginBottom: 40,
+    textAlign: "center",
+    lineHeight: 1.5,
+  },
+  searchWrapper: {
+    width: "100%",
+    maxWidth: 640,
+  },
+  trySection: {
+    marginTop: 28,
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    gap: 10,
+  },
+  tryLabel: {
+    fontSize: 12,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    color: "#4A4540",
+    fontWeight: 600,
+  },
+  demoBadges: {
+    display: "flex",
+    gap: 10,
+    flexWrap: "wrap",
+    justifyContent: "center",
+  },
+  demoBadge: {
+    padding: "8px 18px",
+    borderRadius: 20,
+    border: "1px solid rgba(212,160,23,0.18)",
+    background: "transparent",
+    color: "#B8A88A",
+    cursor: "pointer",
+    fontSize: 13,
+    fontWeight: 500,
+    transition: "all 0.15s ease",
   },
   authCorner: {
     position: "absolute",
@@ -126,23 +170,5 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
     fontWeight: 600,
     fontSize: 13,
-  },
-  demoBadges: {
-    display: "flex",
-    gap: 10,
-    marginTop: 16,
-    flexWrap: "wrap",
-    justifyContent: "center",
-  },
-  demoBadge: {
-    padding: "6px 14px",
-    borderRadius: 20,
-    border: "1px solid #1e1c18",
-    background: "#0a0a0a",
-    color: "#7A7060",
-    cursor: "pointer",
-    fontSize: 13,
-    fontWeight: 500,
-    transition: "all 0.15s ease",
   },
 };

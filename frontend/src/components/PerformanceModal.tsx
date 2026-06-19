@@ -87,7 +87,7 @@ export default function PerformanceModal({ puuid, onClose }: Props) {
               style={{
                 ...styles.pill,
                 background: activeChart === t.id ? "#D4A017" : "transparent",
-                color: activeChart === t.id ? "#0a0a0a" : "#7A7060",
+                color: activeChart === t.id ? "#121210" : "#7A7060",
               }}
             >
               {t.label}
@@ -186,7 +186,7 @@ const styles: Record<string, React.CSSProperties> = {
     zIndex: 1000,
   },
   modal: {
-    background: "#0a0a0a",
+    background: "#121210",
     border: "1px solid #1e1c18",
     borderRadius: 10,
     maxWidth: 900,

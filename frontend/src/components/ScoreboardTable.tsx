@@ -219,7 +219,7 @@ function ArenaPlayerRow({
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
         <div style={{ position: "relative", flexShrink: 0 }}>
           <img src={championIconUrl(p.championName, imgBase)} width={32} height={32} style={{ borderRadius: "50%" }} onError={hideOnError} />
-          <div style={{ position: "absolute", bottom: -2, right: -2, background: "#0a0a0a", fontSize: 9, padding: "0 3px", borderRadius: 4, fontWeight: 700 }}>{p.championLevel}</div>
+          <div style={{ position: "absolute", bottom: -2, right: -2, background: "#121210", fontSize: 9, padding: "0 3px", borderRadius: 4, fontWeight: 700 }}>{p.championLevel}</div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <div style={{ display: "flex", gap: 3 }}>
@@ -358,7 +358,7 @@ export function ScoreboardTeamTable({
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <div style={{ position: "relative", flexShrink: 0 }}>
                 <img src={championIconUrl(p.championName, imgBase)} width={32} height={32} style={{ borderRadius: "50%" }} onError={hideOnError} />
-                <div style={{ position: "absolute", bottom: -2, right: -2, background: "#0a0a0a", fontSize: 9, padding: "0 3px", borderRadius: 4, fontWeight: 700 }}>{p.championLevel}</div>
+                <div style={{ position: "absolute", bottom: -2, right: -2, background: "#121210", fontSize: 9, padding: "0 3px", borderRadius: 4, fontWeight: 700 }}>{p.championLevel}</div>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 <div style={{ display: "flex", gap: 3 }}>

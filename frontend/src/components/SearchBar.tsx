@@ -41,16 +41,22 @@ export default function SearchBar({ compact, initialRegion, initialGameName, ini
     if (e.key === "Enter") handleSearch();
   };
 
+  const inputPadding = compact ? "10px 14px" : "14px 18px";
+  const inputFontSize = compact ? 14 : 15;
+  const gap = compact ? 8 : 12;
+  const maxW = compact ? 600 : 700;
+
   return (
     <div style={{
       display: "flex",
-      gap: compact ? 8 : 10,
+      gap,
       alignItems: "center",
       width: "100%",
-      maxWidth: compact ? 600 : 560,
+      maxWidth: maxW,
     }}>
       <select
-        style={styles.select}
+        className="gold-input"
+        style={{ ...styles.select, padding: inputPadding, fontSize: inputFontSize }}
         value={region}
         onChange={(e) => setRegion(e.target.value as Region)}
       >
@@ -60,7 +66,8 @@ export default function SearchBar({ compact, initialRegion, initialGameName, ini
       </select>
 
       <input
-        style={{ ...styles.input, flex: 1 }}
+        className="gold-input"
+        style={{ ...styles.input, flex: 1, padding: inputPadding, fontSize: inputFontSize }}
         placeholder="Game Name"
         value={gameName}
         onChange={(e) => setGameName(e.target.value)}
@@ -68,7 +75,8 @@ export default function SearchBar({ compact, initialRegion, initialGameName, ini
       />
 
       <input
-        style={{ ...styles.input, width: compact ? 90 : 110 }}
+        className="gold-input"
+        style={{ ...styles.input, width: compact ? 90 : 120, padding: inputPadding, fontSize: inputFontSize }}
         placeholder="#Tag"
         value={tag}
         onChange={(e) => setTag(e.target.value)}
@@ -76,7 +84,11 @@ export default function SearchBar({ compact, initialRegion, initialGameName, ini
       />
 
       <button
-        style={canSearch ? styles.button : styles.buttonDisabled}
+        style={{
+          ...(canSearch ? styles.button : styles.buttonDisabled),
+          padding: compact ? "10px 20px" : "14px 28px",
+          fontSize: compact ? 14 : 15,
+        }}
         disabled={!canSearch}
         onClick={handleSearch}
       >
@@ -88,43 +100,38 @@ export default function SearchBar({ compact, initialRegion, initialGameName, ini
 
 const styles: Record<string, React.CSSProperties> = {
   input: {
-    padding: "10px 14px",
-    borderRadius: 6,
-    border: "1px solid #1e1c18",
-    background: "#0a0a0a",
-    color: "white",
+    borderRadius: 8,
+    border: "1px solid rgba(212,160,23,0.18)",
+    background: "rgba(28,26,22,0.65)",
+    color: "#EDE4D3",
     outline: "none",
-    fontSize: 14,
+    transition: "border-color 0.15s, box-shadow 0.15s",
   },
   select: {
-    padding: "10px 12px",
-    borderRadius: 6,
-    background: "#0a0a0a",
-    color: "white",
-    border: "1px solid #1e1c18",
+    borderRadius: 8,
+    background: "rgba(28,26,22,0.65)",
+    color: "#EDE4D3",
+    border: "1px solid rgba(212,160,23,0.18)",
     outline: "none",
-    fontSize: 14,
+    transition: "border-color 0.15s, box-shadow 0.15s",
   },
   button: {
-    padding: "10px 20px",
-    borderRadius: 6,
-    background: "#B8860B",
-    color: "white",
+    borderRadius: 8,
+    background: "#D4A017",
+    color: "#0F0F0F",
     border: "none",
     cursor: "pointer",
     fontWeight: 700,
-    fontSize: 14,
     whiteSpace: "nowrap",
+    transition: "background 0.15s",
   },
   buttonDisabled: {
-    padding: "10px 20px",
-    borderRadius: 6,
+    borderRadius: 8,
     background: "#1e1c18",
-    color: "#7A7060",
+    color: "#4A4540",
     cursor: "not-allowed",
     border: "none",
     fontWeight: 700,
-    fontSize: 14,
     whiteSpace: "nowrap",
   },
 };

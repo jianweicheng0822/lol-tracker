@@ -6,7 +6,7 @@
 
 body {
   min-height: 100vh;
-  background: #0a0a0a;
+  background: #121210;
   color: #EDE4D3;
   font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
@@ -15,4 +15,10 @@ body {
 
 #root {
   min-height: 100vh;
+}
+
+/* Focus glow for gold-themed inputs */
+.gold-input:focus {
+  border-color: rgba(212,160,23,0.45) !important;
+  box-shadow: 0 0 0 2px rgba(212,160,23,0.25);
 }

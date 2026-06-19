@@ -3,12 +3,6 @@ import userEvent from "@testing-library/user-event";
 import LpSparkline from "./LpSparkline";
 import { makeLpSnapshot } from "../../test/fixtures";
 
-vi.mock("recharts", () => ({
-  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div data-testid="chart-container">{children}</div>,
-  LineChart: ({ children }: { children: React.ReactNode }) => <div data-testid="line-chart">{children}</div>,
-  Line: () => null,
-}));
-
 vi.mock("../../api", () => ({
   fetchLpHistory: vi.fn(),
 }));
@@ -36,18 +30,30 @@ describe("LpSparkline", () => {
     });
   });
 
-  it("renders chart when 2+ data points exist", async () => {
+  it("renders LP History title and chart with 2+ data points", async () => {
     vi.mocked(fetchLpHistory).mockResolvedValue([
-      makeLpSnapshot({ leaguePoints: 40 }),
-      makeLpSnapshot({ leaguePoints: 60 }),
+      makeLpSnapshot({ leaguePoints: 40, capturedAt: Date.now() - 86400000 }),
+      makeLpSnapshot({ leaguePoints: 60, capturedAt: Date.now() }),
     ]);
     render(<LpSparkline puuid="test" onClick={vi.fn()} />);
     await waitFor(() => {
-      expect(screen.getByTestId("chart-container")).toBeInTheDocument();
+      expect(screen.getByText("LP History")).toBeInTheDocument();
+      expect(screen.getByText("60 LP")).toBeInTheDocument();
     });
   });
 
-  it("calls onClick when chart card is clicked", async () => {
+  it("shows tier and rank info for latest point", async () => {
+    vi.mocked(fetchLpHistory).mockResolvedValue([
+      makeLpSnapshot({ tier: "GOLD", rankDivision: "II", leaguePoints: 40 }),
+      makeLpSnapshot({ tier: "GOLD", rankDivision: "II", leaguePoints: 60 }),
+    ]);
+    render(<LpSparkline puuid="test" onClick={vi.fn()} />);
+    await waitFor(() => {
+      expect(screen.getByText("Gold II")).toBeInTheDocument();
+    });
+  });
+
+  it("calls onClick when View Full History is clicked", async () => {
     const user = userEvent.setup();
     const handler = vi.fn();
     vi.mocked(fetchLpHistory).mockResolvedValue([
@@ -55,8 +61,8 @@ describe("LpSparkline", () => {
       makeLpSnapshot({ leaguePoints: 60 }),
     ]);
     render(<LpSparkline puuid="test" onClick={handler} />);
-    await waitFor(() => screen.getByText("LP Trend"));
-    await user.click(screen.getByText("LP Trend"));
+    await waitFor(() => screen.getByText("LP History"));
+    await user.click(screen.getByText(/View Full History/));
     expect(handler).toHaveBeenCalledOnce();
   });
 

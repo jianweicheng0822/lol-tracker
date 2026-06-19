@@ -53,6 +53,7 @@ export type MatchSummary = {
   placement: number;
   totalDamageDealtToChampions: number;
   goldEarned: number;
+  individualPosition: string;
 };
 
 /** Aggregated player statistics computed over recent matches. */

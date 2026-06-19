@@ -69,7 +69,7 @@ class MatchHistoryServiceTest {
 
         MatchSummaryDto summary = new MatchSummaryDto("NA1_1", "Ahri", 10, 2, 8, true, 1800L, 1700000000000L,
                 18, 4, 14, new int[7], 150, 30, 420, 30, List.of(), List.of(),
-                8005, 8200, new int[4], 0, 15000, 12000);
+                8005, 8200, new int[4], 0, 15000, 12000, "MIDDLE");
 
         service.persistMatchRecords("puuid", "NA", List.of(summary));
 
@@ -83,7 +83,7 @@ class MatchHistoryServiceTest {
 
         MatchSummaryDto summary = new MatchSummaryDto("NA1_1", "Ahri", 10, 2, 8, true, 1800L, 1700000000000L,
                 18, 4, 14, new int[7], 150, 30, 420, 30, List.of(), List.of(),
-                8005, 8200, new int[4], 0, 15000, 12000);
+                8005, 8200, new int[4], 0, 15000, 12000, "MIDDLE");
 
         service.persistMatchRecords("puuid", "NA", List.of(summary));
 

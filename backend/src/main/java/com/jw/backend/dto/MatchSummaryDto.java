@@ -34,6 +34,7 @@ import java.util.List;
  * @param placement                  placement in Arena/TFT modes
  * @param totalDamageDealtToChampions total damage dealt to champions
  * @param goldEarned                 total gold earned
+ * @param individualPosition         assigned position (TOP, JUNGLE, MIDDLE, BOTTOM, UTILITY)
  */
 public record MatchSummaryDto(
         String matchId,
@@ -59,5 +60,6 @@ public record MatchSummaryDto(
         int[] augments,
         int placement,
         int totalDamageDealtToChampions,
-        int goldEarned
+        int goldEarned,
+        String individualPosition
 ) {}

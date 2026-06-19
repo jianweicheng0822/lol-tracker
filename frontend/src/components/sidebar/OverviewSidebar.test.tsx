@@ -7,10 +7,6 @@ vi.mock("../../hooks/useIsMobile", () => ({
   useIsMobile: vi.fn(() => false),
 }));
 
-vi.mock("./RankSummary", () => ({
-  default: () => <div data-testid="rank-summary">RankSummary</div>,
-}));
-
 vi.mock("./LpSparkline", () => ({
   default: ({ onClick }: { onClick: () => void }) => (
     <div data-testid="lp-sparkline" onClick={onClick}>LpSparkline</div>
@@ -48,7 +44,6 @@ describe("OverviewSidebar", () => {
 
   it("renders all sections on desktop", () => {
     render(<OverviewSidebar {...defaultProps} />);
-    expect(screen.getByTestId("rank-summary")).toBeInTheDocument();
     expect(screen.getByTestId("lp-sparkline")).toBeInTheDocument();
     expect(screen.getByTestId("recent-stats")).toBeInTheDocument();
     expect(screen.getByTestId("top-champs")).toBeInTheDocument();
@@ -57,14 +52,13 @@ describe("OverviewSidebar", () => {
   it("hides LpSparkline on mobile", () => {
     vi.mocked(useIsMobile).mockReturnValue(true);
     render(<OverviewSidebar {...defaultProps} />);
-    expect(screen.getByTestId("rank-summary")).toBeInTheDocument();
     expect(screen.queryByTestId("lp-sparkline")).not.toBeInTheDocument();
   });
 
   it("shows accordion buttons on mobile", () => {
     vi.mocked(useIsMobile).mockReturnValue(true);
     render(<OverviewSidebar {...defaultProps} />);
-    expect(screen.getByText("Recent Stats")).toBeInTheDocument();
+    expect(screen.getByText("Recent 10 Games")).toBeInTheDocument();
     expect(screen.getByText("Top Champions")).toBeInTheDocument();
   });
 
@@ -73,7 +67,7 @@ describe("OverviewSidebar", () => {
     const user = userEvent.setup();
     render(<OverviewSidebar {...defaultProps} />);
 
-    const recentBtn = screen.getByText("Recent Stats");
+    const recentBtn = screen.getByText("Recent 10 Games");
     await user.click(recentBtn);
     expect(screen.getByTestId("recent-stats")).toBeInTheDocument();
   });
@@ -89,5 +83,10 @@ describe("OverviewSidebar", () => {
     const { container } = render(<OverviewSidebar {...defaultProps} />);
     const wrapper = container.firstChild as HTMLElement;
     expect(wrapper.style.position).not.toBe("sticky");
+  });
+
+  it("shows LP sparkline on desktop", () => {
+    render(<OverviewSidebar {...defaultProps} />);
+    expect(screen.getByTestId("lp-sparkline")).toBeInTheDocument();
   });
 });

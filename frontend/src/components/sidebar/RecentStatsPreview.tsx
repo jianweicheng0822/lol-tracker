@@ -1,31 +1,58 @@
-import type { PlayerStats } from "../../types";
+import type { PlayerStats, MatchSummary } from "../../types";
+
+const ROLE_LABELS: Record<string, string> = {
+  TOP: "Top",
+  JUNGLE: "Jungle",
+  MIDDLE: "Mid",
+  BOTTOM: "Bot",
+  UTILITY: "Support",
+};
+
+function computeMainRole(matches: MatchSummary[]): string | null {
+  const counts: Record<string, number> = {};
+  for (const m of matches) {
+    const pos = m.individualPosition;
+    if (pos && pos !== "" && pos !== "Invalid") {
+      counts[pos] = (counts[pos] || 0) + 1;
+    }
+  }
+  let best: string | null = null;
+  let max = 0;
+  for (const [role, count] of Object.entries(counts)) {
+    if (count > max) { max = count; best = role; }
+  }
+  return best;
+}
 
 type Props = {
   stats: PlayerStats;
+  matches: MatchSummary[];
   onClick: () => void;
 };
 
-export default function RecentStatsPreview({ stats, onClick }: Props) {
+export default function RecentStatsPreview({ stats, matches, onClick }: Props) {
   if (stats.totalGames === 0) return null;
 
   const wrColor = stats.winRate >= 60 ? "#D4A017" : stats.winRate >= 50 ? "#7A7060" : "#C44040";
   const kdaColor = stats.averageKda >= 3 ? "#D4A017" : stats.averageKda >= 2 ? "#E8C84A" : "#C44040";
+  const mainRole = computeMainRole(matches);
+  const roleLabel = mainRole ? ROLE_LABELS[mainRole] || mainRole : "\u2014";
 
   return (
     <div style={{ ...styles.card, cursor: "pointer" }} onClick={onClick}>
-      <div style={styles.title}>Recent Stats</div>
+      <div style={styles.title}>Recent 10 Games</div>
       <div style={styles.row}>
         <div>
           <div style={{ ...styles.value, color: wrColor }}>{stats.winRate}%</div>
           <div style={styles.label}>Win Rate</div>
         </div>
         <div>
-          <div style={{ ...styles.value, color: kdaColor }}>{stats.averageKda.toFixed(2)}</div>
-          <div style={styles.label}>KDA</div>
+          <div style={styles.value}>{roleLabel}</div>
+          <div style={styles.label}>Main Role</div>
         </div>
         <div>
-          <div style={styles.value}>{stats.totalGames}</div>
-          <div style={styles.label}>Games</div>
+          <div style={{ ...styles.value, color: kdaColor }}>{stats.averageKda.toFixed(2)}</div>
+          <div style={styles.label}>KDA</div>
         </div>
       </div>
     </div>

@@ -59,6 +59,7 @@ export function makeMatchSummary(overrides: Partial<MatchSummary> = {}): MatchSu
     placement: 0,
     totalDamageDealtToChampions: 24000,
     goldEarned: 12500,
+    individualPosition: "MIDDLE",
     ...overrides,
   };
 }

@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { fetchLpHistory } from "../../api";
-import { toAbsoluteLp, pickDefaultRange, filterByRange } from "../../utils/lp";
+import { toAbsoluteLp, TIER_COLORS, pickDefaultRange, filterByRange } from "../../utils/lp";
 import type { LpSnapshot } from "../../types";
 
 type Props = {
@@ -155,7 +155,7 @@ export default function LpSparkline({ puuid, onClick }: Props) {
             cx={p.x}
             cy={p.y}
             r={hoveredIdx === i ? 5 : 3.5}
-            fill={data[i].gained ? "#D4A017" : "#C44040"}
+            fill={TIER_COLORS[data[i].tier.toUpperCase()] ?? "#D4A017"}
             stroke={hoveredIdx === i ? "#EDE4D3" : "none"}
             strokeWidth={hoveredIdx === i ? 1.5 : 0}
           />

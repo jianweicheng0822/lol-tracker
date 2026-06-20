@@ -1,5 +1,6 @@
 import type { RankedEntry } from "../../types";
 import { hideOnError } from "../../utils/ddragon";
+import { TIER_TINTS } from "../../utils/lp";
 
 const QUEUE_LABELS: Record<string, string> = {
   RANKED_SOLO_5x5: "Solo/Duo",
@@ -22,18 +23,6 @@ function formatTier(tier: string): string {
   return tier.charAt(0) + tier.slice(1).toLowerCase();
 }
 
-const TIER_TINTS: Record<string, string> = {
-  IRON: "rgba(120,100,90,0.08)",
-  BRONZE: "rgba(140,100,60,0.08)",
-  SILVER: "rgba(160,170,180,0.08)",
-  GOLD: "rgba(200,170,60,0.10)",
-  PLATINUM: "rgba(80,180,160,0.08)",
-  EMERALD: "rgba(40,180,100,0.08)",
-  DIAMOND: "rgba(100,140,220,0.10)",
-  MASTER: "rgba(160,100,220,0.10)",
-  GRANDMASTER: "rgba(220,80,80,0.10)",
-  CHALLENGER: "rgba(240,200,80,0.10)",
-};
 
 function winRateColor(wr: number): string {
   if (wr >= 55) return "#D4A017";

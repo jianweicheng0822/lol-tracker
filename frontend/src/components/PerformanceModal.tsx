@@ -4,7 +4,7 @@ import {
   ResponsiveContainer, ReferenceLine,
 } from "recharts";
 import { fetchMatchTrends, fetchLpHistory } from "../api";
-import { toAbsoluteLp, LP_TIME_RANGES, pickDefaultRange, filterByRange, countInRange } from "../utils/lp";
+import { toAbsoluteLp, TIER_COLORS, LP_TIME_RANGES, pickDefaultRange, filterByRange, countInRange } from "../utils/lp";
 import type { LpTimeRange } from "../utils/lp";
 import { movingAverage, rollingWinRate } from "../utils/trends";
 import type { MatchTrendPoint, LpSnapshot } from "../types";
@@ -85,19 +85,12 @@ export default function PerformanceModal({ puuid, onClose }: Props) {
     0: "Iron", 400: "Bronze", 800: "Silver", 1200: "Gold",
     1600: "Plat", 2000: "Emerald", 2400: "Diamond", 2800: "Master",
   };
-  const tierDotColors: Record<string, string> = {
-    IRON: "#78645A", BRONZE: "#8C6440", SILVER: "#A0AAB4",
-    GOLD: "#C8AA3C", PLATINUM: "#50B4A0", EMERALD: "#28B464",
-    DIAMOND: "#6490DC", MASTER: "#A064DC", GRANDMASTER: "#DC5050",
-    CHALLENGER: "#F0C850",
-  };
-
   const renderLpDot = (props: { cx?: number; cy?: number; index?: number }) => {
     const { cx, cy, index } = props;
     if (cx == null || cy == null || index == null) return null;
     const point = lpChartData[index];
     if (!point) return null;
-    const color = tierDotColors[point.tier] ?? "#D4A017";
+    const color = TIER_COLORS[point.tier] ?? "#D4A017";
     return <circle cx={cx} cy={cy} r={4} fill={color} stroke="#121210" strokeWidth={1} />;
   };
 
@@ -105,7 +98,7 @@ export default function PerformanceModal({ puuid, onClose }: Props) {
   const renderLpTooltip = ({ active, payload }: any) => {
     if (!active || !payload?.[0]) return null;
     const d = payload[0].payload as (typeof lpChartData)[number];
-    const color = tierDotColors[d.tier] ?? "#D4A017";
+    const color = TIER_COLORS[d.tier] ?? "#D4A017";
     return (
       <div style={{ ...tooltipStyle, padding: "8px 12px" }}>
         <div style={{ color, fontWeight: 700, marginBottom: 2 }}>{d.label}</div>

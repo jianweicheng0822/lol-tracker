@@ -47,6 +47,34 @@ export function toAbsoluteLp(tier: string, rank: string, lp: number): number {
   return tierBase + (isApex ? lp : rankBase + lp);
 }
 
+/** Canonical solid colors for each ranked tier. */
+export const TIER_COLORS: Record<string, string> = {
+  IRON: "#78645A",
+  BRONZE: "#8C6440",
+  SILVER: "#A0AAB4",
+  GOLD: "#C8AA3C",
+  PLATINUM: "#50B4A0",
+  EMERALD: "#28B464",
+  DIAMOND: "#6490DC",
+  MASTER: "#A064DC",
+  GRANDMASTER: "#DC5050",
+  CHALLENGER: "#F0C850",
+};
+
+/** Semi-transparent tints derived from TIER_COLORS, for card backgrounds. */
+export const TIER_TINTS: Record<string, string> = {
+  IRON: "rgba(120,100,90,0.08)",
+  BRONZE: "rgba(140,100,60,0.08)",
+  SILVER: "rgba(160,170,180,0.08)",
+  GOLD: "rgba(200,170,60,0.10)",
+  PLATINUM: "rgba(80,180,160,0.08)",
+  EMERALD: "rgba(40,180,100,0.08)",
+  DIAMOND: "rgba(100,140,220,0.10)",
+  MASTER: "rgba(160,100,220,0.10)",
+  GRANDMASTER: "rgba(220,80,80,0.10)",
+  CHALLENGER: "rgba(240,200,80,0.10)",
+};
+
 /** Available time ranges (in days) for LP charts. */
 export const LP_TIME_RANGES = [30, 60, 90, 180] as const;
 export type LpTimeRange = (typeof LP_TIME_RANGES)[number];

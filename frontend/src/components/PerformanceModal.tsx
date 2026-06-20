@@ -1,16 +1,20 @@
 import { useEffect, useState } from "react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, ReferenceLine,
+  ResponsiveContainer,
 } from "recharts";
-import { fetchMatchTrends, fetchLpHistory } from "../api";
+import { fetchLpHistory } from "../api";
 import { toAbsoluteLp, TIER_COLORS, LP_TIME_RANGES, pickDefaultRange, filterByRange, countInRange, hasDataBeyond } from "../utils/lp";
 import type { LpTimeRange } from "../utils/lp";
-import { movingAverage, rollingWinRate } from "../utils/trends";
 import { COLORS } from "../utils/colors";
-import type { MatchTrendPoint, LpSnapshot } from "../types";
+import type { LpSnapshot } from "../types";
 
-type ChartTab = "lp" | "winrate" | "kda" | "damage";
+type QueueFilter = "RANKED_SOLO_5x5" | "RANKED_FLEX_SR";
+
+const QUEUE_OPTIONS: { id: QueueFilter; label: string }[] = [
+  { id: "RANKED_SOLO_5x5", label: "Solo/Duo" },
+  { id: "RANKED_FLEX_SR", label: "Flex" },
+];
 
 type Props = {
   puuid: string;
@@ -18,46 +22,31 @@ type Props = {
 };
 
 export default function PerformanceModal({ puuid, onClose }: Props) {
-  const [activeChart, setActiveChart] = useState<ChartTab>("lp");
-  const [trends, setTrends] = useState<MatchTrendPoint[]>([]);
+  const [queue, setQueue] = useState<QueueFilter>("RANKED_SOLO_5x5");
   const [lpData, setLpData] = useState<LpSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
   const [lpRange, setLpRange] = useState<LpTimeRange>(30);
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([
-      fetchMatchTrends(puuid).catch(() => []),
-      fetchLpHistory(puuid).catch(() => []),
-    ]).then(([t, lp]) => {
-      if (cancelled) return;
-      setTrends(Array.isArray(t) ? t : []);
-      const lpArr = Array.isArray(lp) ? lp : [];
-      setLpData(lpArr);
-      setLpRange(pickDefaultRange(lpArr));
-      setLoading(false);
-    });
+    setLoading(true);
+    fetchLpHistory(puuid, queue)
+      .catch(() => [])
+      .then((lp) => {
+        if (cancelled) return;
+        const lpArr = Array.isArray(lp) ? lp : [];
+        setLpData(lpArr);
+        setLpRange(pickDefaultRange(lpArr));
+        setLoading(false);
+      });
     return () => { cancelled = true; };
-  }, [puuid]);
+  }, [puuid, queue]);
 
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
-
-  const kdaValues = trends.map((t) => {
-    const kda = t.deaths === 0 ? t.kills + t.assists : (t.kills + t.assists) / t.deaths;
-    return Math.round(kda * 100) / 100;
-  });
-  const kdaMA = movingAverage(kdaValues, 5);
-  const kdaChartData = trends.map((t, i) => ({ idx: i + 1, kda: kdaValues[i], ma: kdaMA[i], win: t.win }));
-
-  const wrValues = rollingWinRate(trends.map((t) => t.win), 10);
-  const wrChartData = trends.map((_t, i) => ({ idx: i + 1, winRate: wrValues[i] }));
-
-  const dmgMA = movingAverage(trends.map((t) => t.totalDamageDealtToChampions), 5);
-  const dmgChartData = trends.map((t, i) => ({ idx: i + 1, damage: t.totalDamageDealtToChampions, ma: dmgMA[i], win: t.win }));
 
   const filteredLpData = filterByRange(lpData, lpRange);
   const lpChartData = filteredLpData.map((s) => {
@@ -70,13 +59,6 @@ export default function PerformanceModal({ puuid, onClose }: Props) {
       label: `${s.tier.charAt(0)}${s.tier.slice(1).toLowerCase()} ${s.rankDivision} ${s.leaguePoints}LP`,
     };
   });
-
-  const tabs: { id: ChartTab; label: string }[] = [
-    { id: "lp", label: "LP" },
-    { id: "winrate", label: "Win Rate" },
-    { id: "kda", label: "KDA" },
-    { id: "damage", label: "Damage" },
-  ];
 
   const tooltipStyle = { background: COLORS.pageBg, border: `1px solid ${COLORS.cardBorder}`, borderRadius: 6, fontSize: 12, color: COLORS.textPrimary };
 
@@ -112,132 +94,88 @@ export default function PerformanceModal({ puuid, onClose }: Props) {
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div style={styles.header}>
-          <span style={styles.headerTitle}>Performance Trends</span>
+          <span style={styles.headerTitle}>LP History</span>
           <button style={styles.closeBtn} onClick={onClose}>&times;</button>
         </div>
 
-        <div style={styles.pills}>
-          {tabs.map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setActiveChart(t.id)}
-              style={{
-                ...styles.pill,
-                background: activeChart === t.id ? "#D4A017" : "transparent",
-                color: activeChart === t.id ? COLORS.pageBg : COLORS.textTertiary,
-              }}
-            >
-              {t.label}
-            </button>
-          ))}
+        {/* Queue filter */}
+        <div style={styles.controlsRow}>
+          <div style={styles.queuePills}>
+            {QUEUE_OPTIONS.map((q) => (
+              <button
+                key={q.id}
+                onClick={() => setQueue(q.id)}
+                style={{
+                  ...styles.pill,
+                  background: queue === q.id ? "#D4A017" : "transparent",
+                  color: queue === q.id ? COLORS.pageBg : COLORS.textTertiary,
+                }}
+              >
+                {q.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Time range pills */}
+          {!loading && lpChartData.length > 1 && (
+            <div style={styles.rangePills}>
+              {LP_TIME_RANGES.map((r, idx) => {
+                const tooFew = countInRange(lpData, r) < 2;
+                const prevRange = idx > 0 ? LP_TIME_RANGES[idx - 1] : 0;
+                const noExtra = idx > 0 && !tooFew && !hasDataBeyond(lpData, prevRange, r);
+                const disabled = tooFew || noExtra;
+                const tooltip = tooFew
+                  ? "Not enough data"
+                  : noExtra
+                    ? `No additional data beyond ${prevRange}D`
+                    : undefined;
+                return (
+                  <button
+                    key={r}
+                    disabled={disabled}
+                    onClick={() => setLpRange(r)}
+                    title={tooltip}
+                    style={{
+                      ...styles.rangePill,
+                      background: lpRange === r ? "#D4A017" : "transparent",
+                      color: lpRange === r ? COLORS.pageBg : disabled ? "#2a2a30" : COLORS.textTertiary,
+                      cursor: disabled ? "default" : "pointer",
+                    }}
+                  >
+                    {r}D
+                  </button>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         <div style={styles.chartArea}>
-          {loading && <div style={styles.placeholder}>Loading performance data...</div>}
+          {loading && <div style={styles.placeholder}>Loading LP data...</div>}
 
-          {!loading && trends.length === 0 && lpData.length === 0 && (
-            <div style={styles.placeholder}>No trend data available yet. Play some games!</div>
+          {!loading && lpData.length === 0 && (
+            <div style={styles.placeholder}>No LP data for {QUEUE_OPTIONS.find((q) => q.id === queue)?.label}.</div>
           )}
 
-          {!loading && activeChart === "lp" && (
-            lpChartData.length > 1 ? (
-              <>
-              <div style={styles.rangePills}>
-                {LP_TIME_RANGES.map((r, idx) => {
-                  const tooFew = countInRange(lpData, r) < 2;
-                  const prevRange = idx > 0 ? LP_TIME_RANGES[idx - 1] : 0;
-                  const noExtra = idx > 0 && !tooFew && !hasDataBeyond(lpData, prevRange, r);
-                  const disabled = tooFew || noExtra;
-                  const tooltip = tooFew
-                    ? "Not enough data"
-                    : noExtra
-                      ? `No additional data beyond ${prevRange}D`
-                      : undefined;
-                  return (
-                    <button
-                      key={r}
-                      disabled={disabled}
-                      onClick={() => setLpRange(r)}
-                      title={tooltip}
-                      style={{
-                        ...styles.rangePill,
-                        background: lpRange === r ? "#D4A017" : "transparent",
-                        color: lpRange === r ? COLORS.pageBg : disabled ? "#2a2a30" : COLORS.textTertiary,
-                        cursor: disabled ? "default" : "pointer",
-                      }}
-                    >
-                      {r}D
-                    </button>
-                  );
-                })}
-              </div>
-              <ResponsiveContainer width="100%" height={280}>
-                <LineChart data={lpChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={COLORS.divider} />
-                  <XAxis dataKey="date" tick={{ fill: COLORS.textDim, fontSize: 10 }} />
-                  <YAxis
-                    ticks={tierTicks}
-                    tickFormatter={(v: number) => tierNames[v] ?? ""}
-                    tick={{ fill: COLORS.textDim, fontSize: 10 }}
-                    domain={["dataMin - 100", "dataMax + 100"]}
-                  />
-                  <Tooltip content={renderLpTooltip} />
-                  <Line type="monotone" dataKey="lp" stroke="#D4A017" strokeWidth={2} dot={renderLpDot} />
-                </LineChart>
-              </ResponsiveContainer>
-              </>
-            ) : <div style={styles.placeholder}>Not enough LP data for chart</div>
+          {!loading && lpData.length > 0 && lpChartData.length <= 1 && (
+            <div style={styles.placeholder}>Not enough LP data for chart</div>
           )}
 
-          {!loading && activeChart === "winrate" && (
-            wrChartData.some((d) => d.winRate !== null) ? (
-              <ResponsiveContainer width="100%" height={280}>
-                <LineChart data={wrChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={COLORS.divider} />
-                  <XAxis dataKey="idx" tick={{ fill: COLORS.textDim, fontSize: 10 }} />
-                  <YAxis domain={[0, 100]} tick={{ fill: COLORS.textDim, fontSize: 10 }} />
-                  <Tooltip contentStyle={tooltipStyle} formatter={(v) => [v != null ? `${v}%` : "\u2014", "Win Rate"]} />
-                  <ReferenceLine y={50} stroke={COLORS.cardBorder} strokeDasharray="3 3" />
-                  <Line type="monotone" dataKey="winRate" stroke="#48D1A0" strokeWidth={2} dot={false} connectNulls />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : <div style={styles.placeholder}>Not enough data for win rate chart</div>
-          )}
-
-          {!loading && activeChart === "kda" && (
-            kdaChartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={280}>
-                <LineChart data={kdaChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={COLORS.divider} />
-                  <XAxis dataKey="idx" tick={{ fill: COLORS.textDim, fontSize: 10 }} />
-                  <YAxis tick={{ fill: COLORS.textDim, fontSize: 10 }} />
-                  <Tooltip
-                    contentStyle={tooltipStyle}
-                    formatter={(v, name) => [Number(v ?? 0).toFixed(2), name === "ma" ? "5-game avg" : "KDA"]}
-                  />
-                  <Line type="monotone" dataKey="kda" stroke="#F5A623" strokeWidth={1} dot={false} />
-                  <Line type="monotone" dataKey="ma" stroke="#48D1A0" strokeWidth={2} dot={false} connectNulls />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : <div style={styles.placeholder}>Not enough data for KDA chart</div>
-          )}
-
-          {!loading && activeChart === "damage" && (
-            dmgChartData.length > 0 ? (
-              <ResponsiveContainer width="100%" height={280}>
-                <LineChart data={dmgChartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={COLORS.divider} />
-                  <XAxis dataKey="idx" tick={{ fill: COLORS.textDim, fontSize: 10 }} />
-                  <YAxis tick={{ fill: COLORS.textDim, fontSize: 10 }} />
-                  <Tooltip
-                    contentStyle={tooltipStyle}
-                    formatter={(v, name) => [Number(v ?? 0).toLocaleString(), name === "ma" ? "5-game avg" : "Damage"]}
-                  />
-                  <Line type="monotone" dataKey="damage" stroke="#E84057" strokeWidth={1} dot={false} />
-                  <Line type="monotone" dataKey="ma" stroke="#F5A623" strokeWidth={2} dot={false} connectNulls />
-                </LineChart>
-              </ResponsiveContainer>
-            ) : <div style={styles.placeholder}>Not enough data for damage chart</div>
+          {!loading && lpChartData.length > 1 && (
+            <ResponsiveContainer width="100%" height={300}>
+              <LineChart data={lpChartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke={COLORS.divider} />
+                <XAxis dataKey="date" tick={{ fill: COLORS.textDim, fontSize: 10 }} />
+                <YAxis
+                  ticks={tierTicks}
+                  tickFormatter={(v: number) => tierNames[v] ?? ""}
+                  tick={{ fill: COLORS.textDim, fontSize: 10 }}
+                  domain={["dataMin - 100", "dataMax + 100"]}
+                />
+                <Tooltip content={renderLpTooltip} />
+                <Line type="monotone" dataKey="lp" stroke="#D4A017" strokeWidth={2} dot={renderLpDot} />
+              </LineChart>
+            </ResponsiveContainer>
           )}
         </div>
       </div>
@@ -284,10 +222,15 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
     lineHeight: 1,
   },
-  pills: {
+  controlsRow: {
+    display: "flex",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  queuePills: {
     display: "flex",
     gap: 4,
-    marginBottom: 20,
   },
   pill: {
     border: `1px solid ${COLORS.cardBorder}`,
@@ -304,8 +247,6 @@ const styles: Record<string, React.CSSProperties> = {
   rangePills: {
     display: "flex",
     gap: 4,
-    marginBottom: 10,
-    justifyContent: "flex-end",
   },
   rangePill: {
     border: `1px solid ${COLORS.cardBorder}`,

@@ -411,6 +411,7 @@ function PlayerName({
       }}
     >
       {name}
+      {isMe && <span style={{ color: "#D4A017", fontSize: 9, marginLeft: 3, opacity: 0.8 }}>(You)</span>}
     </span>
   );
 }

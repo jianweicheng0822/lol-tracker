@@ -76,20 +76,10 @@ describe("MatchList", () => {
     expect(screen.getByText("MVP")).toBeInTheDocument();
   });
 
-  it("does not show team rosters in collapsed card", () => {
+  it("does not show scoreboard in collapsed card", () => {
     const match = makeMatchSummary();
-    render(<MatchList matches={[match]} region="NA" puuid="test" gameName="TestPlayer" />);
-    expect(screen.queryByText("Ally1")).not.toBeInTheDocument();
-    expect(screen.queryByText("Enemy1")).not.toBeInTheDocument();
-  });
-
-  it("shows team rosters when card is expanded", async () => {
-    const user = userEvent.setup();
-    const match = makeMatchSummary();
-    render(<MatchList matches={[match]} region="NA" puuid="test" gameName="TestPlayer" />);
-    await user.click(screen.getByTitle("Expand scoreboard"));
-    expect(screen.getByText("Ally1")).toBeInTheDocument();
-    expect(screen.getByText("Enemy1")).toBeInTheDocument();
+    render(<MatchList matches={[match]} region="NA" puuid="test" />);
+    expect(screen.queryByText("Loading scoreboard...")).not.toBeInTheDocument();
   });
 
   it("shows Load More button when hasMore is true", () => {

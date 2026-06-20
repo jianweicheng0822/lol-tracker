@@ -11,10 +11,6 @@ vi.mock("../sidebar/OverviewSidebar", () => ({
   default: () => <div data-testid="overview-sidebar">Sidebar</div>,
 }));
 
-vi.mock("../StatsBar", () => ({
-  default: () => <div data-testid="stats-bar">StatsBar</div>,
-}));
-
 vi.mock("../MatchList", () => ({
   default: () => <div data-testid="match-list">MatchList</div>,
 }));
@@ -48,7 +44,6 @@ describe("OverviewTab", () => {
     ranked: [makeRankedEntry()],
     region: "NA",
     puuid: "test-puuid",
-    gameName: "TestPlayer",
     onLoadMore: vi.fn(),
     isLoadingMore: false,
     hasMore: true,
@@ -67,11 +62,6 @@ describe("OverviewTab", () => {
     render(<OverviewTab {...defaultProps} />);
     expect(screen.getByTestId("overview-sidebar")).toBeInTheDocument();
     expect(screen.getByTestId("match-list")).toBeInTheDocument();
-  });
-
-  it("renders stats bar when stats exist", () => {
-    render(<OverviewTab {...defaultProps} />);
-    expect(screen.getByTestId("stats-bar")).toBeInTheDocument();
   });
 
   it("does not show upgrade banner when tier > 0", () => {

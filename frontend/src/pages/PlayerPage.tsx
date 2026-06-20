@@ -204,7 +204,6 @@ export default function PlayerPage() {
                 ranked={ranked}
                 region={region!}
                 puuid={account.puuid}
-                gameName={account.gameName}
                 onLoadMore={loadMore}
                 isLoadingMore={isLoadingMore}
                 hasMore={hasMore}

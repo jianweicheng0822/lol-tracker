@@ -2,7 +2,6 @@ import { useState } from "react";
 import type { PlayerStats, MatchSummary, RankedEntry, TabId } from "../../types";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import OverviewSidebar from "../sidebar/OverviewSidebar";
-import StatsBar from "../StatsBar";
 import MatchList from "../MatchList";
 import LpSparkline from "../sidebar/LpSparkline";
 import PerformanceModal from "../PerformanceModal";
@@ -14,7 +13,6 @@ type Props = {
   ranked: RankedEntry[];
   region: string;
   puuid: string;
-  gameName: string;
   onLoadMore: () => void;
   isLoadingMore: boolean;
   hasMore: boolean;
@@ -25,7 +23,7 @@ type Props = {
 };
 
 export default function OverviewTab({
-  stats, matches, ranked, region, puuid, gameName,
+  stats, matches, ranked, region, puuid,
   onLoadMore, isLoadingMore, hasMore, tier,
   onTabChange, onShowAuth, onTierChange,
 }: Props) {
@@ -64,7 +62,6 @@ export default function OverviewTab({
               )}
             </div>
           )}
-          {stats && <StatsBar stats={stats} matches={matches} />}
           {isMobile && (
             <LpSparkline puuid={puuid} onClick={() => setShowPerformanceModal(true)} />
           )}
@@ -72,7 +69,6 @@ export default function OverviewTab({
             matches={matches}
             region={region}
             puuid={puuid}
-            gameName={gameName}
             onLoadMore={onLoadMore}
             isLoadingMore={isLoadingMore}
             hasMore={hasMore}

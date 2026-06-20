@@ -6,8 +6,7 @@
  * @module frontend.components
  */
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import type { MatchSummary, MatchParticipant, MatchDetail } from "../types";
+import type { MatchSummary, MatchDetail } from "../types";
 import { fetchMatchDetail } from "../api";
 import {
   useDdragonVersion,
@@ -31,7 +30,6 @@ type MatchListProps = {
   matches: MatchSummary[];
   region?: string;
   puuid?: string;
-  gameName?: string;
   onLoadMore?: () => void;
   isLoadingMore?: boolean;
   hasMore?: boolean;
@@ -102,104 +100,6 @@ function getPerformanceTag(
     return { label: "Balanced", color: COLORS.textDim };
 
   return null;
-}
-
-function PlayerRow({
-  player,
-  imgBase,
-  isMe,
-  region,
-}: {
-  player: MatchParticipant;
-  imgBase: string;
-  isMe: boolean;
-  region?: string;
-}) {
-  const [hovered, setHovered] = useState(false);
-  const navigate = useNavigate();
-  const canNavigate = !!(region && player.summonerName && player.riotIdTagline);
-
-  return (
-    <div
-      onMouseEnter={() => setHovered(true)}
-      onMouseLeave={() => setHovered(false)}
-      onClick={(e) => {
-        if (canNavigate) {
-          e.stopPropagation();
-          navigate(`/player/${region}/${encodeURIComponent(player.summonerName)}/${encodeURIComponent(player.riotIdTagline!)}`);
-        }
-      }}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 5,
-        fontSize: 11,
-        color: isMe ? COLORS.textPrimary : hovered ? COLORS.textSecondary : COLORS.textTertiary,
-        fontWeight: isMe ? 600 : 400,
-        background: isMe
-          ? "rgba(212,160,23,0.07)"
-          : hovered
-            ? "rgba(255,255,255,0.03)"
-            : undefined,
-        borderLeft: isMe ? "2px solid rgba(212,160,23,0.45)" : "2px solid transparent",
-        borderRadius: 2,
-        padding: "2px 5px",
-        marginLeft: -5,
-        transition: "background 0.15s, color 0.15s",
-        cursor: canNavigate ? "pointer" : undefined,
-        textDecoration: canNavigate && hovered ? "underline" : undefined,
-      }}
-    >
-      <img
-        src={championIconUrl(player.championName, imgBase)}
-        width={12}
-        height={12}
-        style={{ borderRadius: 2, flexShrink: 0 }}
-        onError={hideOnError}
-      />
-      <span
-        style={{
-          maxWidth: isMe ? 66 : 86,
-          overflow: "hidden",
-          textOverflow: "ellipsis",
-          whiteSpace: "nowrap",
-        }}
-      >
-        {player.summonerName}
-      </span>
-      {isMe && (
-        <span style={{ color: "#D4A017", fontSize: 9, flexShrink: 0, opacity: 0.8 }}>
-          (You)
-        </span>
-      )}
-    </div>
-  );
-}
-
-function TeamColumn({
-  players,
-  imgBase,
-  highlightPuuid,
-  region,
-}: {
-  players: MatchParticipant[];
-  imgBase: string;
-  highlightPuuid?: string;
-  region?: string;
-}) {
-  return (
-    <div style={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      {players.map((p, i) => (
-        <PlayerRow
-          key={i}
-          player={p}
-          imgBase={imgBase}
-          isMe={p.puuid === highlightPuuid}
-          region={region}
-        />
-      ))}
-    </div>
-  );
 }
 
 function ItemIcon({ itemId, imgBase }: { itemId: number; imgBase: string }) {
@@ -411,7 +311,7 @@ function InlineScoreboard({
   );
 }
 
-export default function MatchList({ matches, region, puuid, gameName, onLoadMore, isLoadingMore, hasMore, tier = 0 }: MatchListProps) {
+export default function MatchList({ matches, region, puuid, onLoadMore, isLoadingMore, hasMore, tier = 0 }: MatchListProps) {
   const ddVersion = useDdragonVersion();
   const imgBase = ddragonBase(ddVersion);
   const hasArena = matches.some((m) => m.queueId === 1700);
@@ -701,20 +601,6 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                     marginTop: -2,
                   }}
                 >
-                  <div style={{ display: "flex", gap: 0, marginBottom: 8, paddingBottom: 8, borderBottom: `1px solid ${COLORS.divider}` }}>
-                    <TeamColumn
-                      players={
-                        puuid
-                          ? [{ summonerName: gameName || m.championName, championName: m.championName, puuid }, ...m.allies]
-                          : m.allies
-                      }
-                      imgBase={imgBase}
-                      highlightPuuid={puuid}
-                      region={region}
-                    />
-                    <div style={{ width: 1, background: "rgba(255,255,255,0.05)", margin: "4px 8px" }} />
-                    <TeamColumn players={m.enemies} imgBase={imgBase} highlightPuuid={puuid} region={region} />
-                  </div>
                   <InlineScoreboard
                     matchId={m.matchId}
                     region={region}

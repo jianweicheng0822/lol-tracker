@@ -18,6 +18,7 @@ import { useTabNavigation } from "../hooks/useTabNavigation";
 import { fetchAccount, fetchAccountByPuuid, fetchMatchSummaries, fetchStats, fetchRanked, checkIsFavorite, addFavorite, removeFavorite, fetchTier, getAuthToken, setAuthToken } from "../api";
 import type { Region, Account, MatchSummary, PlayerStats, RankedEntry } from "../types";
 import { computeStreak, computeClimbStatus } from "../utils/playerInsights";
+import { COLORS } from "../utils/colors";
 
 export default function PlayerPage() {
   // Extract player identifiers from the URL route params
@@ -228,7 +229,7 @@ const styles: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "100vh",
     background: "#121210",
-    color: "#EDE4D3",
+    color: COLORS.textPrimary,
     fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
   },
   topBar: {
@@ -265,7 +266,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   authBtn: {
     background: "transparent",
-    color: "#7A7060",
+    color: COLORS.textTertiary,
     border: "1px solid #1e1c18",
     borderRadius: 6,
     padding: "6px 14px",

@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { login, register } from "../api";
+import { COLORS } from "../utils/colors";
 
 type Props = {
   onSuccess: () => void;
@@ -63,12 +64,12 @@ export default function AuthModal({ onSuccess, onClose }: Props) {
           padding: "28px 24px",
         }}
       >
-        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: "#EDE4D3", textAlign: "center" }}>
+        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: COLORS.textPrimary, textAlign: "center" }}>
           {mode === "login" ? "Log In" : "Create Account"}
         </h2>
 
         {/* Toggle between login/register */}
-        <div style={{ textAlign: "center", marginTop: 8, fontSize: 13, color: "#4A4540" }}>
+        <div style={{ textAlign: "center", marginTop: 8, fontSize: 13, color: COLORS.textDim }}>
           {mode === "login" ? "Don't have an account? " : "Already have an account? "}
           <button
             type="button"
@@ -104,7 +105,7 @@ export default function AuthModal({ onSuccess, onClose }: Props) {
           />
 
           {error && (
-            <div style={{ color: "#C44040", fontSize: 13, padding: "6px 0" }}>{error}</div>
+            <div style={{ color: "#E84057", fontSize: 13, padding: "6px 0" }}>{error}</div>
           )}
 
           <button
@@ -115,7 +116,7 @@ export default function AuthModal({ onSuccess, onClose }: Props) {
               borderRadius: 6,
               border: "none",
               background: loading || !username.trim() || !password.trim() ? "#1e1c18" : "#B8860B",
-              color: loading || !username.trim() || !password.trim() ? "#4A4540" : "#fff",
+              color: loading || !username.trim() || !password.trim() ? COLORS.textDim : "#fff",
               cursor: loading || !username.trim() || !password.trim() ? "not-allowed" : "pointer",
               fontSize: 14,
               fontWeight: 600,
@@ -135,7 +136,7 @@ const inputStyle: React.CSSProperties = {
   borderRadius: 6,
   border: "1px solid rgba(255,255,255,0.1)",
   background: "#121210",
-  color: "#EDE4D3",
+  color: COLORS.textPrimary,
   fontSize: 14,
   outline: "none",
 };

@@ -19,6 +19,7 @@ import {
   timeAgo,
 } from "../utils/ddragon";
 import { ScoreboardTeamTable, ArenaScoreboard } from "../components/ScoreboardTable";
+import { COLORS } from "../utils/colors";
 
 export default function MatchDetailPage() {
   const { region, matchId } = useParams<{ region: string; matchId: string }>();
@@ -81,18 +82,18 @@ export default function MatchDetailPage() {
         {status === "done" && match && (
           <>
             {/* Match header */}
-            <div style={{ ...styles.header, borderLeftColor: myWin ? "#D4A017" : "#C44040" }}>
+            <div style={{ ...styles.header, borderLeftColor: myWin ? "#D4A017" : "#E84057" }}>
               <div>
                 <span style={{ fontSize: 20, fontWeight: 700 }}>{queueName}</span>
-                <span style={{ fontSize: 14, color: "#7A7060", marginLeft: 12 }}>
+                <span style={{ fontSize: 14, color: COLORS.textTertiary, marginLeft: 12 }}>
                   {formatDuration(match.gameDurationSec)}
                 </span>
-                <span style={{ fontSize: 14, color: "#7A7060", marginLeft: 12 }}>
+                <span style={{ fontSize: 14, color: COLORS.textTertiary, marginLeft: 12 }}>
                   {timeAgo(match.gameEndTimestamp)}
                 </span>
               </div>
               {myParticipant && (
-                <span style={{ fontSize: 18, fontWeight: 700, color: myWin ? "#D4A017" : "#C44040" }}>
+                <span style={{ fontSize: 18, fontWeight: 700, color: myWin ? "#D4A017" : "#E84057" }}>
                   {myWin ? "Victory" : "Defeat"}
                 </span>
               )}
@@ -133,7 +134,7 @@ const styles: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "100vh",
     background: "#121210",
-    color: "#EDE4D3",
+    color: COLORS.textPrimary,
     fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
   },
   topBar: {

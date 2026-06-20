@@ -9,6 +9,7 @@ import { useState, useRef, useEffect } from "react";
 import type { MatchSummary } from "../types";
 import { analyzeMatchStream } from "../api";
 import type { AiMatchData, AiChatMessage } from "../api";
+import { COLORS } from "../utils/colors";
 
 type Props = {
   match: MatchSummary;
@@ -145,20 +146,20 @@ export default function AiChatModal({ match, onClose }: Props) {
           }}
         >
           <div>
-            <div style={{ fontSize: 15, fontWeight: 700, color: "#EDE4D3" }}>
+            <div style={{ fontSize: 15, fontWeight: 700, color: COLORS.textPrimary }}>
               {match.championName}
               <span
                 style={{
                   marginLeft: 8,
                   fontSize: 12,
                   fontWeight: 500,
-                  color: isWin ? "#D4A017" : "#C44040",
+                  color: isWin ? "#D4A017" : "#E84057",
                 }}
               >
                 {isWin ? "Victory" : "Defeat"}
               </span>
             </div>
-            <div style={{ fontSize: 12, color: "#4A4540", marginTop: 2 }}>
+            <div style={{ fontSize: 12, color: COLORS.textDim, marginTop: 2 }}>
               {match.kills}/{match.deaths}/{match.assists} ({kda} KDA)
             </div>
           </div>
@@ -167,7 +168,7 @@ export default function AiChatModal({ match, onClose }: Props) {
             style={{
               background: "none",
               border: "none",
-              color: "#4A4540",
+              color: COLORS.textDim,
               cursor: "pointer",
               fontSize: 20,
               lineHeight: 1,
@@ -192,7 +193,7 @@ export default function AiChatModal({ match, onClose }: Props) {
           }}
         >
           {messages.length === 0 && !isLoading && (
-            <div style={{ textAlign: "center", color: "#4A4540", fontSize: 13, marginTop: 40 }}>
+            <div style={{ textAlign: "center", color: COLORS.textDim, fontSize: 13, marginTop: 40 }}>
               Ask about this match — e.g. "How did I perform?" or "What should I improve?"
             </div>
           )}
@@ -210,7 +211,7 @@ export default function AiChatModal({ match, onClose }: Props) {
                   padding: "10px 14px",
                   borderRadius: msg.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
                   background: msg.role === "user" ? "#B8860B" : "#1e1c18",
-                  color: "#EDE4D3",
+                  color: COLORS.textPrimary,
                   fontSize: 13,
                   lineHeight: 1.5,
                   whiteSpace: "pre-wrap",
@@ -229,7 +230,7 @@ export default function AiChatModal({ match, onClose }: Props) {
                   padding: "10px 14px",
                   borderRadius: "14px 14px 14px 4px",
                   background: "#1e1c18",
-                  color: "#EDE4D3",
+                  color: COLORS.textPrimary,
                   fontSize: 13,
                   lineHeight: 1.5,
                   whiteSpace: "pre-wrap",
@@ -260,7 +261,7 @@ export default function AiChatModal({ match, onClose }: Props) {
                       width: 6,
                       height: 6,
                       borderRadius: "50%",
-                      background: "#4A4540",
+                      background: COLORS.textDim,
                       display: "inline-block",
                       animation: `dotPulse 1.4s ease-in-out ${i * 0.2}s infinite`,
                     }}
@@ -298,7 +299,7 @@ export default function AiChatModal({ match, onClose }: Props) {
               borderRadius: 6,
               border: "1px solid rgba(255,255,255,0.1)",
               background: "#121210",
-              color: "#EDE4D3",
+              color: COLORS.textPrimary,
               fontSize: 13,
               outline: "none",
             }}
@@ -311,7 +312,7 @@ export default function AiChatModal({ match, onClose }: Props) {
               borderRadius: 6,
               border: "none",
               background: isLoading || !input.trim() ? "#1e1c18" : "#B8860B",
-              color: isLoading || !input.trim() ? "#4A4540" : "#fff",
+              color: isLoading || !input.trim() ? COLORS.textDim : "#fff",
               cursor: isLoading || !input.trim() ? "not-allowed" : "pointer",
               fontSize: 13,
               fontWeight: 600,

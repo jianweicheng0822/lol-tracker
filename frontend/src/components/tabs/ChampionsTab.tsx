@@ -126,7 +126,13 @@ export default function ChampionsTab({ puuid }: Props) {
                   <div style={{ textAlign: "center" }}>
                     <div style={{ fontSize: 16, fontWeight: 700, color: kdaColor(c.avgKda) }}>{c.avgKda.toFixed(2)}</div>
                     <div style={styles.statLabel}>KDA</div>
-                    <div style={{ fontSize: 10, color: COLORS.textDim }}>{c.avgKills}/{c.avgDeaths}/{c.avgAssists}</div>
+                    <div style={{ fontSize: 10 }}>
+                      <span style={{ color: COLORS.textSecondary }}>{c.avgKills}</span>
+                      <span style={{ color: COLORS.textDim }}>/</span>
+                      <span style={{ color: "#E84057" }}>{c.avgDeaths}</span>
+                      <span style={{ color: COLORS.textDim }}>/</span>
+                      <span style={{ color: COLORS.textSecondary }}>{c.avgAssists}</span>
+                    </div>
                   </div>
                   <div style={{ textAlign: "center" }}>
                     <div style={{ fontSize: 16, fontWeight: 700, color: COLORS.textPrimary }}>{Math.round(c.avgDamage).toLocaleString()}</div>

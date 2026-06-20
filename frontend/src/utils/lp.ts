@@ -99,6 +99,18 @@ export function pickDefaultRange(snapshots: { capturedAt: number }[]): LpTimeRan
   return 180;
 }
 
+/**
+ * Returns true if `outerDays` range contains at least one snapshot
+ * that falls outside `innerDays` — i.e., there is additional data
+ * between innerDays ago and outerDays ago.
+ */
+export function hasDataBeyond(snapshots: { capturedAt: number }[], innerDays: number, outerDays: number): boolean {
+  const now = Date.now();
+  const innerCutoff = now - innerDays * 86_400_000;
+  const outerCutoff = now - outerDays * 86_400_000;
+  return snapshots.some((s) => s.capturedAt < innerCutoff && s.capturedAt >= outerCutoff);
+}
+
 /** Filters snapshots to only those within the last `days` days. */
 export function filterByRange<T extends { capturedAt: number }>(snapshots: T[], days: number): T[] {
   const cutoff = Date.now() - days * 86_400_000;

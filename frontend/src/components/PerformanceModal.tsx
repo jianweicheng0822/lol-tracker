@@ -4,7 +4,7 @@ import {
   ResponsiveContainer, ReferenceLine,
 } from "recharts";
 import { fetchMatchTrends, fetchLpHistory } from "../api";
-import { toAbsoluteLp, TIER_COLORS, LP_TIME_RANGES, pickDefaultRange, filterByRange, countInRange } from "../utils/lp";
+import { toAbsoluteLp, TIER_COLORS, LP_TIME_RANGES, pickDefaultRange, filterByRange, countInRange, hasDataBeyond } from "../utils/lp";
 import type { LpTimeRange } from "../utils/lp";
 import { movingAverage, rollingWinRate } from "../utils/trends";
 import { COLORS } from "../utils/colors";
@@ -143,13 +143,22 @@ export default function PerformanceModal({ puuid, onClose }: Props) {
             lpChartData.length > 1 ? (
               <>
               <div style={styles.rangePills}>
-                {LP_TIME_RANGES.map((r) => {
-                  const disabled = countInRange(lpData, r) < 2;
+                {LP_TIME_RANGES.map((r, idx) => {
+                  const tooFew = countInRange(lpData, r) < 2;
+                  const prevRange = idx > 0 ? LP_TIME_RANGES[idx - 1] : 0;
+                  const noExtra = idx > 0 && !tooFew && !hasDataBeyond(lpData, prevRange, r);
+                  const disabled = tooFew || noExtra;
+                  const tooltip = tooFew
+                    ? "Not enough data"
+                    : noExtra
+                      ? `No additional data beyond ${prevRange}D`
+                      : undefined;
                   return (
                     <button
                       key={r}
                       disabled={disabled}
                       onClick={() => setLpRange(r)}
+                      title={tooltip}
                       style={{
                         ...styles.rangePill,
                         background: lpRange === r ? "#D4A017" : "transparent",

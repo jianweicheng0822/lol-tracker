@@ -28,10 +28,9 @@ function computeMainRole(matches: MatchSummary[]): string | null {
 type Props = {
   stats: PlayerStats;
   matches: MatchSummary[];
-  onClick: () => void;
 };
 
-export default function RecentStatsPreview({ stats, matches, onClick }: Props) {
+export default function RecentStatsPreview({ stats, matches }: Props) {
   if (stats.totalGames === 0) return null;
 
   const wrColor = winRateColor(stats.winRate);
@@ -40,7 +39,7 @@ export default function RecentStatsPreview({ stats, matches, onClick }: Props) {
   const roleLabel = mainRole ? ROLE_LABELS[mainRole] || mainRole : "\u2014";
 
   return (
-    <div style={{ ...styles.card, cursor: "pointer" }} onClick={onClick}>
+    <div style={styles.card}>
       <div style={styles.title}>Recent {stats.totalGames} Ranked {stats.totalGames === 1 ? "Game" : "Games"}</div>
       <div style={styles.row}>
         <div>

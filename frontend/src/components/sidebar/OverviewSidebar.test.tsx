@@ -14,8 +14,8 @@ vi.mock("./LpSparkline", () => ({
 }));
 
 vi.mock("./RecentStatsPreview", () => ({
-  default: ({ onClick }: { onClick: () => void }) => (
-    <div data-testid="recent-stats" onClick={onClick}>RecentStatsPreview</div>
+  default: () => (
+    <div data-testid="recent-stats">RecentStatsPreview</div>
   ),
 }));
 

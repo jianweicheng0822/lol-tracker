@@ -28,7 +28,7 @@ export default function OverviewSidebar({ stats, matches, ranked, puuid, onOpenP
       {isMobile ? (
         <>
           <Accordion label={`Recent ${stats?.totalGames ?? 20} Ranked ${stats?.totalGames === 1 ? "Game" : "Games"}`} open={statsOpen} onToggle={() => setStatsOpen(!statsOpen)}>
-            {stats && <RecentStatsPreview stats={stats} matches={matches} onClick={onOpenPerformance} />}
+            {stats && <RecentStatsPreview stats={stats} matches={matches} />}
           </Accordion>
           <Accordion label="Top Champions" open={champsOpen} onToggle={() => setChampsOpen(!champsOpen)}>
             <TopChampionsPreview matches={matches} onViewAll={onViewChampions} />
@@ -36,7 +36,7 @@ export default function OverviewSidebar({ stats, matches, ranked, puuid, onOpenP
         </>
       ) : (
         <>
-          {stats && <RecentStatsPreview stats={stats} matches={matches} onClick={onOpenPerformance} />}
+          {stats && <RecentStatsPreview stats={stats} matches={matches} />}
           <TopChampionsPreview matches={matches} onViewAll={onViewChampions} />
         </>
       )}

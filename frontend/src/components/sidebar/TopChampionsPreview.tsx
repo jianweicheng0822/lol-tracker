@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { MatchSummary } from "../../types";
 import { useDdragonVersion, ddragonBase, championIconUrl, hideOnError } from "../../utils/ddragon";
-import { winRateColor, COLORS } from "../../utils/colors";
+import { kdaColor, COLORS } from "../../utils/colors";
 
 type ChampPerf = {
   championName: string;
@@ -46,7 +46,7 @@ export default function TopChampionsPreview({ matches, onViewAll }: Props) {
   return (
     <div style={styles.card}>
       <div style={styles.title}>Top Champions</div>
-      <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         {champs.map((c) => (
           <ChampRow key={c.championName} champ={c} imgBase={imgBase} />
         ))}
@@ -58,13 +58,56 @@ export default function TopChampionsPreview({ matches, onViewAll }: Props) {
   );
 }
 
+function WinLossBar({ wins, losses }: { wins: number; losses: number }) {
+  const total = wins + losses;
+  if (total === 0) return null;
+  const winPct = (wins / total) * 100;
+
+  return (
+    <div style={{
+      display: "flex",
+      width: "100%",
+      height: 16,
+      borderRadius: 3,
+      overflow: "hidden",
+      fontSize: 10,
+      fontWeight: 600,
+      lineHeight: "16px",
+    }}>
+      <div style={{
+        width: `${winPct}%`,
+        minWidth: wins > 0 ? 20 : 0,
+        background: "rgba(72,209,160,0.25)",
+        color: "#48D1A0",
+        textAlign: "center",
+        whiteSpace: "nowrap",
+      }}>
+        {wins}W
+      </div>
+      <div style={{
+        width: `${100 - winPct}%`,
+        minWidth: losses > 0 ? 20 : 0,
+        background: "rgba(232,64,87,0.25)",
+        color: "#E84057",
+        textAlign: "center",
+        whiteSpace: "nowrap",
+      }}>
+        {losses}L
+      </div>
+    </div>
+  );
+}
+
 function ChampRow({ champ, imgBase }: { champ: ChampPerf; imgBase: string }) {
   const [hovered, setHovered] = useState(false);
   const wr = champ.games > 0 ? Math.round((champ.wins / champ.games) * 100) : 0;
-  const kda = champ.deaths === 0
-    ? (champ.kills + champ.assists).toFixed(1)
-    : ((champ.kills + champ.assists) / champ.deaths).toFixed(2);
-  const wrColor = winRateColor(wr);
+  const losses = champ.games - champ.wins;
+  const kdaNum = champ.deaths === 0
+    ? champ.kills + champ.assists
+    : (champ.kills + champ.assists) / champ.deaths;
+  const kdaStr = champ.deaths === 0
+    ? kdaNum.toFixed(1)
+    : kdaNum.toFixed(2);
 
   return (
     <div
@@ -74,7 +117,7 @@ function ChampRow({ champ, imgBase }: { champ: ChampPerf; imgBase: string }) {
         display: "flex",
         alignItems: "center",
         gap: 8,
-        padding: "3px 6px",
+        padding: "4px 6px",
         borderRadius: 4,
         background: hovered ? "rgba(255,255,255,0.04)" : undefined,
         transition: "background 0.15s",
@@ -82,16 +125,22 @@ function ChampRow({ champ, imgBase }: { champ: ChampPerf; imgBase: string }) {
     >
       <img
         src={championIconUrl(champ.championName, imgBase)}
-        width={24}
-        height={24}
+        width={28}
+        height={28}
         style={{ borderRadius: "50%", flexShrink: 0 }}
         onError={hideOnError}
       />
-      <div style={{ flex: 1, minWidth: 0, fontSize: 12, fontWeight: 600, color: COLORS.textSecondary, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-        {champ.championName}
+      <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 3 }}>
+        <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
+          <span style={{ fontSize: 12, fontWeight: 600, color: COLORS.textSecondary, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+            {champ.championName}
+          </span>
+          <span style={{ fontSize: 10, fontWeight: 600, color: COLORS.textDim, flexShrink: 0, marginLeft: 6 }}>
+            {wr}% &middot; <span style={{ color: kdaColor(kdaNum) }}>{kdaStr} KDA</span>
+          </span>
+        </div>
+        <WinLossBar wins={champ.wins} losses={losses} />
       </div>
-      <div style={{ fontSize: 11, fontWeight: 700, color: wrColor, flexShrink: 0 }}>{wr}%</div>
-      <div style={{ fontSize: 10, color: COLORS.textDim, flexShrink: 0 }}>{kda}</div>
     </div>
   );
 }

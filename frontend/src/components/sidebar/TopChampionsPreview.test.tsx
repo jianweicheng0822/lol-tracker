@@ -50,12 +50,13 @@ describe("TopChampionsPreview", () => {
     expect(handler).toHaveBeenCalledOnce();
   });
 
-  it("displays win rate percentage per champion", () => {
+  it("displays win/loss bar per champion", () => {
     const matches = [
       makeMatchSummary({ championName: "Ahri", win: true }),
       makeMatchSummary({ championName: "Ahri", win: false }),
     ];
     render(<TopChampionsPreview matches={matches} onViewAll={vi.fn()} />);
-    expect(screen.getByText("50%")).toBeInTheDocument();
+    expect(screen.getByText("1W")).toBeInTheDocument();
+    expect(screen.getByText("1L")).toBeInTheDocument();
   });
 });

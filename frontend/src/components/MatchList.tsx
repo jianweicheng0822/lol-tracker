@@ -23,6 +23,7 @@ import {
   timeAgo,
 } from "../utils/ddragon";
 import { ScoreboardTeamTable, ArenaScoreboard } from "./ScoreboardTable";
+import { kdaColor as getKdaColor, COLORS } from "../utils/colors";
 import AiChatModal from "./AiChatModal";
 
 
@@ -41,12 +42,6 @@ type AugmentEntry = { id: number; augmentSmallIconPath: string };
 let augmentCache: Record<number, string> | null = null;
 let augmentFetchPromise: Promise<Record<number, string>> | null = null;
 
-/**
- * Fetch Arena augment icon URLs from Community Dragon. Cache globally after first load
- * to avoid repeated network requests across component re-renders.
- *
- * @returns A promise resolving to a map of augment ID to icon URL.
- */
 function fetchAugmentIcons(): Promise<Record<number, string>> {
   if (augmentCache) return Promise.resolve(augmentCache);
   if (augmentFetchPromise) return augmentFetchPromise;
@@ -77,12 +72,6 @@ function fetchAugmentIcons(): Promise<Record<number, string>> {
   return augmentFetchPromise;
 }
 
-/**
- * Load augment icons only when Arena matches are present in the match list.
- *
- * @param needed - Whether any Arena matches exist requiring augment icons.
- * @returns A map of augment ID to icon URL.
- */
 function useAugmentIcons(needed: boolean) {
   const [icons, setIcons] = useState<Record<number, string>>(
     augmentCache ?? {}
@@ -94,16 +83,6 @@ function useAugmentIcons(needed: boolean) {
   return icons;
 }
 
-/**
- * Compute a performance badge based on KDA ratio and kill participation.
- *
- * @param kills - Player kills.
- * @param deaths - Player deaths.
- * @param assists - Player assists.
- * @param killParticipation - Kill participation percentage (0-100).
- * @param win - Whether the match was won.
- * @returns A badge object with label and color, or null if no badge applies.
- */
 function getPerformanceTag(
   kills: number,
   deaths: number,
@@ -114,24 +93,17 @@ function getPerformanceTag(
   const kda = deaths === 0 ? kills + assists : (kills + assists) / deaths;
 
   if (kda >= 5 && killParticipation >= 60)
-    return { label: "MVP", color: "#E8C84A" };
+    return { label: "MVP", color: "#F5A623" };
   if (kda >= 3.5 || (kda >= 2.5 && killParticipation >= 55))
-    return { label: "Strong", color: "#D4A017" };
+    return { label: "Strong", color: "#48D1A0" };
   if (kda < 1 || (deaths >= 8 && kda < 1.5))
-    return { label: "Struggled", color: "#4A4540" };
+    return { label: "Struggled", color: COLORS.textDim };
   if (win && kda >= 1.5 && killParticipation >= 35)
-    return { label: "Balanced", color: "#4A4540" };
+    return { label: "Balanced", color: COLORS.textDim };
 
   return null;
 }
 
-/**
- * Render a single player row in the match card sidebar showing champion icon and name.
- * Navigate to the player's profile on click when tagline data is available.
- *
- * @param props - Player data, image base URL, highlight flag, and region.
- * @returns The player row element.
- */
 function PlayerRow({
   player,
   imgBase,
@@ -162,7 +134,7 @@ function PlayerRow({
         alignItems: "center",
         gap: 5,
         fontSize: 11,
-        color: isMe ? "#EDE4D3" : hovered ? "#B8A88A" : "#7A7060",
+        color: isMe ? COLORS.textPrimary : hovered ? COLORS.textSecondary : COLORS.textTertiary,
         fontWeight: isMe ? 600 : 400,
         background: isMe
           ? "rgba(212,160,23,0.07)"
@@ -204,12 +176,6 @@ function PlayerRow({
   );
 }
 
-/**
- * Render a vertical list of PlayerRows for one team (allies or enemies) in the match card sidebar.
- *
- * @param props - Array of players, image base URL, optional highlight PUUID, and region.
- * @returns The team column element.
- */
 function TeamColumn({
   players,
   imgBase,
@@ -236,12 +202,6 @@ function TeamColumn({
   );
 }
 
-/**
- * Render a single item slot icon with scale-up hover effect, or an empty dark square if empty.
- *
- * @param props - The item ID and DDragon image base URL.
- * @returns The item icon element.
- */
 function ItemIcon({ itemId, imgBase }: { itemId: number; imgBase: string }) {
   const [hovered, setHovered] = useState(false);
   return (
@@ -270,13 +230,6 @@ function ItemIcon({ itemId, imgBase }: { itemId: number; imgBase: string }) {
   );
 }
 
-/**
- * Render a match card container with win/loss background gradient, left border accent,
- * and hover elevation effect.
- *
- * @param props - Children content, background gradient, and accent color.
- * @returns The styled match card wrapper element.
- */
 function MatchCard({
   children,
   winBg,
@@ -296,7 +249,7 @@ function MatchCard({
         borderRadius: 6,
         background: winBg,
         padding: "8px 12px",
-        borderLeft: `4px solid ${hovered ? winColor : winColor}`,
+        borderLeft: `4px solid ${winColor}`,
         transition: "box-shadow 0.2s, transform 0.2s, border-color 0.2s",
         boxShadow: hovered
           ? `0 6px 20px rgba(0,0,0,0.3)`
@@ -311,12 +264,6 @@ function MatchCard({
   );
 }
 
-/**
- * Render an AI analysis trigger button with sparkle icon styling.
- *
- * @param props - Click handler for opening the AI chat modal.
- * @returns The AI button element.
- */
 function AiButton({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
   const [hovered, setHovered] = useState(false);
   return (
@@ -326,9 +273,9 @@ function AiButton({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
       onMouseLeave={() => setHovered(false)}
       style={{
         background: hovered ? "rgba(212,160,23,0.2)" : "rgba(255,255,255,0.04)",
-        border: "1px solid rgba(255,255,255,0.08)",
+        border: `1px solid ${COLORS.cardBorder}`,
         borderRadius: 4,
-        color: hovered ? "#D4A017" : "#4A4540",
+        color: hovered ? "#D4A017" : COLORS.textDim,
         cursor: "pointer",
         padding: "4px 8px",
         fontSize: 12,
@@ -344,12 +291,6 @@ function AiButton({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
   );
 }
 
-/**
- * Render a toggle chevron button to expand/collapse the inline scoreboard.
- *
- * @param props - Current expanded state and click handler.
- * @returns The chevron button element.
- */
 function ChevronButton({
   expanded,
   onClick,
@@ -365,9 +306,9 @@ function ChevronButton({
       onMouseLeave={() => setHovered(false)}
       style={{
         background: hovered ? "rgba(255,255,255,0.1)" : "rgba(255,255,255,0.04)",
-        border: "1px solid rgba(255,255,255,0.08)",
+        border: `1px solid ${COLORS.cardBorder}`,
         borderRadius: 4,
-        color: hovered ? "#B8A88A" : "#4A4540",
+        color: hovered ? COLORS.textSecondary : COLORS.textDim,
         cursor: "pointer",
         padding: "4px 8px",
         fontSize: 12,
@@ -383,13 +324,6 @@ function ChevronButton({
   );
 }
 
-/**
- * Render an inline scoreboard fetched on demand when a match card is expanded.
- * Display ArenaScoreboard for Arena matches or ScoreboardTeamTable for standard modes.
- *
- * @param props - Match ID, region, optional highlight PUUID, and DDragon image base URL.
- * @returns The inline scoreboard element with loading/error states.
- */
 function InlineScoreboard({
   matchId,
   region,
@@ -421,7 +355,7 @@ function InlineScoreboard({
 
   if (status === "loading") {
     return (
-      <div style={{ padding: "16px 12px", textAlign: "center", color: "#4A4540", fontSize: 13 }}>
+      <div style={{ padding: "16px 12px", textAlign: "center", color: COLORS.textDim, fontSize: 13 }}>
         Loading scoreboard...
       </div>
     );
@@ -477,13 +411,6 @@ function InlineScoreboard({
   );
 }
 
-/**
- * Render the full match history list with expandable cards, team rosters, inline scoreboards,
- * AI analysis button, and load-more pagination.
- *
- * @param props - Match data, player context, pagination callbacks, and subscription tier.
- * @returns The match list element, or null if no matches are available.
- */
 export default function MatchList({ matches, region, puuid, gameName, onLoadMore, isLoadingMore, hasMore, tier = 0 }: MatchListProps) {
   const ddVersion = useDdragonVersion();
   const imgBase = ddragonBase(ddVersion);
@@ -505,6 +432,8 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
               ? "Perfect"
               : ((m.kills + m.assists) / m.deaths).toFixed(2);
 
+          const kdaNum = m.deaths === 0 ? m.kills + m.assists : (m.kills + m.assists) / m.deaths;
+
           const cs =
             m.totalMinionsKilled + m.neutralMinionsKilled;
 
@@ -524,12 +453,12 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
           const isArena = m.queueId === 1700;
           const isWin = isArena ? (m.placement >= 1 && m.placement <= 4) : m.win;
 
-          const winColor = isWin ? "#D4A017" : "#C44040";
-          const winTextColor = isWin ? "#D4A017" : "#C44040";
+          const winColor = isWin ? "#D4A017" : "#E84057";
+          const winTextColor = isWin ? "#D4A017" : "#E84057";
           const winText = isWin ? "Victory" : "Defeat";
           const winBg = isWin
             ? "linear-gradient(135deg, rgba(212,160,23,0.12) 0%, rgba(212,160,23,0.04) 100%)"
-            : "linear-gradient(135deg, rgba(196,64,64,0.12) 0%, rgba(196,64,64,0.04) 100%)";
+            : "linear-gradient(135deg, rgba(232,64,87,0.12) 0%, rgba(232,64,87,0.04) 100%)";
 
           const queueName =
             QUEUE_NAMES[m.queueId] || "Normal";
@@ -563,12 +492,12 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                         bottom: -2,
                         left: "50%",
                         transform: "translateX(-50%)",
-                        background: "#121210",
+                        background: COLORS.pageBg,
                         fontSize: 9,
                         padding: "0 4px",
                         borderRadius: 4,
                         fontWeight: 600,
-                        color: "#4A4540",
+                        color: COLORS.textDim,
                         lineHeight: "14px",
                       }}
                     >
@@ -576,7 +505,6 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                     </div>
                   </div>
 
-                  {/* Arena: 2x2 augment icon grid; standard: summoner spells + runes */}
                   {m.queueId === 1700 ? (
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 22px)", gap: 2 }}>
                       {m.augments
@@ -589,7 +517,7 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                            height: 22,
                            borderRadius: 4,
                            overflow: "hidden",
-                           background: "rgba(20,18,14,0.6)",
+                           background: "rgba(35,35,40,0.6)",
                            border: "1px solid rgba(255,255,255,0.15)",
                            boxShadow: "0 0 6px rgba(255,255,255,0.15)",
                          }}
@@ -656,11 +584,11 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                   }}
                 >
                   <div style={{ fontSize: 21, fontWeight: 800, letterSpacing: -0.5, lineHeight: 1 }}>
-                    <span style={{ color: "#D4A017" }}>{m.kills}</span>
-                    <span style={{ color: "#2e2a22", fontWeight: 400 }}> / </span>
-                    <span style={{ color: "#C44040" }}>{m.deaths}</span>
-                    <span style={{ color: "#2e2a22", fontWeight: 400 }}> / </span>
-                    <span style={{ color: "#D4A017" }}>{m.assists}</span>
+                    <span style={{ color: COLORS.textPrimary }}>{m.kills}</span>
+                    <span style={{ color: COLORS.textDim, fontWeight: 400 }}> / </span>
+                    <span style={{ color: "#E84057" }}>{m.deaths}</span>
+                    <span style={{ color: COLORS.textDim, fontWeight: 400 }}> / </span>
+                    <span style={{ color: COLORS.textPrimary }}>{m.assists}</span>
                   </div>
 
                   <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -668,7 +596,7 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                       style={{
                         fontSize: 13,
                         fontWeight: 700,
-                        color: kda === "Perfect" ? "#E8C84A" : "#D4A017",
+                        color: kda === "Perfect" ? "#F5A623" : getKdaColor(kdaNum),
                       }}
                     >
                       {kda} KDA
@@ -710,12 +638,12 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
                       display: "flex",
                       gap: 7,
                       fontSize: 10,
-                      color: "#4A4540",
+                      color: COLORS.textDim,
                       alignItems: "center",
                       opacity: 0.85,
                     }}
                   >
-                    <span style={{ fontWeight: 500, color: "#4A4540" }}>{queueName}</span>
+                    <span style={{ fontWeight: 500, color: COLORS.textDim }}>{queueName}</span>
                     <span>&middot;</span>
                     <span>{formatDuration(m.gameDurationSec)}</span>
                     <span>&middot;</span>
@@ -765,15 +693,15 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
               {isExpanded && region && (
                 <div
                   style={{
-                    background: "rgba(10,10,10,0.95)",
-                    border: "1px solid rgba(255,255,255,0.06)",
+                    background: "rgba(20,20,24,0.95)",
+                    border: `1px solid ${COLORS.divider}`,
                     borderTop: "none",
                     borderRadius: "0 0 6px 6px",
                     padding: "8px 12px",
                     marginTop: -2,
                   }}
                 >
-                  <div style={{ display: "flex", gap: 0, marginBottom: 8, paddingBottom: 8, borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                  <div style={{ display: "flex", gap: 0, marginBottom: 8, paddingBottom: 8, borderBottom: `1px solid ${COLORS.divider}` }}>
                     <TeamColumn
                       players={
                         puuid
@@ -810,8 +738,8 @@ export default function MatchList({ matches, region, puuid, gameName, onLoadMore
               padding: "10px 32px",
               borderRadius: 6,
               background: isLoadingMore ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.08)",
-              border: "1px solid #1e1c18",
-              color: isLoadingMore ? "#4A4540" : "#B8A88A",
+              border: `1px solid ${COLORS.cardBorder}`,
+              color: isLoadingMore ? COLORS.textDim : COLORS.textSecondary,
               cursor: isLoadingMore ? "not-allowed" : "pointer",
               fontSize: 13,
               fontWeight: 600,

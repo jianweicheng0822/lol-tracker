@@ -17,9 +17,9 @@ describe("RecentStatsPreview", () => {
     expect(screen.getByText("3.76")).toBeInTheDocument();
   });
 
-  it("renders title as Recent 10 Games", () => {
+  it("renders title with game count", () => {
     render(<RecentStatsPreview stats={makePlayerStats()} matches={[makeMatchSummary()]} onClick={vi.fn()} />);
-    expect(screen.getByText("Recent 10 Games")).toBeInTheDocument();
+    expect(screen.getByText(/Recent 20 Ranked Games/)).toBeInTheDocument();
   });
 
   it("renders main role from match positions", () => {
@@ -39,26 +39,26 @@ describe("RecentStatsPreview", () => {
     expect(screen.getByText("Support")).toBeInTheDocument();
   });
 
-  it("uses gold color for win rate >= 60", () => {
+  it("uses blue color for win rate >= 60", () => {
     render(<RecentStatsPreview stats={makePlayerStats({ winRate: 65 })} matches={[makeMatchSummary()]} onClick={vi.fn()} />);
-    expect(screen.getByText("65%")).toHaveStyle({ color: "#D4A017" });
+    expect(screen.getByText("65%")).toHaveStyle({ color: "#3A8FD6" });
   });
 
-  it("uses neutral color for win rate between 50 and 59", () => {
+  it("uses green color for win rate between 50 and 59", () => {
     render(<RecentStatsPreview stats={makePlayerStats({ winRate: 55 })} matches={[makeMatchSummary()]} onClick={vi.fn()} />);
-    expect(screen.getByText("55%")).toHaveStyle({ color: "#7A7060" });
+    expect(screen.getByText("55%")).toHaveStyle({ color: "#48D1A0" });
   });
 
   it("uses red color for win rate below 50", () => {
     render(<RecentStatsPreview stats={makePlayerStats({ winRate: 40 })} matches={[makeMatchSummary()]} onClick={vi.fn()} />);
-    expect(screen.getByText("40%")).toHaveStyle({ color: "#C44040" });
+    expect(screen.getByText("40%")).toHaveStyle({ color: "#E84057" });
   });
 
   it("calls onClick when card is clicked", async () => {
     const user = userEvent.setup();
     const handler = vi.fn();
     render(<RecentStatsPreview stats={makePlayerStats()} matches={[makeMatchSummary()]} onClick={handler} />);
-    await user.click(screen.getByText("Recent 10 Games"));
+    await user.click(screen.getByText(/Recent 20 Ranked Games/));
     expect(handler).toHaveBeenCalledOnce();
   });
 });

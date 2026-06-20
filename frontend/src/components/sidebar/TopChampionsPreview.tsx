@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { MatchSummary } from "../../types";
 import { useDdragonVersion, ddragonBase, championIconUrl, hideOnError } from "../../utils/ddragon";
+import { winRateColor, COLORS } from "../../utils/colors";
 
 type ChampPerf = {
   championName: string;
@@ -63,7 +64,7 @@ function ChampRow({ champ, imgBase }: { champ: ChampPerf; imgBase: string }) {
   const kda = champ.deaths === 0
     ? (champ.kills + champ.assists).toFixed(1)
     : ((champ.kills + champ.assists) / champ.deaths).toFixed(2);
-  const wrColor = wr >= 60 ? "#D4A017" : wr >= 50 ? "#7A7060" : "#C44040";
+  const wrColor = winRateColor(wr);
 
   return (
     <div
@@ -86,19 +87,19 @@ function ChampRow({ champ, imgBase }: { champ: ChampPerf; imgBase: string }) {
         style={{ borderRadius: "50%", flexShrink: 0 }}
         onError={hideOnError}
       />
-      <div style={{ flex: 1, minWidth: 0, fontSize: 12, fontWeight: 600, color: "#B8A88A", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+      <div style={{ flex: 1, minWidth: 0, fontSize: 12, fontWeight: 600, color: COLORS.textSecondary, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
         {champ.championName}
       </div>
       <div style={{ fontSize: 11, fontWeight: 700, color: wrColor, flexShrink: 0 }}>{wr}%</div>
-      <div style={{ fontSize: 10, color: "#4A4540", flexShrink: 0 }}>{kda}</div>
+      <div style={{ fontSize: 10, color: COLORS.textDim, flexShrink: 0 }}>{kda}</div>
     </div>
   );
 }
 
 const styles: Record<string, React.CSSProperties> = {
   card: {
-    background: "rgba(20,18,14,0.65)",
-    border: "1px solid rgba(212,160,23,0.10)",
+    background: COLORS.cardBg,
+    border: `1px solid ${COLORS.cardBorder}`,
     borderRadius: 6,
     padding: 12,
     marginBottom: 12,
@@ -107,7 +108,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 11,
     textTransform: "uppercase",
     letterSpacing: 0.8,
-    color: "#4A4540",
+    color: COLORS.textDim,
     fontWeight: 500,
     marginBottom: 8,
   },

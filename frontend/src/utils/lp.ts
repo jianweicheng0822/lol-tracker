@@ -63,16 +63,16 @@ export const TIER_COLORS: Record<string, string> = {
 
 /** Semi-transparent tints derived from TIER_COLORS, for card backgrounds. */
 export const TIER_TINTS: Record<string, string> = {
-  IRON: "rgba(120,100,90,0.08)",
-  BRONZE: "rgba(140,100,60,0.08)",
-  SILVER: "rgba(160,170,180,0.08)",
-  GOLD: "rgba(200,170,60,0.10)",
-  PLATINUM: "rgba(80,180,160,0.08)",
-  EMERALD: "rgba(40,180,100,0.08)",
-  DIAMOND: "rgba(100,140,220,0.10)",
-  MASTER: "rgba(160,100,220,0.10)",
-  GRANDMASTER: "rgba(220,80,80,0.10)",
-  CHALLENGER: "rgba(240,200,80,0.10)",
+  IRON: "rgba(120,100,90,0.12)",
+  BRONZE: "rgba(140,100,60,0.12)",
+  SILVER: "rgba(160,170,180,0.12)",
+  GOLD: "rgba(200,170,60,0.14)",
+  PLATINUM: "rgba(80,180,160,0.12)",
+  EMERALD: "rgba(40,180,100,0.12)",
+  DIAMOND: "rgba(100,140,220,0.14)",
+  MASTER: "rgba(160,100,220,0.14)",
+  GRANDMASTER: "rgba(220,80,80,0.14)",
+  CHALLENGER: "rgba(240,200,80,0.14)",
 };
 
 /** Available time ranges (in days) for LP charts. */

@@ -58,7 +58,7 @@ describe("OverviewSidebar", () => {
   it("shows accordion buttons on mobile", () => {
     vi.mocked(useIsMobile).mockReturnValue(true);
     render(<OverviewSidebar {...defaultProps} />);
-    expect(screen.getByText("Recent 10 Games")).toBeInTheDocument();
+    expect(screen.getByText("Recent 20 Ranked Games")).toBeInTheDocument();
     expect(screen.getByText("Top Champions")).toBeInTheDocument();
   });
 
@@ -67,7 +67,7 @@ describe("OverviewSidebar", () => {
     const user = userEvent.setup();
     render(<OverviewSidebar {...defaultProps} />);
 
-    const recentBtn = screen.getByText("Recent 10 Games");
+    const recentBtn = screen.getByText("Recent 20 Ranked Games");
     await user.click(recentBtn);
     expect(screen.getByTestId("recent-stats")).toBeInTheDocument();
   });

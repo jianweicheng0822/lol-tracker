@@ -1,4 +1,5 @@
 import type { PlayerStats, MatchSummary } from "../../types";
+import { winRateColor, kdaColor, COLORS } from "../../utils/colors";
 
 const ROLE_LABELS: Record<string, string> = {
   TOP: "Top",
@@ -33,8 +34,8 @@ type Props = {
 export default function RecentStatsPreview({ stats, matches, onClick }: Props) {
   if (stats.totalGames === 0) return null;
 
-  const wrColor = stats.winRate >= 60 ? "#D4A017" : stats.winRate >= 50 ? "#7A7060" : "#C44040";
-  const kdaColor = stats.averageKda >= 3 ? "#D4A017" : stats.averageKda >= 2 ? "#E8C84A" : "#C44040";
+  const wrColor = winRateColor(stats.winRate);
+  const kdaClr = kdaColor(stats.averageKda);
   const mainRole = computeMainRole(matches);
   const roleLabel = mainRole ? ROLE_LABELS[mainRole] || mainRole : "\u2014";
 
@@ -51,7 +52,7 @@ export default function RecentStatsPreview({ stats, matches, onClick }: Props) {
           <div style={styles.label}>Main Role</div>
         </div>
         <div>
-          <div style={{ ...styles.value, color: kdaColor }}>{stats.averageKda.toFixed(2)}</div>
+          <div style={{ ...styles.value, color: kdaClr }}>{stats.averageKda.toFixed(2)}</div>
           <div style={styles.label}>KDA</div>
         </div>
       </div>
@@ -61,8 +62,8 @@ export default function RecentStatsPreview({ stats, matches, onClick }: Props) {
 
 const styles: Record<string, React.CSSProperties> = {
   card: {
-    background: "rgba(20,18,14,0.65)",
-    border: "1px solid rgba(212,160,23,0.10)",
+    background: COLORS.cardBg,
+    border: `1px solid ${COLORS.cardBorder}`,
     borderRadius: 6,
     padding: 12,
     marginBottom: 12,
@@ -71,7 +72,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 11,
     textTransform: "uppercase",
     letterSpacing: 0.8,
-    color: "#4A4540",
+    color: COLORS.textDim,
     fontWeight: 500,
     marginBottom: 8,
   },
@@ -83,11 +84,11 @@ const styles: Record<string, React.CSSProperties> = {
   value: {
     fontSize: 18,
     fontWeight: 700,
-    color: "#EDE4D3",
+    color: COLORS.textPrimary,
   },
   label: {
     fontSize: 10,
-    color: "#4A4540",
+    color: COLORS.textDim,
     marginTop: 2,
   },
 };

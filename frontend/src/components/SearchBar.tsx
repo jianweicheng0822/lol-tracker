@@ -8,6 +8,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { Region } from "../types";
 import { REGIONS } from "../types";
+import { COLORS } from "../utils/colors";
 
 type SearchBarProps = {
   compact?: boolean;
@@ -16,13 +17,6 @@ type SearchBarProps = {
   initialTag?: string;
 };
 
-/**
- * Render a search bar for looking up summoners by Riot ID (game name + tag) and region.
- * Navigate to the player profile route on valid submission.
- *
- * @param props - Optional compact mode flag and initial field values for pre-population.
- * @returns The search bar form element.
- */
 export default function SearchBar({ compact, initialRegion, initialGameName, initialTag }: SearchBarProps) {
   const navigate = useNavigate();
   const [region, setRegion] = useState<Region>(initialRegion || "NA");
@@ -101,17 +95,17 @@ export default function SearchBar({ compact, initialRegion, initialGameName, ini
 const styles: Record<string, React.CSSProperties> = {
   input: {
     borderRadius: 8,
-    border: "1px solid rgba(212,160,23,0.18)",
-    background: "rgba(28,26,22,0.65)",
-    color: "#EDE4D3",
+    border: `1px solid ${COLORS.cardBorder}`,
+    background: "rgba(35,35,40,0.65)",
+    color: COLORS.textPrimary,
     outline: "none",
     transition: "border-color 0.15s, box-shadow 0.15s",
   },
   select: {
     borderRadius: 8,
-    background: "rgba(28,26,22,0.65)",
-    color: "#EDE4D3",
-    border: "1px solid rgba(212,160,23,0.18)",
+    background: "rgba(35,35,40,0.65)",
+    color: COLORS.textPrimary,
+    border: `1px solid ${COLORS.cardBorder}`,
     outline: "none",
     transition: "border-color 0.15s, box-shadow 0.15s",
   },
@@ -127,8 +121,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   buttonDisabled: {
     borderRadius: 8,
-    background: "#1e1c18",
-    color: "#4A4540",
+    background: "rgba(255,255,255,0.06)",
+    color: COLORS.textDim,
     cursor: "not-allowed",
     border: "none",
     fontWeight: 700,

@@ -38,7 +38,7 @@ function Tab({ label, active, onClick }: { id: TabId; label: string; active: boo
         background: "none",
         border: "none",
         borderBottom: active ? "2px solid #D4A017" : "2px solid transparent",
-        color: active ? "#EDE4D3" : hovered ? "#7A7060" : "#4A4540",
+        color: active ? "#FFFFFF" : hovered ? "#7B7A8E" : "#515163",
         fontSize: 14,
         fontWeight: active ? 600 : 500,
         cursor: "pointer",
@@ -70,7 +70,7 @@ const styles: Record<string, React.CSSProperties> = {
   container: {
     display: "flex",
     gap: 4,
-    borderBottom: "1px solid #1e1c18",
+    borderBottom: "1px solid rgba(255,255,255,0.08)",
     marginBottom: 24,
   },
 };

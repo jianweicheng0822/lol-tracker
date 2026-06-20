@@ -6,6 +6,8 @@
  */
 import type { RankedEntry } from "../types";
 import { hideOnError } from "../utils/ddragon";
+import { TIER_COLORS } from "../utils/lp";
+import { COLORS } from "../utils/colors";
 
 const QUEUE_LABELS: Record<string, string> = {
   RANKED_SOLO_5x5: "Solo/Duo",
@@ -17,12 +19,6 @@ const TIER_ICON_BASE =
 
 const SVG_ONLY_TIERS = new Set(["EMERALD"]);
 
-/**
- * Build the Community Dragon URL for a tier's ranked crest icon.
- *
- * @param tier - The uppercase tier name (e.g., "GOLD", "EMERALD").
- * @returns The full URL to the tier icon asset.
- */
 function tierIconUrl(tier: string): string {
   const ext = SVG_ONLY_TIERS.has(tier.toUpperCase()) ? "svg" : "png";
   return `${TIER_ICON_BASE}/${tier.toLowerCase()}.${ext}`;
@@ -30,26 +26,15 @@ function tierIconUrl(tier: string): string {
 
 const APEX_TIERS = new Set(["MASTER", "GRANDMASTER", "CHALLENGER"]);
 
-/**
- * Format a tier string to title case for display.
- *
- * @param tier - The uppercase tier name.
- * @returns Title-cased tier name (e.g., "Gold", "Platinum").
- */
 function formatTier(tier: string): string {
   return tier.charAt(0) + tier.slice(1).toLowerCase();
 }
 
-/**
- * Render a single ranked queue badge with tier icon, rank, LP, and win/loss record.
- *
- * @param props - The ranked entry data for one queue.
- * @returns The queue badge element.
- */
 function QueueBadge({ entry }: { entry: RankedEntry }) {
   const label = QUEUE_LABELS[entry.queueType] || entry.queueType;
   const totalGames = entry.wins + entry.losses;
   const winRate = totalGames > 0 ? Math.round((entry.wins / totalGames) * 100) : 0;
+  const tierColor = TIER_COLORS[entry.tier] || COLORS.textPrimary;
 
   return (
     <div style={styles.badge}>
@@ -63,7 +48,7 @@ function QueueBadge({ entry }: { entry: RankedEntry }) {
         />
         <div>
           <div style={styles.tierRow}>
-            <span style={styles.tier}>{formatTier(entry.tier)}{APEX_TIERS.has(entry.tier) ? "" : ` ${entry.rank}`}</span>
+            <span style={{ ...styles.tier, color: tierColor }}>{formatTier(entry.tier)}{APEX_TIERS.has(entry.tier) ? "" : ` ${entry.rank}`}</span>
             <span style={styles.lp}>{entry.leaguePoints} LP</span>
           </div>
           <div style={styles.record}>
@@ -75,13 +60,6 @@ function QueueBadge({ entry }: { entry: RankedEntry }) {
   );
 }
 
-/**
- * Render ranked badges for all relevant queue types, sorted with Solo/Duo first.
- * Display an "Unranked" placeholder when no ranked entries are available.
- *
- * @param props - The array of ranked entries from the Riot API.
- * @returns The ranked badge container element.
- */
 export default function RankBadge({ entries }: { entries: RankedEntry[] }) {
   const relevant = entries.filter((e) => QUEUE_LABELS[e.queueType]);
 
@@ -126,8 +104,8 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: 20,
   },
   badge: {
-    background: "#111110",
-    border: "1px solid #1e1c18",
+    background: COLORS.cardBg,
+    border: `1px solid ${COLORS.cardBorder}`,
     borderRadius: 6,
     padding: "12px 20px",
     minWidth: 180,
@@ -136,7 +114,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 11,
     textTransform: "uppercase",
     letterSpacing: 1,
-    color: "#7A7060",
+    color: COLORS.textTertiary,
     marginBottom: 8,
   },
   iconRow: {
@@ -156,7 +134,7 @@ const styles: Record<string, React.CSSProperties> = {
   tier: {
     fontSize: 18,
     fontWeight: 700,
-    color: "#EDE4D3",
+    color: COLORS.textPrimary,
   },
   lp: {
     fontSize: 14,
@@ -165,7 +143,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   record: {
     fontSize: 12,
-    color: "#7A7060",
+    color: COLORS.textTertiary,
     marginTop: 4,
   },
 };

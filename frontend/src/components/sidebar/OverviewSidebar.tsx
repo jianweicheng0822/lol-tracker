@@ -60,11 +60,11 @@ function Accordion({ label, open, onToggle, children }: { label: string; open: b
 
 const accStyles: Record<string, React.CSSProperties> = {
   header: {
-    background: "rgba(20,18,14,0.65)",
-    border: "1px solid rgba(212,160,23,0.10)",
+    background: "rgba(35,35,40,0.85)",
+    border: "1px solid rgba(255,255,255,0.08)",
     borderRadius: 6,
     padding: "10px 14px",
-    color: "#7A7060",
+    color: "#7B7A8E",
     fontSize: 12,
     fontWeight: 600,
     cursor: "pointer",

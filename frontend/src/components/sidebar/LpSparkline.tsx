@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { fetchLpHistory } from "../../api";
 import { toAbsoluteLp, TIER_COLORS, pickDefaultRange, filterByRange } from "../../utils/lp";
+import { COLORS } from "../../utils/colors";
 import type { LpSnapshot } from "../../types";
 
 type Props = {
@@ -14,7 +15,7 @@ type DataPoint = {
   rank: string;
   rawLp: number;
   date: string;
-  gained: boolean; // true = LP went up or stayed, false = LP went down
+  gained: boolean;
 };
 
 function formatTier(tier: string): string {
@@ -81,7 +82,6 @@ export default function LpSparkline({ puuid, onClick }: Props) {
     );
   }
 
-  // Chart dimensions
   const W = 256;
   const H = 100;
   const PAD_X = 8;
@@ -99,10 +99,8 @@ export default function LpSparkline({ puuid, onClick }: Props) {
     y: PAD_Y + chartH - ((d.lp - minLp) / range) * chartH,
   }));
 
-  // Build polyline path
   const linePath = points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
 
-  // Latest data point for the summary display
   const latest = data[data.length - 1];
 
   const handleMouseMove = (e: React.MouseEvent<SVGSVGElement>) => {
@@ -112,7 +110,6 @@ export default function LpSparkline({ puuid, onClick }: Props) {
     const scaleX = W / rect.width;
     const scaledX = mouseX * scaleX;
 
-    // Find nearest point
     let closest = 0;
     let closestDist = Infinity;
     for (let i = 0; i < points.length; i++) {
@@ -123,6 +120,7 @@ export default function LpSparkline({ puuid, onClick }: Props) {
   };
 
   const displayPoint = hoveredIdx !== null ? data[hoveredIdx] : latest;
+  const tierColor = TIER_COLORS[displayPoint.tier.toUpperCase()] ?? "#D4A017";
 
   return (
     <div style={styles.card}>
@@ -130,14 +128,12 @@ export default function LpSparkline({ puuid, onClick }: Props) {
         <div style={styles.title}>LP History</div>
       </div>
 
-      {/* Current / hovered point info */}
       <div style={styles.infoRow}>
-        <span style={styles.infoTier}>{formatRank(displayPoint.tier, displayPoint.rank)}</span>
+        <span style={{ ...styles.infoTier, color: tierColor }}>{formatRank(displayPoint.tier, displayPoint.rank)}</span>
         <span style={styles.infoLp}>{displayPoint.rawLp} LP</span>
         <span style={styles.infoDate}>{displayPoint.date}</span>
       </div>
 
-      {/* Chart */}
       <svg
         ref={svgRef}
         viewBox={`0 0 ${W} ${H}`}
@@ -145,10 +141,8 @@ export default function LpSparkline({ puuid, onClick }: Props) {
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setHoveredIdx(null)}
       >
-        {/* Line */}
-        <path d={linePath} fill="none" stroke="#7A7060" strokeWidth={1.5} />
+        <path d={linePath} fill="none" stroke={COLORS.textTertiary} strokeWidth={1.5} />
 
-        {/* Dots */}
         {points.map((p, i) => (
           <circle
             key={i}
@@ -156,12 +150,11 @@ export default function LpSparkline({ puuid, onClick }: Props) {
             cy={p.y}
             r={hoveredIdx === i ? 5 : 3.5}
             fill={TIER_COLORS[data[i].tier.toUpperCase()] ?? "#D4A017"}
-            stroke={hoveredIdx === i ? "#EDE4D3" : "none"}
+            stroke={hoveredIdx === i ? COLORS.textPrimary : "none"}
             strokeWidth={hoveredIdx === i ? 1.5 : 0}
           />
         ))}
 
-        {/* Hover crosshair line */}
         {hoveredIdx !== null && (
           <line
             x1={points[hoveredIdx].x}
@@ -184,8 +177,8 @@ export default function LpSparkline({ puuid, onClick }: Props) {
 
 const styles: Record<string, React.CSSProperties> = {
   card: {
-    background: "rgba(20,18,14,0.65)",
-    border: "1px solid rgba(212,160,23,0.10)",
+    background: COLORS.cardBg,
+    border: `1px solid ${COLORS.cardBorder}`,
     borderRadius: 6,
     padding: 12,
     marginBottom: 12,
@@ -199,7 +192,7 @@ const styles: Record<string, React.CSSProperties> = {
   title: {
     fontSize: 14,
     fontWeight: 700,
-    color: "#EDE4D3",
+    color: COLORS.textPrimary,
   },
   infoRow: {
     display: "flex",
@@ -215,21 +208,21 @@ const styles: Record<string, React.CSSProperties> = {
   infoLp: {
     fontSize: 16,
     fontWeight: 800,
-    color: "#EDE4D3",
+    color: COLORS.textPrimary,
   },
   infoDate: {
     fontSize: 11,
-    color: "#4A4540",
+    color: COLORS.textDim,
   },
   empty: {
     fontSize: 12,
-    color: "#4A4540",
+    color: COLORS.textDim,
     padding: "8px 0",
   },
   viewFull: {
     background: "none",
     border: "none",
-    color: "#7A7060",
+    color: COLORS.textTertiary,
     fontSize: 11,
     fontWeight: 600,
     cursor: "pointer",

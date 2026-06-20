@@ -93,7 +93,7 @@ const styles: Record<string, React.CSSProperties> = {
   removeBtn: {
     background: "none",
     border: "none",
-    color: "#7A7060",
+    color: "#7B7A8E",
     cursor: "pointer",
     fontSize: 16,
     padding: 0,

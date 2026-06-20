@@ -9,6 +9,7 @@ import SearchBar from "../components/SearchBar";
 import AuthModal from "../components/AuthModal";
 import FavoritesList from "../components/FavoritesList";
 import { fetchFavorites, getAuthToken, setAuthToken } from "../api";
+import { COLORS } from "../utils/colors";
 import type { FavoritePlayer } from "../types";
 
 const DEMO_PLAYERS = [
@@ -63,7 +64,6 @@ export default function HomePage() {
           <SearchBar />
         </div>
 
-        {/* Try searching */}
         <div style={styles.trySection}>
           <span style={styles.tryLabel}>Try searching</span>
           <div style={styles.demoBadges}>
@@ -73,7 +73,7 @@ export default function HomePage() {
                 style={styles.demoBadge}
                 onClick={() => navigate(`/player/puuid/${p.region}/${encodeURIComponent(p.puuid)}`)}
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(212,160,23,0.45)"; e.currentTarget.style.background = "rgba(212,160,23,0.08)"; }}
-                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(212,160,23,0.18)"; e.currentTarget.style.background = "transparent"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.background = "transparent"; }}
               >
                 {p.label}
               </button>
@@ -94,8 +94,8 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     justifyContent: "center",
     minHeight: "100vh",
-    background: "radial-gradient(circle at 50% 40%, rgba(212,160,23,0.08), transparent 50%), #121210",
-    color: "#EDE4D3",
+    background: `radial-gradient(circle at 50% 40%, rgba(212,160,23,0.08), transparent 50%), ${COLORS.pageBg}`,
+    color: COLORS.textPrimary,
     fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
   },
   center: {
@@ -111,11 +111,11 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 800,
     margin: 0,
     letterSpacing: -1.5,
-    color: "#EDE4D3",
+    color: COLORS.textPrimary,
   },
   subtitle: {
     fontSize: 16,
-    color: "#7A7060",
+    color: COLORS.textTertiary,
     marginTop: 12,
     marginBottom: 40,
     textAlign: "center",
@@ -136,7 +136,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 12,
     textTransform: "uppercase",
     letterSpacing: 1,
-    color: "#4A4540",
+    color: COLORS.textDim,
     fontWeight: 600,
   },
   demoBadges: {
@@ -148,9 +148,9 @@ const styles: Record<string, React.CSSProperties> = {
   demoBadge: {
     padding: "8px 18px",
     borderRadius: 20,
-    border: "1px solid rgba(212,160,23,0.18)",
+    border: "1px solid rgba(255,255,255,0.12)",
     background: "transparent",
-    color: "#B8A88A",
+    color: COLORS.textSecondary,
     cursor: "pointer",
     fontSize: 13,
     fontWeight: 500,
@@ -163,8 +163,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   authBtn: {
     background: "transparent",
-    color: "#7A7060",
-    border: "1px solid #1e1c18",
+    color: COLORS.textTertiary,
+    border: `1px solid ${COLORS.cardBorder}`,
     borderRadius: 6,
     padding: "6px 14px",
     cursor: "pointer",

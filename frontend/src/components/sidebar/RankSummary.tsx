@@ -1,6 +1,7 @@
 import type { RankedEntry } from "../../types";
 import { hideOnError } from "../../utils/ddragon";
-import { TIER_TINTS } from "../../utils/lp";
+import { TIER_TINTS, TIER_COLORS } from "../../utils/lp";
+import { winRateColor, COLORS } from "../../utils/colors";
 
 const QUEUE_LABELS: Record<string, string> = {
   RANKED_SOLO_5x5: "Solo/Duo",
@@ -21,13 +22,6 @@ const APEX_TIERS = new Set(["MASTER", "GRANDMASTER", "CHALLENGER"]);
 
 function formatTier(tier: string): string {
   return tier.charAt(0) + tier.slice(1).toLowerCase();
-}
-
-
-function winRateColor(wr: number): string {
-  if (wr >= 55) return "#D4A017";
-  if (wr >= 45) return "#7A7060";
-  return "#C44040";
 }
 
 type Props = { entries: RankedEntry[] };
@@ -60,6 +54,7 @@ export default function RankSummary({ entries }: Props) {
         const label = QUEUE_LABELS[entry.queueType] || entry.queueType;
         const total = entry.wins + entry.losses;
         const wr = total > 0 ? Math.round((entry.wins / total) * 100) : 0;
+        const tierColor = TIER_COLORS[entry.tier] || COLORS.textPrimary;
 
         return (
           <div key={entry.queueType} style={styles.badge}>
@@ -68,7 +63,7 @@ export default function RankSummary({ entries }: Props) {
               <img src={tierIconUrl(entry.tier)} alt={entry.tier} style={styles.tierIcon} onError={hideOnError} />
               <div>
                 <div style={styles.tierRow}>
-                  <span style={styles.tier}>
+                  <span style={{ ...styles.tier, color: tierColor }}>
                     {formatTier(entry.tier)}{APEX_TIERS.has(entry.tier) ? "" : ` ${entry.rank}`}
                   </span>
                   <span style={styles.lp}>{entry.leaguePoints} LP</span>
@@ -88,8 +83,8 @@ export default function RankSummary({ entries }: Props) {
 
 const styles: Record<string, React.CSSProperties> = {
   card: {
-    background: "rgba(20,18,14,0.65)",
-    border: "1px solid rgba(212,160,23,0.10)",
+    background: COLORS.cardBg,
+    border: `1px solid ${COLORS.cardBorder}`,
     borderRadius: 6,
     padding: 20,
     marginBottom: 12,
@@ -102,7 +97,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 11,
     textTransform: "uppercase",
     letterSpacing: 1,
-    color: "#7A7060",
+    color: COLORS.textTertiary,
     marginBottom: 8,
   },
   iconRow: {
@@ -119,7 +114,7 @@ const styles: Record<string, React.CSSProperties> = {
   tier: {
     fontSize: 20,
     fontWeight: 800,
-    color: "#EDE4D3",
+    color: COLORS.textPrimary,
   },
   lp: {
     fontSize: 16,
@@ -128,7 +123,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   record: {
     fontSize: 12,
-    color: "#7A7060",
+    color: COLORS.textTertiary,
     marginTop: 3,
   },
 };

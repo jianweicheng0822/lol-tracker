@@ -1,6 +1,7 @@
 import type { Account } from "../types";
 import type { Streak } from "../utils/playerInsights";
 import { useDdragonVersion } from "../utils/ddragon";
+import { COLORS } from "../utils/colors";
 
 type Props = {
   account: Account;
@@ -21,12 +22,12 @@ export default function ProfileHeader({ account, region, isFav, onToggleFavorite
         <img
           src={`https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/profileicon/${account.profileIconId}.png`}
           alt="Profile Icon"
-          style={{ width: 56, height: 56, borderRadius: "50%", border: "2px solid #1e1c18" }}
+          style={{ width: 56, height: 56, borderRadius: "50%", border: `2px solid ${COLORS.cardBorder}` }}
         />
         <div>
           <h2 style={{ margin: 0, fontSize: 28 }}>
             {account.gameName}
-            <span style={{ color: "#4A4540", fontWeight: 400 }}> #{account.tagLine}</span>
+            <span style={{ color: COLORS.textDim, fontWeight: 400 }}> #{account.tagLine}</span>
           </h2>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
             <span style={{ fontSize: 13, opacity: 0.5 }}>{region}</span>
@@ -36,8 +37,8 @@ export default function ProfileHeader({ account, region, isFav, onToggleFavorite
                 fontWeight: 600,
                 padding: "2px 8px",
                 borderRadius: 4,
-                background: streak.type === "win" ? "rgba(212,160,23,0.12)" : "rgba(196,64,64,0.12)",
-                color: streak.type === "win" ? "#D4A017" : "#C44040",
+                background: streak.type === "win" ? "rgba(72,209,160,0.12)" : "rgba(232,64,87,0.12)",
+                color: streak.type === "win" ? "#48D1A0" : "#E84057",
               }}>
                 {streak.type === "win" ? "\u2191" : "\u2193"} {streak.count}{streak.type === "win" ? "W" : "L"} Streak
               </span>
@@ -70,7 +71,7 @@ const styles: Record<string, React.CSSProperties> = {
     justifyContent: "space-between",
     marginBottom: 24,
     paddingBottom: 16,
-    borderBottom: "1px solid #1e1c18",
+    borderBottom: `1px solid ${COLORS.cardBorder}`,
   },
   favBtn: {
     padding: "8px 16px",
@@ -108,15 +109,15 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     padding: "2px 8px",
     borderRadius: 4,
-    background: "rgba(212,160,23,0.15)",
-    color: "#D4A017",
+    background: "rgba(72,209,160,0.15)",
+    color: "#48D1A0",
   },
   fallBadge: {
     fontSize: 12,
     fontWeight: 600,
     padding: "2px 8px",
     borderRadius: 4,
-    background: "rgba(196,64,64,0.15)",
-    color: "#C44040",
+    background: "rgba(232,64,87,0.15)",
+    color: "#E84057",
   },
 };

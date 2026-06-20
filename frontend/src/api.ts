@@ -271,9 +271,12 @@ export async function removeFavorite(puuid: string) {
  * @param puuid - The player's PUUID.
  * @returns An array of per-champion stat objects.
  */
-export async function fetchChampionStats(puuid: string) {
+export async function fetchChampionStats(puuid: string, count?: number, queueId?: number) {
+  const params = new URLSearchParams({ puuid });
+  if (count != null) params.set("count", String(count));
+  if (queueId != null) params.set("queueId", String(queueId));
   const res = await fetch(
-    `${BASE}/api/trends/champions?puuid=${encodeURIComponent(puuid)}`,
+    `${BASE}/api/trends/champions?${params}`,
     fetchOpts()
   );
   if (!res.ok) throw new Error(await readErrorMessage(res));

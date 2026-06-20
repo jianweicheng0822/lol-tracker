@@ -48,8 +48,12 @@ public class TrendsController {
      * @return list of champion statistics ordered by total games descending
      */
     @GetMapping("/champions")
-    public List<ChampionStatsDto> getChampionStats(@RequestParam String puuid) {
-        return matchHistoryService.getChampionStats(puuid);
+    public List<ChampionStatsDto> getChampionStats(
+            @RequestParam String puuid,
+            @RequestParam(required = false) Integer count,
+            @RequestParam(required = false) Integer queueId
+    ) {
+        return matchHistoryService.getChampionStats(puuid, count, queueId);
     }
 
     /**

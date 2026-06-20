@@ -100,7 +100,7 @@ class MatchHistoryServiceTest {
         );
         when(matchRecordRepository.findByPuuidOrderByGameEndTimestampDesc("puuid")).thenReturn(records);
 
-        List<ChampionStatsDto> result = service.getChampionStats("puuid");
+        List<ChampionStatsDto> result = service.getChampionStats("puuid", null, null);
 
         assertEquals(2, result.size());
         assertEquals("Ahri", result.get(0).championName());
@@ -118,7 +118,7 @@ class MatchHistoryServiceTest {
         );
         when(matchRecordRepository.findByPuuidOrderByGameEndTimestampDesc("puuid")).thenReturn(records);
 
-        List<ChampionStatsDto> result = service.getChampionStats("puuid");
+        List<ChampionStatsDto> result = service.getChampionStats("puuid", null, null);
 
         assertEquals(1, result.size());
         assertEquals(15.0, result.get(0).avgKda());
@@ -129,7 +129,7 @@ class MatchHistoryServiceTest {
     void getChampionStats_withEmptyRecords_returnsEmptyList() {
         when(matchRecordRepository.findByPuuidOrderByGameEndTimestampDesc("puuid")).thenReturn(List.of());
 
-        List<ChampionStatsDto> result = service.getChampionStats("puuid");
+        List<ChampionStatsDto> result = service.getChampionStats("puuid", null, null);
 
         assertTrue(result.isEmpty());
     }

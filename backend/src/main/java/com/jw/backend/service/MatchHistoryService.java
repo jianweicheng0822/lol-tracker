@@ -81,8 +81,18 @@ public class MatchHistoryService {
      * @param puuid the player's unique identifier
      * @return list of champion statistics sorted by total games descending
      */
-    public List<ChampionStatsDto> getChampionStats(String puuid) {
+    public List<ChampionStatsDto> getChampionStats(String puuid, Integer count, Integer queueId) {
         List<MatchRecord> records = matchRecordRepository.findByPuuidOrderByGameEndTimestampDesc(puuid);
+
+        if (queueId != null) {
+            records = records.stream()
+                    .filter(r -> queueId.equals(r.getQueueId()))
+                    .collect(Collectors.toList());
+        }
+
+        if (count != null && count > 0 && count < records.size()) {
+            records = records.subList(0, count);
+        }
 
         Map<String, List<MatchRecord>> byChampion = records.stream()
                 .collect(Collectors.groupingBy(MatchRecord::getChampionName));

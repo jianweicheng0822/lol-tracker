@@ -50,13 +50,27 @@ class TrendsControllerTest {
         List<ChampionStatsDto> stats = List.of(
             new ChampionStatsDto("Ahri", 10, 7, 70.0, 8.0, 3.0, 7.0, 5.0, 15000, 180.0)
         );
-        when(matchHistoryService.getChampionStats("test-puuid")).thenReturn(stats);
+        when(matchHistoryService.getChampionStats("test-puuid", null, null)).thenReturn(stats);
 
         mockMvc.perform(get("/api/trends/champions").param("puuid", "test-puuid"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.length()").value(1))
             .andExpect(jsonPath("$[0].championName").value("Ahri"))
             .andExpect(jsonPath("$[0].games").value(10));
+    }
+
+    /** Verify that count and queueId params are passed through to the service. */
+    @Test
+    void getChampionStats_withCountAndQueueId_passesParams() throws Exception {
+        when(matchHistoryService.getChampionStats("test-puuid", 50, 420)).thenReturn(List.of());
+
+        mockMvc.perform(get("/api/trends/champions")
+                .param("puuid", "test-puuid")
+                .param("count", "50")
+                .param("queueId", "420"))
+            .andExpect(status().isOk());
+
+        verify(matchHistoryService).getChampionStats("test-puuid", 50, 420);
     }
 
     /** Verify that a missing puuid for champion stats returns HTTP 400. */

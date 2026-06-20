@@ -6,7 +6,7 @@
  *   Supports game count and queue filters.
  * @module frontend.components.tabs
  */
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { fetchChampionStats } from "../../api";
 import { useDdragonVersion, ddragonBase, championIconUrl, hideOnError } from "../../utils/ddragon";
 import { COLORS, winRateColor, kdaColor } from "../../utils/colors";
@@ -41,24 +41,22 @@ export default function ChampionsTab({ puuid }: Props) {
   const [queueFilter, setQueueFilter] = useState<number | undefined>(undefined);
   const ddVersion = useDdragonVersion();
   const imgBase = ddragonBase(ddVersion);
+  const fetchIdRef = useRef(0);
 
   useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
+    const id = ++fetchIdRef.current;
     fetchChampionStats(puuid, countFilter, queueFilter)
       .then((data) => {
-        if (cancelled) return;
+        if (fetchIdRef.current !== id) return;
         setChampions(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(() => {
-        if (!cancelled) {
+        if (fetchIdRef.current === id) {
           setChampions([]);
           setLoading(false);
         }
       });
-
-    return () => { cancelled = true; };
   }, [puuid, countFilter, queueFilter]);
 
   if (loading) return <div style={{ textAlign: "center", padding: 40, opacity: 0.5 }}>Loading champion stats...</div>;
@@ -71,7 +69,7 @@ export default function ChampionsTab({ puuid }: Props) {
           {COUNT_OPTIONS.map((opt) => (
             <button
               key={opt.label}
-              onClick={() => setCountFilter(opt.value)}
+              onClick={() => { setCountFilter(opt.value); setLoading(true); }}
               style={{
                 ...styles.pill,
                 background: countFilter === opt.value ? "#D4A017" : "transparent",
@@ -86,7 +84,7 @@ export default function ChampionsTab({ puuid }: Props) {
           {QUEUE_OPTIONS.map((opt) => (
             <button
               key={opt.label}
-              onClick={() => setQueueFilter(opt.value)}
+              onClick={() => { setQueueFilter(opt.value); setLoading(true); }}
               style={{
                 ...styles.pill,
                 background: queueFilter === opt.value ? "#D4A017" : "transparent",

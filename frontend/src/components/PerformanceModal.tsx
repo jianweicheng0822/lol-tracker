@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer,
@@ -27,19 +27,19 @@ export default function PerformanceModal({ puuid, onClose }: Props) {
   const [loading, setLoading] = useState(true);
   const [lpRange, setLpRange] = useState<LpTimeRange>(30);
 
+  const fetchIdRef = useRef(0);
+
   useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
+    const id = ++fetchIdRef.current;
     fetchLpHistory(puuid, queue)
       .catch(() => [])
       .then((lp) => {
-        if (cancelled) return;
+        if (fetchIdRef.current !== id) return;
         const lpArr = Array.isArray(lp) ? lp : [];
         setLpData(lpArr);
         setLpRange(pickDefaultRange(lpArr));
         setLoading(false);
       });
-    return () => { cancelled = true; };
   }, [puuid, queue]);
 
   useEffect(() => {
@@ -104,7 +104,7 @@ export default function PerformanceModal({ puuid, onClose }: Props) {
             {QUEUE_OPTIONS.map((q) => (
               <button
                 key={q.id}
-                onClick={() => setQueue(q.id)}
+                onClick={() => { setQueue(q.id); setLoading(true); }}
                 style={{
                   ...styles.pill,
                   background: queue === q.id ? "#D4A017" : "transparent",

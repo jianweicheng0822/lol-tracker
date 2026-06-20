@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { MatchSummary } from "../../types";
 import { useDdragonVersion, ddragonBase, championIconUrl, hideOnError } from "../../utils/ddragon";
-import { kdaColor, COLORS } from "../../utils/colors";
+import { COLORS } from "../../utils/colors";
 
 type ChampPerf = {
   championName: string;
@@ -102,12 +102,9 @@ function ChampRow({ champ, imgBase }: { champ: ChampPerf; imgBase: string }) {
   const [hovered, setHovered] = useState(false);
   const wr = champ.games > 0 ? Math.round((champ.wins / champ.games) * 100) : 0;
   const losses = champ.games - champ.wins;
-  const kdaNum = champ.deaths === 0
-    ? champ.kills + champ.assists
-    : (champ.kills + champ.assists) / champ.deaths;
-  const kdaStr = champ.deaths === 0
-    ? kdaNum.toFixed(1)
-    : kdaNum.toFixed(2);
+  const avgK = (champ.kills / champ.games).toFixed(1);
+  const avgD = (champ.deaths / champ.games).toFixed(1);
+  const avgA = (champ.assists / champ.games).toFixed(1);
 
   return (
     <div
@@ -135,8 +132,14 @@ function ChampRow({ champ, imgBase }: { champ: ChampPerf; imgBase: string }) {
           <span style={{ fontSize: 12, fontWeight: 600, color: COLORS.textSecondary, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
             {champ.championName}
           </span>
-          <span style={{ fontSize: 10, fontWeight: 600, color: COLORS.textDim, flexShrink: 0, marginLeft: 6 }}>
-            {wr}% &middot; <span style={{ color: kdaColor(kdaNum) }}>{kdaStr} KDA</span>
+          <span style={{ fontSize: 10, fontWeight: 600, flexShrink: 0, marginLeft: 6 }}>
+            <span style={{ color: COLORS.textDim }}>{wr}%</span>
+            <span style={{ color: COLORS.textDim }}> &middot; </span>
+            <span style={{ color: COLORS.textSecondary }}>{avgK}</span>
+            <span style={{ color: COLORS.textDim }}>/</span>
+            <span style={{ color: "#E84057" }}>{avgD}</span>
+            <span style={{ color: COLORS.textDim }}>/</span>
+            <span style={{ color: COLORS.textSecondary }}>{avgA}</span>
           </span>
         </div>
         <WinLossBar wins={champ.wins} losses={losses} />

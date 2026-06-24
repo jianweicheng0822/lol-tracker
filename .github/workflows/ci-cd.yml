@@ -152,6 +152,8 @@ jobs:
             docker rm lol-tracker 2>/dev/null || true
             docker stop lol-nginx 2>/dev/null || true
             docker rm lol-nginx 2>/dev/null || true
+            # Stop host nginx if running (legacy from manual deploy)
+            sudo systemctl stop nginx 2>/dev/null || true
             # Clean up anything else on port 80
             PORT_CID=$(docker ps -q --filter publish=80)
             [ -n "$PORT_CID" ] && docker stop "$PORT_CID" && docker rm "$PORT_CID" || true

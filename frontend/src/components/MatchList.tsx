@@ -34,6 +34,7 @@ type MatchListProps = {
   isLoadingMore?: boolean;
   hasMore?: boolean;
   tier?: number;
+  onShowUpgrade?: () => void;
 };
 
 type AugmentEntry = { id: number; augmentSmallIconPath: string };
@@ -164,7 +165,7 @@ function MatchCard({
   );
 }
 
-function AiButton({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
+function AiButton({ onClick, locked }: { onClick: (e: React.MouseEvent) => void; locked?: boolean }) {
   const [hovered, setHovered] = useState(false);
   return (
     <button
@@ -183,10 +184,28 @@ function AiButton({ onClick }: { onClick: (e: React.MouseEvent) => void }) {
         transition: "all 0.15s",
         flexShrink: 0,
         marginLeft: 4,
+        position: "relative",
       }}
-      title="Analyze with AI"
+      title={locked ? "PRO feature — click to upgrade" : "Analyze with AI"}
     >
-      ✦
+      {"\u2726"}
+      {locked && (
+        <span style={{
+          position: "absolute",
+          top: -6,
+          right: -6,
+          background: "linear-gradient(135deg, #D4A017, #F5D060)",
+          color: "#1a1a1a",
+          fontSize: 7,
+          fontWeight: 800,
+          padding: "1px 4px",
+          borderRadius: 4,
+          lineHeight: "10px",
+          letterSpacing: 0.5,
+        }}>
+          PRO
+        </span>
+      )}
     </button>
   );
 }
@@ -311,7 +330,7 @@ function InlineScoreboard({
   );
 }
 
-export default function MatchList({ matches, region, puuid, onLoadMore, isLoadingMore, hasMore, tier = 0 }: MatchListProps) {
+export default function MatchList({ matches, region, puuid, onLoadMore, isLoadingMore, hasMore, tier = 0, onShowUpgrade }: MatchListProps) {
   const ddVersion = useDdragonVersion();
   const imgBase = ddragonBase(ddVersion);
   const hasArena = matches.some((m) => m.queueId === 1700);
@@ -570,14 +589,17 @@ export default function MatchList({ matches, region, puuid, onLoadMore, isLoadin
                       flexShrink: 0,
                     }}
                   >
-                    {tier === 1 && (
-                      <AiButton
-                        onClick={(e) => {
-                          e.stopPropagation();
+                    <AiButton
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (tier === 1) {
                           setAiMatch(m);
-                        }}
-                      />
-                    )}
+                        } else if (onShowUpgrade) {
+                          onShowUpgrade();
+                        }
+                      }}
+                      locked={tier !== 1}
+                    />
                     <ChevronButton
                       expanded={isExpanded}
                       onClick={(e) => {

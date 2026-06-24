@@ -5,7 +5,8 @@ import OverviewSidebar from "../sidebar/OverviewSidebar";
 import MatchList from "../MatchList";
 import LpSparkline from "../sidebar/LpSparkline";
 import PerformanceModal from "../PerformanceModal";
-import { getAuthToken, upgradeTier } from "../../api";
+import UpgradeModal from "../UpgradeModal";
+import { COLORS } from "../../utils/colors";
 
 type Props = {
   stats: PlayerStats | null;
@@ -29,6 +30,15 @@ export default function OverviewTab({
 }: Props) {
   const isMobile = useIsMobile();
   const [showPerformanceModal, setShowPerformanceModal] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [bannerDismissed, setBannerDismissed] = useState(
+    () => sessionStorage.getItem("upgrade_banner_dismissed") === "1"
+  );
+
+  function dismissBanner() {
+    setBannerDismissed(true);
+    sessionStorage.setItem("upgrade_banner_dismissed", "1");
+  }
 
   return (
     <>
@@ -42,24 +52,30 @@ export default function OverviewTab({
           onViewChampions={() => onTabChange("champions")}
         />
         <div>
-          {tier === 0 && (
+          {tier === 0 && !bannerDismissed && (
             <div style={styles.upgradeBanner}>
-              FREE tier: 20 matches max, no AI analysis.{" "}
-              {getAuthToken() ? (
+              <div style={styles.bannerLeft}>
+                <span style={styles.proBadge}>PRO</span>
+                <div>
+                  <span style={styles.bannerTitle}>
+                    Unlock AI coaching &amp; 100 match history
+                  </span>
+                  <span style={styles.bannerSub}>
+                    $4.99/mo &middot; cancel anytime
+                  </span>
+                </div>
+              </div>
+              <div style={styles.bannerRight}>
                 <button
                   style={styles.upgradeBtn}
-                  onClick={async () => { const d = await upgradeTier(); onTierChange(d.tier); }}
+                  onClick={() => setShowUpgradeModal(true)}
                 >
-                  Upgrade to PRO
+                  See Plans
                 </button>
-              ) : (
-                <button
-                  style={{ ...styles.upgradeBtn, background: "#B8860B" }}
-                  onClick={onShowAuth}
-                >
-                  Log in to upgrade
+                <button style={styles.dismissBtn} onClick={dismissBanner}>
+                  {"\u00d7"}
                 </button>
-              )}
+              </div>
             </div>
           )}
           {isMobile && (
@@ -73,12 +89,20 @@ export default function OverviewTab({
             isLoadingMore={isLoadingMore}
             hasMore={hasMore}
             tier={tier}
+            onShowUpgrade={() => setShowUpgradeModal(true)}
           />
         </div>
       </div>
 
       {showPerformanceModal && (
         <PerformanceModal puuid={puuid} onClose={() => setShowPerformanceModal(false)} />
+      )}
+
+      {showUpgradeModal && (
+        <UpgradeModal
+          onClose={() => setShowUpgradeModal(false)}
+          onShowAuth={() => { setShowUpgradeModal(false); onShowAuth(); }}
+        />
       )}
     </>
   );
@@ -96,24 +120,65 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 16,
   },
   upgradeBanner: {
-    background: "#1a1508",
-    color: "#E8C84A",
-    padding: "10px 16px",
-    borderRadius: 6,
+    background: "linear-gradient(135deg, rgba(212,160,23,0.12) 0%, rgba(212,160,23,0.04) 100%)",
+    border: "1px solid rgba(212,160,23,0.25)",
+    padding: "12px 16px",
+    borderRadius: 10,
     marginBottom: 12,
-    fontSize: 14,
     display: "flex",
     alignItems: "center",
-    gap: 10,
+    justifyContent: "space-between",
+    gap: 12,
+  },
+  bannerLeft: {
+    display: "flex",
+    alignItems: "center",
+    gap: 12,
+  },
+  proBadge: {
+    background: "linear-gradient(135deg, #D4A017, #F5D060)",
+    color: "#1a1a1a",
+    fontWeight: 800,
+    fontSize: 11,
+    padding: "3px 10px",
+    borderRadius: 14,
+    letterSpacing: 1,
+    flexShrink: 0,
+  },
+  bannerTitle: {
+    display: "block",
+    color: "#F5D060",
+    fontSize: 14,
+    fontWeight: 600,
+  },
+  bannerSub: {
+    display: "block",
+    color: COLORS.textTertiary,
+    fontSize: 12,
+    marginTop: 2,
+  },
+  bannerRight: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    flexShrink: 0,
   },
   upgradeBtn: {
-    background: "#B8860B",
-    color: "#fff",
+    background: "linear-gradient(135deg, #D4A017, #E8C84A)",
+    color: "#1a1a1a",
     border: "none",
-    borderRadius: 6,
-    padding: "6px 14px",
+    borderRadius: 8,
+    padding: "8px 18px",
     cursor: "pointer",
-    fontWeight: 600,
+    fontWeight: 700,
     fontSize: 13,
+  },
+  dismissBtn: {
+    background: "none",
+    border: "none",
+    color: COLORS.textDim,
+    fontSize: 18,
+    cursor: "pointer",
+    padding: "0 4px",
   },
 };

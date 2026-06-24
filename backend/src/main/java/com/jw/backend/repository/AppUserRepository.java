@@ -32,4 +32,8 @@ public interface AppUserRepository extends JpaRepository<AppUser, Long> {
      * @return the matching user, if present
      */
     Optional<AppUser> findByUsername(String username);
+
+    Optional<AppUser> findByStripeCustomerId(String stripeCustomerId);
+
+    Optional<AppUser> findByStripeSubscriptionId(String stripeSubscriptionId);
 }

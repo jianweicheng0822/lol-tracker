@@ -7,12 +7,8 @@ import { Routes, Route } from "react-router-dom";
 import HomePage from "./pages/HomePage";
 import PlayerPage from "./pages/PlayerPage";
 import MatchDetailPage from "./pages/MatchDetailPage";
+import { CheckoutSuccessPage, CheckoutCancelPage } from "./pages/CheckoutResultPage";
 
-/**
- * Define the application's client-side routes.
- *
- * @returns The route tree rendered by React Router.
- */
 export default function App() {
   return (
     <Routes>
@@ -20,6 +16,8 @@ export default function App() {
       <Route path="/player/:region/:gameName/:tag" element={<PlayerPage />} />
       <Route path="/player/puuid/:region/:puuid" element={<PlayerPage />} />
       <Route path="/match/:region/:matchId" element={<MatchDetailPage />} />
+      <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
+      <Route path="/checkout/cancel" element={<CheckoutCancelPage />} />
     </Routes>
   );
 }

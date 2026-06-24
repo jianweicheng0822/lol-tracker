@@ -330,8 +330,35 @@ export async function fetchTier(): Promise<{ tier: number }> {
  *
  * @returns An object containing the new numeric tier value.
  */
-export async function upgradeTier(): Promise<{ tier: number }> {
-  const res = await fetch(`${BASE}/api/upgrade`, { ...fetchOpts(), method: "POST" });
+/** Create a Stripe Checkout session and return the redirect URL. */
+export async function createCheckoutSession(): Promise<{ url: string }> {
+  const res = await fetch(`${BASE}/api/checkout/session`, { ...fetchOpts(), method: "POST" });
+  if (!res.ok) throw new Error(await readErrorMessage(res));
+  return res.json();
+}
+
+/** Get current subscription details (tier, status, billing info). */
+export async function fetchSubscription(): Promise<{
+  tier: number;
+  status: string;
+  currentPeriodEnd?: number;
+  cancelAtPeriodEnd?: boolean;
+}> {
+  const res = await fetch(`${BASE}/api/subscription`, fetchOpts());
+  if (!res.ok) throw new Error(await readErrorMessage(res));
+  return res.json();
+}
+
+/** Cancel subscription at end of current billing period. */
+export async function cancelSubscription(): Promise<{ cancelAtPeriodEnd: boolean }> {
+  const res = await fetch(`${BASE}/api/subscription/cancel`, { ...fetchOpts(), method: "POST" });
+  if (!res.ok) throw new Error(await readErrorMessage(res));
+  return res.json();
+}
+
+/** Open Stripe Customer Portal for billing management. */
+export async function createPortalSession(): Promise<{ url: string }> {
+  const res = await fetch(`${BASE}/api/checkout/portal`, { ...fetchOpts(), method: "POST" });
   if (!res.ok) throw new Error(await readErrorMessage(res));
   return res.json();
 }

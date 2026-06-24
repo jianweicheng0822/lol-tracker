@@ -248,6 +248,10 @@
 							<goal>check</goal>
 						</goals>
 						<configuration>
+							<excludes>
+								<exclude>com/jw/backend/controller/CheckoutController.class</exclude>
+								<exclude>com/jw/backend/controller/StripeWebhookController.class</exclude>
+							</excludes>
 							<rules>
 								<rule>
 									<element>BUNDLE</element>

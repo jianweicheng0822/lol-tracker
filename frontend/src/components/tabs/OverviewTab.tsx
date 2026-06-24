@@ -26,7 +26,7 @@ type Props = {
 export default function OverviewTab({
   stats, matches, ranked, region, puuid,
   onLoadMore, isLoadingMore, hasMore, tier,
-  onTabChange, onShowAuth, onTierChange,
+  onTabChange, onShowAuth,
 }: Props) {
   const isMobile = useIsMobile();
   const [showPerformanceModal, setShowPerformanceModal] = useState(false);

@@ -1,10 +1,9 @@
 import { useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { fetchTier } from "../api";
 import { COLORS } from "../utils/colors";
 
 export function CheckoutSuccessPage() {
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [status, setStatus] = useState<"loading" | "done">("loading");
 

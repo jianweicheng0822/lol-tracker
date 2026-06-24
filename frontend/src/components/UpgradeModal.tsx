@@ -8,9 +8,7 @@ type Props = {
 };
 
 const FEATURES = [
-  { label: "Match History", free: "20 matches", pro: "100 matches" },
   { label: "AI Match Coaching", free: "\u2014", pro: "Unlimited" },
-  { label: "API Rate Limit", free: "5 req/min", pro: "Unlimited" },
 ];
 
 export default function UpgradeModal({ onClose, onShowAuth }: Props) {
@@ -43,10 +41,10 @@ export default function UpgradeModal({ onClose, onShowAuth }: Props) {
           <span style={styles.proBadge}>PRO</span>
           <h2 style={styles.title}>Upgrade Your Tracker</h2>
           <p style={styles.subtitle}>
-            Unlock AI coaching, deeper match history, and unlimited access.
+            Unlock AI coaching to improve your gameplay.
           </p>
           <button style={styles.closeBtn} onClick={onClose}>
-            \u00d7
+            {"\u00d7"}
           </button>
         </div>
 

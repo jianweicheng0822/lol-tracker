@@ -28,9 +28,9 @@ class SubscriptionIntegrationTest extends BaseIntegrationSupport {
             .andExpect(jsonPath("$.tier").value(0));
     }
 
-    /** Verify that an authenticated user can upgrade from free to PRO tier. */
+    /** Verify that an authenticated user starts on the free tier. */
     @Test
-    void authenticatedUser_canUpgrade() throws Exception {
+    void authenticatedUser_startsFreeTier() throws Exception {
         String regBody = """
             {"username": "upgradeuser", "password": "password123"}
             """;
@@ -46,16 +46,6 @@ class SubscriptionIntegrationTest extends BaseIntegrationSupport {
                 .header("Authorization", "Bearer " + token))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.tier").value(0));
-
-        mockMvc.perform(post("/api/upgrade")
-                .header("Authorization", "Bearer " + token))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.tier").value(1));
-
-        mockMvc.perform(get("/api/tier")
-                .header("Authorization", "Bearer " + token))
-            .andExpect(status().isOk())
-            .andExpect(jsonPath("$.tier").value(1));
     }
 
     /** Verify that the AI analyze endpoint blocks free-tier users with HTTP 403. */

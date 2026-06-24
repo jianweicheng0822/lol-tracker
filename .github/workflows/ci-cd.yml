@@ -179,6 +179,7 @@ jobs:
               "$IMAGE"
 
             # --- Write Nginx config ---
+            rm -rf /tmp/lol-nginx
             mkdir -p /tmp/lol-nginx
             cat > /tmp/lol-nginx/default.conf << 'NGINX'
             server {

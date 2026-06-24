@@ -89,11 +89,14 @@ jobs:
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
           REDIS_PASSWORD: ${{ secrets.REDIS_PASSWORD }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          STRIPE_PRICE_ID: ${{ secrets.STRIPE_PRICE_ID }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: IMAGE,RIOT_KEY,OPENAI_KEY,GH_TOKEN,GH_ACTOR,DB_NAME,DB_USER,DB_PASSWORD,JWT_SECRET,REDIS_PASSWORD
+          envs: IMAGE,RIOT_KEY,OPENAI_KEY,GH_TOKEN,GH_ACTOR,DB_NAME,DB_USER,DB_PASSWORD,JWT_SECRET,REDIS_PASSWORD,STRIPE_SECRET_KEY,STRIPE_WEBHOOK_SECRET,STRIPE_PRICE_ID
           script: |
             set -e
 
@@ -140,6 +143,10 @@ jobs:
               done
             fi
 
+            # --- Stop docker-compose if running (migration from old setup) ---
+            cd /home/ec2-user/lol-tracker 2>/dev/null && docker compose down 2>/dev/null || true
+            cd /home/ec2-user
+
             # --- Stop & remove old containers ---
             docker stop lol-tracker 2>/dev/null || true
             docker rm lol-tracker 2>/dev/null || true
@@ -165,6 +172,10 @@ jobs:
               -e "REDIS_PASSWORD=$REDIS_PASSWORD" \
               -e "JWT_SECRET=$JWT_SECRET" \
               -e "CORS_ORIGIN=https://loltracker.lol" \
+              -e "STRIPE_SECRET_KEY=$STRIPE_SECRET_KEY" \
+              -e "STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET" \
+              -e "STRIPE_PRICE_ID=$STRIPE_PRICE_ID" \
+              -e "APP_BASE_URL=https://loltracker.lol" \
               "$IMAGE"
 
             # --- Write Nginx config ---
@@ -207,7 +218,7 @@ jobs:
             # --- Health check: wait for app to start ---
             echo "Waiting for app to start..."
             for i in $(seq 1 60); do
-              if curl -sf -H "Host: loltracker.lol" http://localhost/health >/dev/null 2>&1; then
+              if curl -sf http://localhost:80/api/tier >/dev/null 2>&1; then
                 echo "App is healthy!"
                 exit 0
               fi

@@ -58,7 +58,7 @@ export default function OverviewTab({
                 <span style={styles.proBadge}>PRO</span>
                 <div>
                   <span style={styles.bannerTitle}>
-                    Unlock AI coaching &amp; 100 match history
+                    Unlock AI match coaching
                   </span>
                   <span style={styles.bannerSub}>
                     $4.99/mo &middot; cancel anytime

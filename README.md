@@ -42,9 +42,9 @@ Full-stack League of Legends analytics dashboard with AI-powered match coaching.
 
 **AI Match Analysis** — Click the sparkle button on any match to open a chat modal. Streaming responses via SSE for real-time coaching. System prompt constructed server-side from structured match data
 
-**JWT Authentication** — Stateless authentication with Bearer tokens. Register/login endpoints return JWTs. Anonymous access is preserved as FREE tier
+**JWT Authentication** — Stateless authentication with Bearer tokens. Register/login endpoints return JWTs. Anonymous users have full access to all features except AI coaching
 
-**Subscription Tiers** — FREE/PRO system using JWT identity. FREE users get 20 matches and 5 requests/minute rate limiting. PRO users get 100 matches, unlimited requests, and AI analysis access
+**Subscription Tiers** — FREE/PRO system via Stripe. All users get full match history and unlimited API access. PRO adds AI match coaching ($4.99/mo via Stripe Checkout)
 
 ## Architecture
 
@@ -68,6 +68,7 @@ graph TB
     subgraph External
         Riot["Riot Games API"]
         OpenAI["OpenAI API<br/>(GPT-4o-mini)"]
+        Stripe["Stripe API<br/>(Payments)"]
         DDragon["DDragon CDN"]
     end
 
@@ -77,6 +78,7 @@ graph TB
     API -->|"Cache-aside reads"| Redis
     API -->|"Account / Match / Ranked"| Riot
     API -->|"Streaming analysis"| OpenAI
+    API -->|"Checkout / Webhooks"| Stripe
     Browser -->|"Icons & assets"| DDragon
     Swagger -.->|"Try it out"| API
 ```
@@ -94,6 +96,7 @@ graph TB
 | Flyway | Database schema migrations |
 | Spring WebFlux | WebClient for OpenAI streaming |
 | Lombok | Reduces boilerplate in entities and DTOs |
+| Stripe Java SDK | Payment processing and subscription management |
 | Springdoc OpenAPI | Swagger UI + API documentation |
 | Testcontainers | Integration tests with real PostgreSQL |
 | JaCoCo | Code coverage enforcement (70% minimum) |
@@ -111,6 +114,7 @@ graph TB
 ### External APIs
 - **[Riot Games API](https://developer.riotgames.com)** — Account, match, ranked, and summoner data
 - **[OpenAI API](https://platform.openai.com)** — GPT-4o-mini for AI match analysis
+- **[Stripe API](https://stripe.com)** — Checkout sessions, subscription lifecycle, and webhooks
 - **[DDragon CDN](https://ddragon.leagueoflegends.com)** — Champion, item, spell, and profile icons
 - **[Community Dragon](https://communitydragon.org)** — Ranked tier icons, Arena augment icons
 
@@ -155,6 +159,9 @@ Create a `backend/.env` file (or set env vars). The backend uses [spring-dotenv]
 | `DB_USER` | No | `postgres` | PostgreSQL username |
 | `DB_PASSWORD` | No | `postgres` | PostgreSQL password |
 | `CORS_ORIGIN` | No | `http://localhost:5173` | Allowed CORS origin |
+| `STRIPE_SECRET_KEY` | No | — | Stripe secret key (required for PRO subscriptions) |
+| `STRIPE_WEBHOOK_SECRET` | No | — | Stripe webhook signing secret |
+| `STRIPE_PRICE_ID` | No | — | Stripe Price ID for the PRO plan |
 
 ### Running Locally
 
@@ -186,6 +193,7 @@ Interactive Swagger UI is available at `/swagger-ui.html` when the app is runnin
 | Auth | POST | `/api/auth/register` | Register new user, returns JWT |
 | | POST | `/api/auth/login` | Login, returns JWT |
 | Summoner | GET | `/api/summoner` | Resolve Riot ID to account |
+| | GET | `/api/summoner/by-puuid` | Resolve PUUID to account |
 | Matches | GET | `/api/matches/recent` | Recent match IDs |
 | | GET | `/api/matches/summary` | Match summaries with KDA and rosters |
 | | GET | `/api/matches/detail` | Raw match detail from Riot API |
@@ -199,10 +207,16 @@ Interactive Swagger UI is available at `/swagger-ui.html` when the app is runnin
 | Trends | GET | `/api/trends/champions` | Per-champion aggregated stats |
 | | GET | `/api/trends/matches` | Per-match trend data points |
 | | GET | `/api/trends/lp` | LP progression history |
+| Global | GET | `/api/global/champions` | Global champion pick/win rates |
+| | GET | `/api/global/overview` | Global aggregate stats |
 | AI | POST | `/api/analyze` | AI match analysis (sync, PRO only) |
 | | POST | `/api/analyze/stream` | AI match analysis (SSE streaming, PRO only) |
 | Subscription | GET | `/api/tier` | Get current user's subscription tier |
-| | POST | `/api/upgrade` | Upgrade current user to PRO |
+| | GET | `/api/subscription` | Get subscription details |
+| | POST | `/api/subscription/cancel` | Cancel subscription at period end |
+| Checkout | POST | `/api/checkout/session` | Create Stripe Checkout session |
+| | POST | `/api/checkout/portal` | Create Stripe Customer Portal session |
+| Webhook | POST | `/api/stripe/webhook` | Stripe webhook handler |
 | Health | GET | `/health` | Health check |
 
 ## Testing
@@ -221,8 +235,8 @@ cd backend
 
 | Suite | Count | Database | Docker required |
 |-------|-------|----------|-----------------|
-| Unit tests | 181 | None (mocked) | No |
-| Integration tests | 11 | PostgreSQL (Testcontainers) | Yes |
+| Unit tests | 192 | None (mocked) | No |
+| Integration tests | 12 | PostgreSQL (Testcontainers) | Yes |
 
 Unit tests use `@WebMvcTest` with MockMvc and mocked service layers — no database is involved. Integration tests use Testcontainers to spin up a real PostgreSQL container and run Flyway migrations, validating the full stack end-to-end.
 
@@ -243,10 +257,11 @@ npm run test:coverage
 
 | Suite | Count | Description |
 |-------|-------|-------------|
-| Utility tests | 20 | `movingAverage`, `rollingWinRate`, `toAbsoluteLp` |
-| Component tests | 22 | SearchBar, RankBadge, AuthModal |
+| Utility tests | 37 | `playerInsights`, `trends`, `lp` conversion |
+| Component tests | 159 | MatchList, ScoreboardTable, ProfileHeader, RankSummary, OverviewTab, ChampionsTab, etc. |
+| Hook tests | 9 | `useIsMobile`, `useTabNavigation` |
 | API module tests | 11 | Token management, login/register, error parsing |
-| Page tests | 7 | HomePage rendering and state |
+| Page tests | 15 | HomePage, MatchDetailPage rendering and state |
 
 Frontend tests use Vitest with jsdom and React Testing Library. Components are tested for rendering, user interaction, form validation, and navigation. API tests mock `fetch` and `localStorage` to verify request construction and token handling.
 
@@ -258,6 +273,9 @@ PostgreSQL with Flyway-managed migrations:
 |-----------|-------------|
 | `V1__init_schema.sql` | Initial schema: `app_users`, `favorite_players`, `match_records`, `lp_snapshots` |
 | `V2__add_auth_fields.sql` | Adds `username` and `password` columns to `app_users` |
+| `V3__add_tracked_players.sql` | Adds `tracked_players` table for background match ingestion |
+| `V4__add_user_id_to_favorites.sql` | Links `favorite_players` to `app_users` with foreign key |
+| `V5__add_stripe_fields.sql` | Adds Stripe customer ID, subscription ID, and status to `app_users` |
 
 Schema is validated at startup (`ddl-auto=validate`) — Flyway is the single source of truth for DDL.
 
@@ -277,6 +295,9 @@ docker run -p 8080:8080 \
   -e DB_USER=postgres \
   -e DB_PASSWORD=your-password \
   -e REDIS_HOST=your-redis-host \
+  -e STRIPE_SECRET_KEY=your-stripe-key \
+  -e STRIPE_WEBHOOK_SECRET=your-webhook-secret \
+  -e STRIPE_PRICE_ID=your-price-id \
   lol-tracker
 ```
 
@@ -298,6 +319,7 @@ lol-tracker/
 ├── backend/
 │   ├── src/main/java/com/jw/backend/
 │   │   ├── *Controller.java    # REST endpoints (Javadoc on all public methods)
+│   │   ├── controller/         # Stripe checkout and webhook controllers
 │   │   ├── SpaForwardingController.java  # Forwards non-API routes to React SPA
 │   │   ├── security/           # JWT filter, SecurityConfig, JwtUtil
 │   │   ├── config/             # OpenApiConfig (Swagger/OpenAPI)
@@ -337,4 +359,4 @@ This project is for educational purposes.
 
 ---
 
-Built with the [Riot Games API](https://developer.riotgames.com) and [OpenAI API](https://platform.openai.com)
+Built with the [Riot Games API](https://developer.riotgames.com), [OpenAI API](https://platform.openai.com), and [Stripe](https://stripe.com)

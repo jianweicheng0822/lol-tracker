@@ -71,28 +71,12 @@ describe("OverviewTab", () => {
 
   it("shows upgrade banner when tier is 0", () => {
     render(<OverviewTab {...defaultProps} tier={0} />);
-    expect(screen.getByText(/FREE tier/)).toBeInTheDocument();
+    expect(screen.getByText(/Unlock AI match coaching/)).toBeInTheDocument();
   });
 
-  it("shows 'Log in to upgrade' when tier 0 and not authenticated", () => {
-    vi.mocked(getAuthToken).mockReturnValue(null);
+  it("shows 'See Plans' button when tier 0", () => {
     render(<OverviewTab {...defaultProps} tier={0} />);
-    expect(screen.getByText("Log in to upgrade")).toBeInTheDocument();
-  });
-
-  it("calls onShowAuth when 'Log in to upgrade' is clicked", async () => {
-    const user = userEvent.setup();
-    vi.mocked(getAuthToken).mockReturnValue(null);
-    const handler = vi.fn();
-    render(<OverviewTab {...defaultProps} tier={0} onShowAuth={handler} />);
-    await user.click(screen.getByText("Log in to upgrade"));
-    expect(handler).toHaveBeenCalledOnce();
-  });
-
-  it("shows 'Upgrade to PRO' when tier 0 and authenticated", () => {
-    vi.mocked(getAuthToken).mockReturnValue("some-token");
-    render(<OverviewTab {...defaultProps} tier={0} />);
-    expect(screen.getByText("Upgrade to PRO")).toBeInTheDocument();
+    expect(screen.getByText("See Plans")).toBeInTheDocument();
   });
 
   it("does not show PerformanceModal initially", () => {

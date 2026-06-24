@@ -6,14 +6,10 @@
 package com.jw.backend;
 
 import com.jw.backend.dto.MatchSummaryDto;
-import com.jw.backend.entity.AppUser;
 import com.jw.backend.region.RiotRegion;
 import com.jw.backend.security.JwtUtil;
 import com.jw.backend.service.MatchHistoryService;
-import com.jw.backend.service.RateLimitService;
 import com.jw.backend.service.RiotApiService;
-import com.jw.backend.service.SubscriptionService;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
@@ -23,9 +19,6 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.List;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.*;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -49,19 +42,6 @@ class MatchControllerTest {
 
     @MockitoBean
     private MatchHistoryService matchHistoryService;
-
-    @MockitoBean
-    private SubscriptionService subscriptionService;
-
-    @MockitoBean
-    private RateLimitService rateLimitService;
-
-    @BeforeEach
-    void setUp() {
-        AppUser freeUser = new AppUser();
-        when(subscriptionService.getOrCreateUser(any())).thenReturn(freeUser);
-        when(subscriptionService.getMaxMatchCount(any())).thenReturn(20);
-    }
 
     /** Verify that valid puuid and region parameters return match IDs successfully. */
     @Test
@@ -189,10 +169,10 @@ class MatchControllerTest {
             .andExpect(jsonPath("$[1].win").value(false));
     }
 
-    /** Verify that the default count of 3 is used for summaries when count is omitted. */
+    /** Verify that the default count of 20 is used for summaries when count is omitted. */
     @Test
     void getMatchSummaries_usesDefaultCount_whenCountNotProvided() throws Exception {
-        when(riotApiService.getRecentMatchSummaries("test-puuid", RiotRegion.NA, 3, 0))
+        when(riotApiService.getRecentMatchSummaries("test-puuid", RiotRegion.NA, 20, 0))
             .thenReturn(List.of());
 
         mockMvc.perform(
@@ -203,7 +183,7 @@ class MatchControllerTest {
             .andExpect(status().isOk());
 
         verify(riotApiService, times(1))
-            .getRecentMatchSummaries("test-puuid", RiotRegion.NA, 3, 0);
+            .getRecentMatchSummaries("test-puuid", RiotRegion.NA, 20, 0);
     }
 
     /** Verify that a missing puuid for summaries returns HTTP 400. */

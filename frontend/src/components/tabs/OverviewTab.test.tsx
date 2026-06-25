@@ -1,5 +1,4 @@
 import { render, screen } from "@testing-library/react";
-import userEvent from "@testing-library/user-event";
 import OverviewTab from "./OverviewTab";
 import { makePlayerStats, makeMatchSummary, makeRankedEntry } from "../../test/fixtures";
 
@@ -35,7 +34,6 @@ vi.mock("../../api", () => ({
 }));
 
 import { useIsMobile } from "../../hooks/useIsMobile";
-import { getAuthToken } from "../../api";
 
 describe("OverviewTab", () => {
   const defaultProps = {

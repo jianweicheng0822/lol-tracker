@@ -10,6 +10,7 @@ import com.jw.backend.dto.MatchSummaryDto;
 import com.jw.backend.dto.MatchTrendPointDto;
 import com.jw.backend.entity.MatchRecord;
 import com.jw.backend.repository.MatchRecordRepository;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -46,8 +47,12 @@ public class MatchHistoryService {
      * @param summaries list of match summaries fetched from the Riot API
      */
     public void persistMatchRecords(String puuid, String region, List<MatchSummaryDto> summaries) {
+        List<String> incomingIds = summaries.stream().map(MatchSummaryDto::matchId).toList();
+        Set<String> existingIds = matchRecordRepository.findMatchIdsByPuuidAndMatchIdIn(puuid, incomingIds);
+
+        List<MatchRecord> newRecords = new ArrayList<>();
         for (MatchSummaryDto s : summaries) {
-            if (!matchRecordRepository.existsByPuuidAndMatchId(puuid, s.matchId())) {
+            if (!existingIds.contains(s.matchId())) {
                 MatchRecord r = new MatchRecord();
                 r.setPuuid(puuid);
                 r.setMatchId(s.matchId());
@@ -66,8 +71,11 @@ public class MatchHistoryService {
                 r.setNeutralMinionsKilled(s.neutralMinionsKilled());
                 r.setPlacement(s.placement());
                 r.setTeamTotalKills(s.teamTotalKills());
-                matchRecordRepository.save(r);
+                newRecords.add(r);
             }
+        }
+        if (!newRecords.isEmpty()) {
+            matchRecordRepository.saveAll(newRecords);
         }
     }
 
@@ -81,8 +89,11 @@ public class MatchHistoryService {
      * @param puuid the player's unique identifier
      * @return list of champion statistics sorted by total games descending
      */
+    private static final int MAX_RECORDS = 1000;
+
     public List<ChampionStatsDto> getChampionStats(String puuid, Integer count, Integer queueId) {
-        List<MatchRecord> records = matchRecordRepository.findByPuuidOrderByGameEndTimestampDesc(puuid);
+        List<MatchRecord> records = matchRecordRepository.findByPuuidOrderByGameEndTimestampDesc(
+                puuid, PageRequest.of(0, MAX_RECORDS));
 
         if (queueId != null) {
             records = records.stream()
@@ -133,7 +144,8 @@ public class MatchHistoryService {
      * @return time-ordered list of match performance data points
      */
     public List<MatchTrendPointDto> getMatchTrends(String puuid) {
-        List<MatchRecord> records = matchRecordRepository.findByPuuidOrderByGameEndTimestampDesc(puuid);
+        List<MatchRecord> records = matchRecordRepository.findByPuuidOrderByGameEndTimestampDesc(
+                puuid, PageRequest.of(0, MAX_RECORDS));
 
         List<MatchRecord> chronological = new ArrayList<>(records);
         Collections.reverse(chronological);

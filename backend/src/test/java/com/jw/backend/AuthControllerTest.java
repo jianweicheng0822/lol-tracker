@@ -100,7 +100,7 @@ class AuthControllerTest {
                             {"username": "newuser", "password": "short"}
                             """))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Password must be at least 8 characters"));
+                .andExpect(jsonPath("$.error").value("Password must be between 8 and 128 characters"));
     }
 
     @Test

@@ -90,6 +90,7 @@ export default function LpSparkline({ puuid, onClick }: Props) {
   const chartH = H - PAD_Y * 2;
 
   const lpValues = data.map((d) => d.lp);
+  if (lpValues.length === 0) return null;
   const minLp = Math.min(...lpValues);
   const maxLp = Math.max(...lpValues);
   const range = maxLp - minLp || 1;

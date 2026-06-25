@@ -6,10 +6,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
+import java.util.Objects;
+import java.util.concurrent.*;
 import com.jw.backend.region.RiotRegion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -246,10 +244,13 @@ public class RiotApiService {
                 .map(matchId -> CompletableFuture.supplyAsync(() -> {
                     String detailJson = getMatchDetail(matchId, region);
                     return extractSummaryFromMatchDetail(detailJson, puuid, matchId);
-                }, riotExecutor))
+                }, riotExecutor).orTimeout(30, TimeUnit.SECONDS).exceptionally(ex -> {
+                    log.warn("Failed to fetch match {}: {}", matchId, ex.getMessage());
+                    return null;
+                }))
                 .toList();
 
-        return futures.stream().map(CompletableFuture::join).toList();
+        return futures.stream().map(CompletableFuture::join).filter(Objects::nonNull).toList();
     }
 
     /**

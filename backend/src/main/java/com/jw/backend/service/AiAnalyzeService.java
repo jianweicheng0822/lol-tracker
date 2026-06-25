@@ -95,22 +95,22 @@ public class AiAnalyzeService {
                 "max_tokens", MAX_TOKENS
         );
 
-        String response = webClient.post()
-                .contentType(MediaType.APPLICATION_JSON)
-                .bodyValue(body)
-                .retrieve()
-                .bodyToMono(String.class)
-                .timeout(TIMEOUT)
-                .block();
-
         try {
+            String response = webClient.post()
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .bodyValue(body)
+                    .retrieve()
+                    .bodyToMono(String.class)
+                    .timeout(TIMEOUT)
+                    .block();
+
             JsonNode root = objectMapper.readTree(response);
             String reply = root.path("choices").path(0).path("message").path("content").asText();
             String model = root.path("model").asText();
             int tokens = root.path("usage").path("total_tokens").asInt();
             return new AiChatResponse(reply, model, tokens);
         } catch (Exception e) {
-            return new AiChatResponse("Failed to parse AI response.", MODEL, 0);
+            return new AiChatResponse("Failed to get AI response. Please try again.", MODEL, 0);
         }
     }
 

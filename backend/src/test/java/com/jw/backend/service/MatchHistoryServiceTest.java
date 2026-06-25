@@ -16,10 +16,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import org.springframework.data.domain.PageRequest;
+
 import java.util.List;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 /**
@@ -65,7 +68,8 @@ class MatchHistoryServiceTest {
     /** Verify that new match records are persisted to the repository. */
     @Test
     void persistMatchRecords_savesNewRecords() {
-        when(matchRecordRepository.existsByPuuidAndMatchId("puuid", "NA1_1")).thenReturn(false);
+        when(matchRecordRepository.findMatchIdsByPuuidAndMatchIdIn(eq("puuid"), anyList()))
+                .thenReturn(Set.of());
 
         MatchSummaryDto summary = new MatchSummaryDto("NA1_1", "Ahri", 10, 2, 8, true, 1800L, 1700000000000L,
                 18, 4, 14, new int[7], 150, 30, 420, 30, List.of(), List.of(),
@@ -73,13 +77,14 @@ class MatchHistoryServiceTest {
 
         service.persistMatchRecords("puuid", "NA", List.of(summary));
 
-        verify(matchRecordRepository).save(any(MatchRecord.class));
+        verify(matchRecordRepository).saveAll(anyList());
     }
 
     /** Verify that duplicate match records are skipped without saving. */
     @Test
     void persistMatchRecords_skipsDuplicates() {
-        when(matchRecordRepository.existsByPuuidAndMatchId("puuid", "NA1_1")).thenReturn(true);
+        when(matchRecordRepository.findMatchIdsByPuuidAndMatchIdIn(eq("puuid"), anyList()))
+                .thenReturn(Set.of("NA1_1"));
 
         MatchSummaryDto summary = new MatchSummaryDto("NA1_1", "Ahri", 10, 2, 8, true, 1800L, 1700000000000L,
                 18, 4, 14, new int[7], 150, 30, 420, 30, List.of(), List.of(),
@@ -87,7 +92,7 @@ class MatchHistoryServiceTest {
 
         service.persistMatchRecords("puuid", "NA", List.of(summary));
 
-        verify(matchRecordRepository, never()).save(any());
+        verify(matchRecordRepository, never()).saveAll(anyList());
     }
 
     /** Verify that champion stats are aggregated correctly across multiple matches. */
@@ -98,7 +103,7 @@ class MatchHistoryServiceTest {
             makeRecord("NA1_2", "Ahri", 5, 5, 3, false, 2000L),
             makeRecord("NA1_3", "Zed", 15, 1, 2, true, 3000L)
         );
-        when(matchRecordRepository.findByPuuidOrderByGameEndTimestampDesc("puuid")).thenReturn(records);
+        when(matchRecordRepository.findByPuuidOrderByGameEndTimestampDesc(eq("puuid"), any(PageRequest.class))).thenReturn(records);
 
         List<ChampionStatsDto> result = service.getChampionStats("puuid", null, null);
 
@@ -116,7 +121,7 @@ class MatchHistoryServiceTest {
         List<MatchRecord> records = List.of(
             makeRecord("NA1_1", "Ahri", 10, 0, 5, true, 1000L)
         );
-        when(matchRecordRepository.findByPuuidOrderByGameEndTimestampDesc("puuid")).thenReturn(records);
+        when(matchRecordRepository.findByPuuidOrderByGameEndTimestampDesc(eq("puuid"), any(PageRequest.class))).thenReturn(records);
 
         List<ChampionStatsDto> result = service.getChampionStats("puuid", null, null);
 
@@ -127,7 +132,7 @@ class MatchHistoryServiceTest {
     /** Verify that an empty record list returns an empty champion stats list. */
     @Test
     void getChampionStats_withEmptyRecords_returnsEmptyList() {
-        when(matchRecordRepository.findByPuuidOrderByGameEndTimestampDesc("puuid")).thenReturn(List.of());
+        when(matchRecordRepository.findByPuuidOrderByGameEndTimestampDesc(eq("puuid"), any(PageRequest.class))).thenReturn(List.of());
 
         List<ChampionStatsDto> result = service.getChampionStats("puuid", null, null);
 
@@ -141,7 +146,7 @@ class MatchHistoryServiceTest {
             makeRecord("NA1_2", "Ahri", 5, 5, 3, false, 2000L),
             makeRecord("NA1_1", "Zed", 10, 2, 8, true, 1000L)
         );
-        when(matchRecordRepository.findByPuuidOrderByGameEndTimestampDesc("puuid")).thenReturn(records);
+        when(matchRecordRepository.findByPuuidOrderByGameEndTimestampDesc(eq("puuid"), any(PageRequest.class))).thenReturn(records);
 
         List<MatchTrendPointDto> result = service.getMatchTrends("puuid");
 
@@ -156,7 +161,7 @@ class MatchHistoryServiceTest {
         MatchRecord record = makeRecord("NA1_1", "Ahri", 10, 2, 8, true, 1000L);
         record.setTotalMinionsKilled(150);
         record.setNeutralMinionsKilled(30);
-        when(matchRecordRepository.findByPuuidOrderByGameEndTimestampDesc("puuid")).thenReturn(List.of(record));
+        when(matchRecordRepository.findByPuuidOrderByGameEndTimestampDesc(eq("puuid"), any(PageRequest.class))).thenReturn(List.of(record));
 
         List<MatchTrendPointDto> result = service.getMatchTrends("puuid");
 

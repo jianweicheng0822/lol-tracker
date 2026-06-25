@@ -102,9 +102,10 @@ function ChampRow({ champ, imgBase }: { champ: ChampPerf; imgBase: string }) {
   const [hovered, setHovered] = useState(false);
   const wr = champ.games > 0 ? Math.round((champ.wins / champ.games) * 100) : 0;
   const losses = champ.games - champ.wins;
-  const avgK = (champ.kills / champ.games).toFixed(1);
-  const avgD = (champ.deaths / champ.games).toFixed(1);
-  const avgA = (champ.assists / champ.games).toFixed(1);
+  const g = champ.games || 1;
+  const avgK = (champ.kills / g).toFixed(1);
+  const avgD = (champ.deaths / g).toFixed(1);
+  const avgA = (champ.assists / g).toFixed(1);
 
   return (
     <div
@@ -157,11 +158,9 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: 12,
   },
   title: {
-    fontSize: 11,
-    textTransform: "uppercase",
-    letterSpacing: 0.8,
-    color: COLORS.textDim,
-    fontWeight: 500,
+    fontSize: 14,
+    fontWeight: 700,
+    color: COLORS.textPrimary,
     marginBottom: 8,
   },
   viewAll: {

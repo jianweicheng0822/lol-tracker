@@ -70,8 +70,12 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("error", "Username and password are required"));
         }
 
-        if (request.password().length() < 8) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Password must be at least 8 characters"));
+        if (request.username().length() > 50) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Username must be 50 characters or fewer"));
+        }
+
+        if (request.password().length() < 8 || request.password().length() > 128) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Password must be between 8 and 128 characters"));
         }
 
         if (appUserRepository.findByUsername(request.username()).isPresent()) {

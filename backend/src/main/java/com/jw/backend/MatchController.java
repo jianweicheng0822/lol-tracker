@@ -51,6 +51,7 @@ public class MatchController {
             @RequestParam RiotRegion region,
             @RequestParam(defaultValue = "10") int count
     ) {
+        count = Math.max(1, Math.min(count, 100));
         return riotApiService.getRecentMatchIds(puuid, region, count);
     }
 
@@ -103,6 +104,9 @@ public class MatchController {
             @RequestParam(defaultValue = "20") int count,
             @RequestParam(defaultValue = "0") int start
     ) {
+        count = Math.max(1, Math.min(count, 100));
+        start = Math.max(0, start);
+
         List<MatchSummaryDto> summaries = riotApiService.getRecentMatchSummaries(puuid, region, count, start);
 
         matchHistoryService.persistMatchRecords(puuid, region.name(), summaries);

@@ -45,6 +45,7 @@ public class StatsController {
             @RequestParam RiotRegion region,
             @RequestParam(defaultValue = "10") int count
     ) {
+        count = Math.max(1, Math.min(count, 100));
         return statsService.calculateStats(puuid, region, count);
     }
 }

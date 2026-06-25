@@ -80,7 +80,7 @@ export function ArenaScoreboard({
   });
 
   const allParticipants = participants;
-  const maxDamage = Math.max(...allParticipants.map((p) => p.totalDamageDealtToChampions), 1);
+  const maxDamage = Math.max(...allParticipants.map((p) => p.totalDamageDealtToChampions), 1) || 1;
 
   const gridCols = "200px 120px 80px 100px 70px 180px";
 
@@ -259,7 +259,7 @@ export function ScoreboardTeamTable({
   const teamColor = team.win ? "#D4A017" : "#E84057";
   const teamLabel = team.win ? "Victory" : "Defeat";
 
-  const maxDamage = Math.max(...participants.map((p) => p.totalDamageDealtToChampions), 1);
+  const maxDamage = Math.max(...participants.map((p) => p.totalDamageDealtToChampions), 1) || 1;
 
   const gridCols = showWards
     ? "200px 90px 80px 100px 70px 70px 180px 70px"

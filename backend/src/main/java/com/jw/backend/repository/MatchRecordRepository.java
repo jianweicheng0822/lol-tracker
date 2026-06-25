@@ -6,12 +6,14 @@
 package com.jw.backend.repository;
 
 import com.jw.backend.entity.MatchRecord;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Provide match record queries for analytics and deduplication checks.
@@ -29,6 +31,8 @@ public interface MatchRecordRepository extends JpaRepository<MatchRecord, Long> 
      */
     List<MatchRecord> findByPuuidOrderByGameEndTimestampDesc(String puuid);
 
+    List<MatchRecord> findByPuuidOrderByGameEndTimestampDesc(String puuid, Pageable pageable);
+
     /**
      * Check whether a match record already exists for deduplication.
      *
@@ -39,6 +43,9 @@ public interface MatchRecordRepository extends JpaRepository<MatchRecord, Long> 
      * @return true if the record already exists
      */
     boolean existsByPuuidAndMatchId(String puuid, String matchId);
+
+    @Query("SELECT m.matchId FROM MatchRecord m WHERE m.puuid = :puuid AND m.matchId IN :matchIds")
+    Set<String> findMatchIdsByPuuidAndMatchIdIn(@Param("puuid") String puuid, @Param("matchIds") List<String> matchIds);
 
     @Query("SELECT m.championName, COUNT(m), SUM(CASE WHEN m.win = true THEN 1 ELSE 0 END), " +
            "AVG(m.kills), AVG(m.deaths), AVG(m.assists), " +

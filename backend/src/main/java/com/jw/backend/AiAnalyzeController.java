@@ -16,6 +16,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Flux;
 
+import jakarta.servlet.http.HttpServletRequest;
 import java.security.Principal;
 
 /**
@@ -54,14 +55,14 @@ public class AiAnalyzeController {
      * @return AI-generated analysis response, or 403 if the user lacks PRO access
      */
     @PostMapping
-    public ResponseEntity<AiChatResponse> analyze(@RequestBody AiChatRequest request, Principal principal) {
+    public ResponseEntity<AiChatResponse> analyze(@RequestBody AiChatRequest request, Principal principal,
+                                                    HttpServletRequest httpRequest) {
         String username = principal != null ? principal.getName() : null;
         if (!subscriptionService.hasAiAccess(username)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        if (username != null) {
-            rateLimitService.checkAiRateLimit(username);
-        }
+        String rateLimitKey = username != null ? username : "anon-" + httpRequest.getRemoteAddr();
+        rateLimitService.checkAiRateLimit(rateLimitKey);
         if (request.matchData() == null || request.messages() == null) {
             return ResponseEntity.badRequest().build();
         }
@@ -80,14 +81,14 @@ public class AiAnalyzeController {
      * @return reactive stream of analysis text chunks
      */
     @PostMapping(value = "/stream", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
-    public Flux<String> analyzeStream(@RequestBody AiChatRequest request, Principal principal) {
+    public Flux<String> analyzeStream(@RequestBody AiChatRequest request, Principal principal,
+                                       HttpServletRequest httpRequest) {
         String username = principal != null ? principal.getName() : null;
         if (!subscriptionService.hasAiAccess(username)) {
             return Flux.just("[Error: AI analysis requires PRO subscription]");
         }
-        if (username != null) {
-            rateLimitService.checkAiRateLimit(username);
-        }
+        String rateLimitKey = username != null ? username : "anon-" + httpRequest.getRemoteAddr();
+        rateLimitService.checkAiRateLimit(rateLimitKey);
         if (request.matchData() == null || request.messages() == null) {
             return Flux.just("[Error: matchData and messages are required]");
         }

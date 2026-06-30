@@ -37,8 +37,14 @@ FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
+# Run as non-root user for security
+RUN addgroup --system app && adduser --system --ingroup app app
+
 # Copy the built JAR from stage 2
 COPY --from=backend-build /app/backend/target/backend-0.0.1-SNAPSHOT.jar app.jar
+
+RUN chown app:app app.jar
+USER app
 
 EXPOSE 8080
 

@@ -7,7 +7,7 @@ package com.jw.backend;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.jw.backend.dto.SummonerDto;
 import com.jw.backend.region.RiotRegion;
 import com.jw.backend.service.LpTrackingService;
 import com.jw.backend.service.PlayerTrackingService;
@@ -55,11 +55,11 @@ public class SummonerController {
      * @param gameName the player's game name (before the #)
      * @param tag      the player's tag line (after the #)
      * @param region   the Riot platform region
-     * @return JSON string containing merged account and summoner data
+     * @return enriched summoner data with profile icon
      * @throws RuntimeException if either Riot API call fails or JSON parsing errors occur
      */
     @GetMapping
-    public String getSummoner(
+    public SummonerDto getSummoner(
             @RequestParam String gameName,
             @RequestParam String tag,
             @RequestParam RiotRegion region
@@ -80,10 +80,10 @@ public class SummonerController {
      *
      * @param puuid  the player's PUUID
      * @param region the Riot platform region
-     * @return JSON string containing merged account and summoner data
+     * @return enriched summoner data with profile icon
      */
     @GetMapping("/by-puuid")
-    public String getSummonerByPuuid(
+    public SummonerDto getSummonerByPuuid(
             @RequestParam String puuid,
             @RequestParam RiotRegion region
     ) {
@@ -98,8 +98,8 @@ public class SummonerController {
     /**
      * Shared enrichment logic: adds profileIconId and captures an LP snapshot.
      */
-    private String enrichAccount(String accountJson, RiotRegion region) throws Exception {
-        ObjectNode accountNode = (ObjectNode) objectMapper.readTree(accountJson);
+    private SummonerDto enrichAccount(String accountJson, RiotRegion region) throws Exception {
+        JsonNode accountNode = objectMapper.readTree(accountJson);
         String puuid = accountNode.path("puuid").asText();
         String gameName = accountNode.path("gameName").asText("");
         String tagLine = accountNode.path("tagLine").asText("");
@@ -108,11 +108,9 @@ public class SummonerController {
         JsonNode summonerNode = objectMapper.readTree(summonerJson);
         int profileIconId = summonerNode.path("profileIconId").asInt(0);
 
-        accountNode.put("profileIconId", profileIconId);
-
         lpTrackingService.captureSnapshot(puuid, region);
         playerTrackingService.trackPlayer(puuid, region.name(), gameName, tagLine);
 
-        return objectMapper.writeValueAsString(accountNode);
+        return new SummonerDto(puuid, gameName, tagLine, profileIconId);
     }
 }

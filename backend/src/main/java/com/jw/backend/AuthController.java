@@ -63,7 +63,7 @@ public class AuthController {
      */
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody AuthRequest request, HttpServletRequest servletRequest) {
-        rateLimitService.checkRateLimit(extractClientIp(servletRequest), 0);
+        rateLimitService.checkRateLimit(servletRequest.getRemoteAddr(), 0);
 
         if (request.username() == null || request.username().isBlank()
                 || request.password() == null || request.password().isBlank()) {
@@ -99,7 +99,7 @@ public class AuthController {
      */
     @PostMapping("/login")
     public ResponseEntity<?> login(@RequestBody AuthRequest request, HttpServletRequest servletRequest) {
-        rateLimitService.checkRateLimit(extractClientIp(servletRequest), 0);
+        rateLimitService.checkRateLimit(servletRequest.getRemoteAddr(), 0);
 
         if (request.username() == null || request.username().isBlank()
                 || request.password() == null || request.password().isBlank()) {
@@ -117,15 +117,4 @@ public class AuthController {
         return ResponseEntity.ok(new AuthResponse(token, user.getTier()));
     }
 
-    private String extractClientIp(HttpServletRequest request) {
-        String xForwardedFor = request.getHeader("X-Forwarded-For");
-        if (xForwardedFor != null && !xForwardedFor.isBlank()) {
-            return xForwardedFor.split(",")[0].trim();
-        }
-        String xRealIp = request.getHeader("X-Real-IP");
-        if (xRealIp != null && !xRealIp.isBlank()) {
-            return xRealIp;
-        }
-        return request.getRemoteAddr();
-    }
 }

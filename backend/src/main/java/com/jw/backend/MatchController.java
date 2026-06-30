@@ -5,6 +5,8 @@
  */
 package com.jw.backend;
 
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jw.backend.region.RiotRegion;
 import com.jw.backend.service.MatchHistoryService;
 import com.jw.backend.service.RiotApiService;
@@ -25,49 +27,59 @@ public class MatchController {
 
     private final RiotApiService riotApiService;
     private final MatchHistoryService matchHistoryService;
+    private final ObjectMapper objectMapper;
 
     /**
      * Construct the controller with required service dependencies.
      *
      * @param riotApiService      service for Riot API communication
      * @param matchHistoryService service for persisting match records locally
+     * @param objectMapper        Jackson mapper for JSON deserialization
      */
-    public MatchController(RiotApiService riotApiService, MatchHistoryService matchHistoryService) {
+    public MatchController(RiotApiService riotApiService, MatchHistoryService matchHistoryService,
+                           ObjectMapper objectMapper) {
         this.riotApiService = riotApiService;
         this.matchHistoryService = matchHistoryService;
+        this.objectMapper = objectMapper;
     }
 
     /**
-     * Retrieve recent match IDs for a player as raw JSON from Riot API.
+     * Retrieve recent match IDs for a player.
      *
      * @param puuid  the player's unique identifier
      * @param region the Riot routing region
      * @param count  number of match IDs to retrieve (default 10)
-     * @return raw JSON array of match ID strings
+     * @return list of match ID strings
      */
     @GetMapping("/recent")
-    public String getRecentMatches(
+    public List<String> getRecentMatches(
             @RequestParam String puuid,
             @RequestParam RiotRegion region,
             @RequestParam(defaultValue = "10") int count
     ) {
         count = Math.max(1, Math.min(count, 100));
-        return riotApiService.getRecentMatchIds(puuid, region, count);
+        String idsJson = riotApiService.getRecentMatchIds(puuid, region, count);
+        try {
+            return objectMapper.readValue(idsJson, new TypeReference<List<String>>() {});
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to parse match IDs", e);
+        }
     }
 
     /**
-     * Retrieve full match detail JSON for a specific match from Riot API.
+     * Retrieve full match detail for a specific match.
      *
      * @param matchId the Riot match identifier (e.g., "NA1_4567890123")
      * @param region  the Riot routing region
-     * @return raw JSON match detail payload
+     * @return parsed match detail with team and participant breakdowns
      */
     @GetMapping("/detail")
-    public String getMatchDetail(
+    public MatchDetailDto getMatchDetail(
             @RequestParam String matchId,
             @RequestParam RiotRegion region
     ) {
-        return riotApiService.getMatchDetail(matchId, region);
+        String detailJson = riotApiService.getMatchDetail(matchId, region);
+        return riotApiService.extractFullMatchDetail(detailJson, matchId);
     }
 
     /**

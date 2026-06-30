@@ -5,6 +5,7 @@
  */
 package com.jw.backend;
 
+import com.jw.backend.dto.MatchDetailDto;
 import com.jw.backend.dto.MatchSummaryDto;
 import com.jw.backend.region.RiotRegion;
 import com.jw.backend.security.JwtUtil;
@@ -98,13 +99,16 @@ class MatchControllerTest {
             .andExpect(status().isBadRequest());
     }
 
-    /** Verify that valid matchId and region return match detail JSON. */
+    /** Verify that valid matchId and region return match detail DTO. */
     @Test
     void getMatchDetail_withValidParams_returnsOk() throws Exception {
         String fakeMatchDetail = "{\"matchId\":\"NA1_123\",\"info\":{}}";
+        MatchDetailDto fakeDto = new MatchDetailDto("NA1_123", 420, 1800, 1700000000000L, "CLASSIC", "14.1", List.of(), List.of());
 
         when(riotApiService.getMatchDetail("NA1_123", RiotRegion.NA))
             .thenReturn(fakeMatchDetail);
+        when(riotApiService.extractFullMatchDetail(fakeMatchDetail, "NA1_123"))
+            .thenReturn(fakeDto);
 
         mockMvc.perform(
                 get("/api/matches/detail")
@@ -112,7 +116,7 @@ class MatchControllerTest {
                     .param("region", "NA")
             )
             .andExpect(status().isOk())
-            .andExpect(content().json(fakeMatchDetail));
+            .andExpect(jsonPath("$.matchId").value("NA1_123"));
     }
 
     /** Verify that a missing matchId parameter returns HTTP 400. */

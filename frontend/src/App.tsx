@@ -8,6 +8,7 @@ import HomePage from "./pages/HomePage";
 import PlayerPage from "./pages/PlayerPage";
 import MatchDetailPage from "./pages/MatchDetailPage";
 import { CheckoutSuccessPage, CheckoutCancelPage } from "./pages/CheckoutResultPage";
+import LeaderboardPage from "./pages/LeaderboardPage";
 
 export default function App() {
   return (
@@ -16,6 +17,7 @@ export default function App() {
       <Route path="/player/:region/:gameName/:tag" element={<PlayerPage />} />
       <Route path="/player/puuid/:region/:puuid" element={<PlayerPage />} />
       <Route path="/match/:region/:matchId" element={<MatchDetailPage />} />
+      <Route path="/leaderboard" element={<LeaderboardPage />} />
       <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
       <Route path="/checkout/cancel" element={<CheckoutCancelPage />} />
     </Routes>

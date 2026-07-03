@@ -1,3 +1,8 @@
+/**
+ * @file useIsMobile.ts
+ * @description Responsive breakpoint hook that tracks viewport width changes.
+ * @module frontend.hooks
+ */
 import { useState, useEffect } from "react";
 
 export function useIsMobile(breakpoint = 768): boolean {

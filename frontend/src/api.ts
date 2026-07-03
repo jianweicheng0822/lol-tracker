@@ -364,6 +364,23 @@ export async function createPortalSession(): Promise<{ url: string }> {
 }
 
 /**
+ * Fetch the ranked leaderboard for a given tier, queue, and region.
+ *
+ * @param region - The Riot API region code (e.g., "NA", "KR").
+ * @param queue - The ranked queue identifier (e.g., "RANKED_SOLO_5x5").
+ * @param tier - The apex tier: "challenger", "grandmaster", or "master".
+ * @returns An array of leaderboard entries sorted by LP descending.
+ */
+export async function fetchLeaderboard(region: string, queue: string, tier: string) {
+  const res = await fetch(
+    `${BASE}/api/leaderboard?region=${encodeURIComponent(region)}&queue=${encodeURIComponent(queue)}&tier=${encodeURIComponent(tier)}`,
+    fetchOpts()
+  );
+  if (!res.ok) throw new Error(await readErrorMessage(res));
+  return res.json();
+}
+
+/**
  * Structured match data sent to the backend for AI analysis.
  * The backend constructs the LLM prompt from this data; no prompt text is sent from the frontend.
  */

@@ -176,6 +176,17 @@ export type LpSnapshot = {
   capturedAt: number;
 };
 
+/** A single entry in the ranked leaderboard (Challenger/Grandmaster/Master). */
+export type LeaderboardEntry = {
+  summonerName: string;
+  tier: string;
+  rank: string;
+  leaguePoints: number;
+  wins: number;
+  losses: number;
+  winRate: number;
+};
+
 /** A saved favorite player entry persisted in the user's profile. */
 export type FavoritePlayer = {
   id: number;

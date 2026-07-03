@@ -215,6 +215,34 @@ public class RiotApiService {
         return result;
     }
 
+    /**
+     * League-v4 apex tier league data. 15min TTL — leaderboard rankings shift slowly.
+     *
+     * @param tier  one of "challenger", "grandmaster", or "master"
+     * @param queue the ranked queue (e.g., "RANKED_SOLO_5x5")
+     * @param region the Riot region
+     * @return raw JSON string from League-v4
+     */
+    public String getLeagueByTier(String tier, String queue, RiotRegion region) {
+        long ttlMs = 15L * 60 * 1000;
+
+        String baseUrl = "https://" + region.platform() + ".api.riotgames.com";
+        String cacheKey = "league:" + region.platform() + ":" + tier + ":" + queue;
+
+        String cached = getCached(cacheKey);
+        if (cached != null) return cached;
+
+        riotRateLimiter.acquire();
+        String result = getClient(baseUrl).get()
+                .uri("/lol/league/v4/{tier}leagues/by-queue/{queue}", tier, queue)
+                .header("X-Riot-Token", apiKey)
+                .retrieve()
+                .body(String.class);
+
+        putCached(cacheKey, result, ttlMs);
+        return result;
+    }
+
     private final Executor riotExecutor = Executors.newFixedThreadPool(6);
 
     public List<com.jw.backend.dto.MatchSummaryDto> getRecentMatchSummaries(String puuid, RiotRegion region, int count) {

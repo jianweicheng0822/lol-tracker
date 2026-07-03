@@ -60,4 +60,35 @@ class RateLimitServiceTest {
         // Different user should still be allowed
         assertDoesNotThrow(() -> rateLimitService.checkRateLimit("user2", 0));
     }
+
+    @Test
+    void checkAiRateLimit_allowsUpToTwentyRequests() {
+        for (int i = 0; i < 20; i++) {
+            assertDoesNotThrow(() -> rateLimitService.checkAiRateLimit("user1"));
+        }
+    }
+
+    @Test
+    void checkAiRateLimit_throwsOnTwentyFirstRequest() {
+        for (int i = 0; i < 20; i++) {
+            rateLimitService.checkAiRateLimit("user1");
+        }
+        assertThrows(RateLimitException.class, () -> rateLimitService.checkAiRateLimit("user1"));
+    }
+
+    @Test
+    void reset_clearsAllLimits() {
+        for (int i = 0; i < 5; i++) {
+            rateLimitService.checkRateLimit("user1", 0);
+        }
+        rateLimitService.reset();
+        assertDoesNotThrow(() -> rateLimitService.checkRateLimit("user1", 0));
+    }
+
+    @Test
+    void evictStaleEntries_doesNotThrow() {
+        rateLimitService.checkRateLimit("user1", 0);
+        rateLimitService.checkAiRateLimit("user1");
+        assertDoesNotThrow(() -> rateLimitService.evictStaleEntries());
+    }
 }

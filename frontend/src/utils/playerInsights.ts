@@ -1,3 +1,8 @@
+/**
+ * @file playerInsights.ts
+ * @description Derived player analytics including win/loss streaks and climb status calculations.
+ * @module frontend.utils
+ */
 import type { MatchSummary, RankedEntry } from "../types";
 
 export type Streak = { type: "win" | "loss"; count: number };

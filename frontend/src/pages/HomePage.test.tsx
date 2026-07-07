@@ -37,7 +37,7 @@ describe("HomePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(api.fetchFavorites).mockResolvedValue([]);
-    vi.mocked(api.fetchLeaderboard).mockResolvedValue([]);
+    vi.mocked(api.fetchLeaderboard).mockResolvedValue({ entries: [], totalEntries: 0 });
     vi.mocked(api.getAuthToken).mockReturnValue(null);
   });
 
@@ -93,15 +93,15 @@ describe("HomePage", () => {
 
   it("fetches leaderboard preview on mount", () => {
     render(<HomePage />);
-    expect(api.fetchLeaderboard).toHaveBeenCalledWith("NA", "RANKED_SOLO_5x5", "challenger");
+    expect(api.fetchLeaderboard).toHaveBeenCalledWith("NA", "RANKED_SOLO_5x5", "challenger", 0, 3);
   });
 
   it("renders leaderboard preview card when data loads", async () => {
-    vi.mocked(api.fetchLeaderboard).mockResolvedValue([
+    vi.mocked(api.fetchLeaderboard).mockResolvedValue({ entries: [
       { summonerName: "TopPlayer1", tier: "CHALLENGER", rank: "I", leaguePoints: 1500, wins: 200, losses: 80, winRate: 71.4 },
       { summonerName: "TopPlayer2", tier: "CHALLENGER", rank: "I", leaguePoints: 1200, wins: 180, losses: 90, winRate: 66.7 },
       { summonerName: "TopPlayer3", tier: "CHALLENGER", rank: "I", leaguePoints: 1000, wins: 150, losses: 100, winRate: 60.0 },
-    ]);
+    ], totalEntries: 3 });
     render(<HomePage />);
     const { waitFor } = await import("@testing-library/react");
     await waitFor(() => {
@@ -113,9 +113,9 @@ describe("HomePage", () => {
   });
 
   it("renders View Full Leaderboard button", async () => {
-    vi.mocked(api.fetchLeaderboard).mockResolvedValue([
+    vi.mocked(api.fetchLeaderboard).mockResolvedValue({ entries: [
       { summonerName: "P1", tier: "CHALLENGER", rank: "I", leaguePoints: 1500, wins: 200, losses: 80, winRate: 71.4 },
-    ]);
+    ], totalEntries: 1 });
     render(<HomePage />);
     const { waitFor } = await import("@testing-library/react");
     await waitFor(() => {
@@ -124,7 +124,7 @@ describe("HomePage", () => {
   });
 
   it("does not render leaderboard card when no data", () => {
-    vi.mocked(api.fetchLeaderboard).mockResolvedValue([]);
+    vi.mocked(api.fetchLeaderboard).mockResolvedValue({ entries: [], totalEntries: 0 });
     render(<HomePage />);
     expect(screen.queryByText("Top Ranked Players")).not.toBeInTheDocument();
   });

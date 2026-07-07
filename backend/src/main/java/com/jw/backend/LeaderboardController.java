@@ -30,14 +30,18 @@ public class LeaderboardController {
     public ResponseEntity<?> getLeaderboard(
             @RequestParam(defaultValue = "NA") RiotRegion region,
             @RequestParam(defaultValue = "RANKED_SOLO_5x5") String queue,
-            @RequestParam(defaultValue = "challenger") String tier
+            @RequestParam(defaultValue = "challenger") String tier,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "50") int size
     ) {
         String normalizedTier = tier.toLowerCase();
         if (!ALLOWED_TIERS.contains(normalizedTier)) {
             return ResponseEntity.badRequest().body(
                     java.util.Map.of("message", "Invalid tier. Allowed: challenger, grandmaster, master"));
         }
-        List<LeaderboardEntryDto> result = leaderboardService.getLeaderboard(normalizedTier, queue, region);
+        int clampedSize = Math.max(1, Math.min(size, 100));
+        int clampedPage = Math.max(0, page);
+        var result = leaderboardService.getLeaderboard(normalizedTier, queue, region, clampedPage, clampedSize);
         return ResponseEntity.ok(result);
     }
 }

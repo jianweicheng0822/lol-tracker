@@ -33,8 +33,8 @@ export default function HomePage() {
 
   useEffect(() => {
     loadFavorites();
-    fetchLeaderboard("NA", "RANKED_SOLO_5x5", "challenger")
-      .then(data => setTopPlayers(data.slice(0, 3)))
+    fetchLeaderboard("NA", "RANKED_SOLO_5x5", "challenger", 0, 3)
+      .then((data: { entries: LeaderboardEntry[] }) => setTopPlayers(data.entries))
       .catch(e => console.error("Failed to load leaderboard preview:", e));
   }, [loadFavorites]);
 

@@ -19,10 +19,12 @@ const MOCK_ENTRIES = [
   { summonerName: "Gumayusi", tier: "CHALLENGER", rank: "I", leaguePoints: 1000, wins: 150, losses: 100, winRate: 60.0 },
 ];
 
+const MOCK_RESPONSE = { entries: MOCK_ENTRIES, totalEntries: 3 };
+
 describe("LeaderboardPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    vi.mocked(api.fetchLeaderboard).mockResolvedValue(MOCK_ENTRIES);
+    vi.mocked(api.fetchLeaderboard).mockResolvedValue(MOCK_RESPONSE);
   });
 
   it("shows loading state initially", () => {
@@ -82,9 +84,9 @@ describe("LeaderboardPage", () => {
     });
   });
 
-  it("fetches challenger NA by default", () => {
+  it("fetches challenger NA page 0 by default", () => {
     render(<LeaderboardPage />);
-    expect(api.fetchLeaderboard).toHaveBeenCalledWith("NA", "RANKED_SOLO_5x5", "challenger");
+    expect(api.fetchLeaderboard).toHaveBeenCalledWith("NA", "RANKED_SOLO_5x5", "challenger", 0, 50);
   });
 
   it("refetches when tier tab is clicked", async () => {
@@ -95,7 +97,7 @@ describe("LeaderboardPage", () => {
     });
 
     await user.click(screen.getByText("Grandmaster"));
-    expect(api.fetchLeaderboard).toHaveBeenCalledWith("NA", "RANKED_SOLO_5x5", "grandmaster");
+    expect(api.fetchLeaderboard).toHaveBeenCalledWith("NA", "RANKED_SOLO_5x5", "grandmaster", 0, 50);
   });
 
   it("refetches when region is changed", async () => {
@@ -107,7 +109,7 @@ describe("LeaderboardPage", () => {
 
     const select = screen.getByDisplayValue("NA");
     await user.selectOptions(select, "KR");
-    expect(api.fetchLeaderboard).toHaveBeenCalledWith("KR", "RANKED_SOLO_5x5", "challenger");
+    expect(api.fetchLeaderboard).toHaveBeenCalledWith("KR", "RANKED_SOLO_5x5", "challenger", 0, 50);
   });
 
   it("refetches when queue is changed to Flex", async () => {
@@ -119,7 +121,7 @@ describe("LeaderboardPage", () => {
 
     const select = screen.getByDisplayValue("Solo/Duo");
     await user.selectOptions(select, "RANKED_FLEX_SR");
-    expect(api.fetchLeaderboard).toHaveBeenCalledWith("NA", "RANKED_FLEX_SR", "challenger");
+    expect(api.fetchLeaderboard).toHaveBeenCalledWith("NA", "RANKED_FLEX_SR", "challenger", 0, 50);
   });
 
   it("navigates home when back button is clicked", async () => {
@@ -156,10 +158,33 @@ describe("LeaderboardPage", () => {
   });
 
   it("shows no entries message for empty result", async () => {
-    vi.mocked(api.fetchLeaderboard).mockResolvedValue([]);
+    vi.mocked(api.fetchLeaderboard).mockResolvedValue({ entries: [], totalEntries: 0 });
     render(<LeaderboardPage />);
     await waitFor(() => {
       expect(screen.getByText("No entries found.")).toBeInTheDocument();
     });
+  });
+
+  it("shows pagination when multiple pages exist", async () => {
+    vi.mocked(api.fetchLeaderboard).mockResolvedValue({ entries: MOCK_ENTRIES, totalEntries: 120 });
+    render(<LeaderboardPage />);
+    await waitFor(() => {
+      expect(screen.getByText("Faker")).toBeInTheDocument();
+    });
+    expect(screen.getByText("Page 1 of 3")).toBeInTheDocument();
+    expect(screen.getByText(/Prev/)).toBeDisabled();
+    expect(screen.getByText(/Next/)).not.toBeDisabled();
+  });
+
+  it("advances to next page when Next is clicked", async () => {
+    vi.mocked(api.fetchLeaderboard).mockResolvedValue({ entries: MOCK_ENTRIES, totalEntries: 120 });
+    const user = userEvent.setup();
+    render(<LeaderboardPage />);
+    await waitFor(() => {
+      expect(screen.getByText("Faker")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByText(/Next/));
+    expect(api.fetchLeaderboard).toHaveBeenCalledWith("NA", "RANKED_SOLO_5x5", "challenger", 1, 50);
   });
 });

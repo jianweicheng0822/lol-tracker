@@ -410,10 +410,10 @@ describe("fetchLeaderboard", () => {
   beforeEach(() => vi.clearAllMocks());
 
   it("calls leaderboard endpoint with params", async () => {
-    mockOk([]);
-    await fetchLeaderboard("NA", "RANKED_SOLO_5x5", "challenger");
+    mockOk({ entries: [], totalEntries: 0 });
+    await fetchLeaderboard("NA", "RANKED_SOLO_5x5", "challenger", 0, 50);
     expect(mockFetch).toHaveBeenCalledWith(
-      expect.stringContaining("/api/leaderboard?region=NA&queue=RANKED_SOLO_5x5&tier=challenger"),
+      expect.stringContaining("/api/leaderboard?region=NA&queue=RANKED_SOLO_5x5&tier=challenger&page=0&size=50"),
       expect.any(Object)
     );
   });

@@ -33,27 +33,36 @@ const QUEUES = [
 ] as const;
 type Queue = (typeof QUEUES)[number]["value"];
 
+const PAGE_SIZE = 50;
+
 export default function LeaderboardPage() {
   const navigate = useNavigate();
   const [region, setRegion] = useState<Region>("NA");
   const [queue, setQueue] = useState<Queue>("RANKED_SOLO_5x5");
   const [tier, setTier] = useState<Tier>("challenger");
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
+  const [totalEntries, setTotalEntries] = useState(0);
+  const [page, setPage] = useState(0);
   const [status, setStatus] = useState<"loading" | "error" | "done">("loading");
   const [errorMsg, setErrorMsg] = useState("");
 
   // Track which request key is active so stale responses are discarded
   const [fetchKey, setFetchKey] = useState(0);
 
-  // Reset to loading when region, queue, or tier changes
-  function changeRegion(r: Region) { setRegion(r); setStatus("loading"); setErrorMsg(""); setFetchKey((k) => k + 1); }
-  function changeQueue(q: Queue) { setQueue(q); setStatus("loading"); setErrorMsg(""); setFetchKey((k) => k + 1); }
-  function changeTier(t: Tier) { setTier(t); setStatus("loading"); setErrorMsg(""); setFetchKey((k) => k + 1); }
+  // Reset to page 0 and loading when filters change
+  function changeRegion(r: Region) { setRegion(r); setPage(0); setStatus("loading"); setErrorMsg(""); setFetchKey((k) => k + 1); }
+  function changeQueue(q: Queue) { setQueue(q); setPage(0); setStatus("loading"); setErrorMsg(""); setFetchKey((k) => k + 1); }
+  function changeTier(t: Tier) { setTier(t); setPage(0); setStatus("loading"); setErrorMsg(""); setFetchKey((k) => k + 1); }
+  function changePage(p: number) { setPage(p); setStatus("loading"); setFetchKey((k) => k + 1); }
+
+  const totalPages = Math.max(1, Math.ceil(totalEntries / PAGE_SIZE));
 
   useEffect(() => {
     let active = true;
-    fetchLeaderboard(region, queue, tier).then(
-      (data) => { if (active) { setEntries(data); setStatus("done"); } },
+    fetchLeaderboard(region, queue, tier, page, PAGE_SIZE).then(
+      (data: { entries: LeaderboardEntry[]; totalEntries: number }) => {
+        if (active) { setEntries(data.entries); setTotalEntries(data.totalEntries); setStatus("done"); }
+      },
       (e: unknown) => { if (active) { setStatus("error"); setErrorMsg(e instanceof Error ? e.message : "Something went wrong."); } },
     );
     return () => { active = false; };
@@ -160,6 +169,7 @@ export default function LeaderboardPage() {
             <tbody>
               {entries.map((entry, i) => {
                 const wr = entry.winRate;
+                const globalRank = page * PAGE_SIZE + i + 1;
                 return (
                   <tr
                     key={`${entry.summonerName}-${i}`}
@@ -177,11 +187,11 @@ export default function LeaderboardPage() {
                       style={{
                         ...styles.td,
                         textAlign: "center",
-                        fontWeight: i < 3 ? 700 : 400,
-                        color: i < 3 ? COLORS.gold : COLORS.textSecondary,
+                        fontWeight: globalRank <= 3 ? 700 : 400,
+                        color: globalRank <= 3 ? COLORS.gold : COLORS.textSecondary,
                       }}
                     >
-                      {i + 1}
+                      {globalRank}
                     </td>
                     <td style={styles.td}>
                       <div style={styles.playerCell}>
@@ -235,6 +245,27 @@ export default function LeaderboardPage() {
           {entries.length === 0 && (
             <div style={styles.statusMsg}>No entries found.</div>
           )}
+        </div>
+      )}
+      {status === "done" && totalPages > 1 && (
+        <div style={styles.pagination}>
+          <button
+            onClick={() => changePage(page - 1)}
+            disabled={page === 0}
+            style={{ ...styles.pageBtn, ...(page === 0 ? styles.pageBtnDisabled : {}) }}
+          >
+            &larr; Prev
+          </button>
+          <span style={styles.pageInfo}>
+            Page {page + 1} of {totalPages}
+          </span>
+          <button
+            onClick={() => changePage(page + 1)}
+            disabled={page >= totalPages - 1}
+            style={{ ...styles.pageBtn, ...(page >= totalPages - 1 ? styles.pageBtnDisabled : {}) }}
+          >
+            Next &rarr;
+          </button>
         </div>
       )}
     </div>
@@ -371,5 +402,33 @@ const styles: Record<string, React.CSSProperties> = {
   tierIcon: {
     width: 24,
     height: 24,
+  },
+  pagination: {
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 16,
+    marginTop: 16,
+    width: "100%",
+    maxWidth: 900,
+  },
+  pageBtn: {
+    background: COLORS.cardBg,
+    color: COLORS.textSecondary,
+    border: `1px solid ${COLORS.cardBorder}`,
+    borderRadius: 6,
+    padding: "8px 18px",
+    cursor: "pointer",
+    fontWeight: 600,
+    fontSize: 13,
+  },
+  pageBtnDisabled: {
+    opacity: 0.35,
+    cursor: "default",
+  },
+  pageInfo: {
+    fontSize: 13,
+    color: COLORS.textSecondary,
+    fontWeight: 600,
   },
 };

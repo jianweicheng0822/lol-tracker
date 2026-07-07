@@ -371,9 +371,9 @@ export async function createPortalSession(): Promise<{ url: string }> {
  * @param tier - The apex tier: "challenger", "grandmaster", or "master".
  * @returns An array of leaderboard entries sorted by LP descending.
  */
-export async function fetchLeaderboard(region: string, queue: string, tier: string) {
+export async function fetchLeaderboard(region: string, queue: string, tier: string, page = 0, size = 50) {
   const res = await fetch(
-    `${BASE}/api/leaderboard?region=${encodeURIComponent(region)}&queue=${encodeURIComponent(queue)}&tier=${encodeURIComponent(tier)}`,
+    `${BASE}/api/leaderboard?region=${encodeURIComponent(region)}&queue=${encodeURIComponent(queue)}&tier=${encodeURIComponent(tier)}&page=${page}&size=${size}`,
     fetchOpts()
   );
   if (!res.ok) throw new Error(await readErrorMessage(res));

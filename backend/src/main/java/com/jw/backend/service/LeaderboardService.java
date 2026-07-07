@@ -34,7 +34,9 @@ public class LeaderboardService {
         this.objectMapper = objectMapper;
     }
 
-    public List<LeaderboardEntryDto> getLeaderboard(String tier, String queue, RiotRegion region) {
+    public record LeaderboardPage(List<LeaderboardEntryDto> entries, int totalEntries) {}
+
+    public LeaderboardPage getLeaderboard(String tier, String queue, RiotRegion region, int page, int size) {
         String json = riotApiService.getLeagueByTier(tier, queue, region);
         try {
             JsonNode root = objectMapper.readTree(json);
@@ -52,11 +54,18 @@ public class LeaderboardService {
                 rawEntries.add(new RawEntry(puuid, fallbackName, rank, lp, wins, losses));
             }
 
-            // Sort by LP descending first, then resolve names only for entries we return
+            // Sort by LP descending
             rawEntries.sort(Comparator.comparingInt(RawEntry::lp).reversed());
 
+            int totalEntries = rawEntries.size();
+
+            // Paginate: only resolve names for the current page
+            int from = Math.min(page * size, totalEntries);
+            int to = Math.min(from + size, totalEntries);
+            List<RawEntry> pageEntries = rawEntries.subList(from, to);
+
             // Resolve Riot IDs in parallel via Account-v1 (cached 24h per puuid)
-            List<CompletableFuture<LeaderboardEntryDto>> futures = rawEntries.stream()
+            List<CompletableFuture<LeaderboardEntryDto>> futures = pageEntries.stream()
                     .map(raw -> CompletableFuture.supplyAsync(() -> {
                         String name = resolveName(raw.puuid(), raw.fallbackName(), region);
                         int total = raw.wins() + raw.losses();
@@ -70,7 +79,8 @@ public class LeaderboardService {
                     }))
                     .toList();
 
-            return futures.stream().map(CompletableFuture::join).toList();
+            List<LeaderboardEntryDto> resolved = futures.stream().map(CompletableFuture::join).toList();
+            return new LeaderboardPage(resolved, totalEntries);
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse league JSON for " + tier, e);
         }

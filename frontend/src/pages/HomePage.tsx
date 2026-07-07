@@ -41,18 +41,30 @@ export default function HomePage() {
   return (
     <div style={styles.page}>
       <div style={styles.authCorner}>
-        <button onClick={() => navigate("/leaderboard")} style={styles.navLink}>
+        <button
+          onClick={() => navigate("/leaderboard")}
+          style={styles.navLink}
+          onMouseEnter={(e) => { e.currentTarget.style.background = `${COLORS.gold}20`; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+        >
           Leaderboard
         </button>
         {loggedIn ? (
           <button
             onClick={() => { setAuthToken(null); setLoggedIn(false); }}
-            style={styles.authBtn}
+            style={styles.logoutBtn}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(232,64,87,0.12)"; e.currentTarget.style.borderColor = "rgba(232,64,87,0.5)"; e.currentTarget.style.color = "#E84057"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; e.currentTarget.style.color = COLORS.textSecondary; }}
           >
             Log out
           </button>
         ) : (
-          <button onClick={() => setShowAuthModal(true)} style={styles.authBtn}>
+          <button
+            onClick={() => setShowAuthModal(true)}
+            style={styles.loginBtn}
+            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(58,143,214,0.15)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(58,143,214,0.08)"; }}
+          >
             Log in
           </button>
         )}
@@ -206,12 +218,14 @@ const styles: Record<string, React.CSSProperties> = {
   },
   navLink: {
     background: "transparent",
-    color: COLORS.textTertiary,
-    border: "none",
+    color: COLORS.gold,
+    border: `1px solid ${COLORS.gold}50`,
+    borderRadius: 6,
     cursor: "pointer",
     fontWeight: 600,
     fontSize: 13,
-    padding: "6px 8px",
+    padding: "6px 14px",
+    transition: "background 0.15s ease",
   },
   leaderboardCard: {
     marginTop: 28,
@@ -276,14 +290,26 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 13,
     transition: "background 0.15s ease",
   },
-  authBtn: {
-    background: "transparent",
-    color: COLORS.textTertiary,
-    border: `1px solid ${COLORS.cardBorder}`,
+  loginBtn: {
+    background: "rgba(58,143,214,0.08)",
+    color: "#3A8FD6",
+    border: "1px solid rgba(58,143,214,0.4)",
     borderRadius: 6,
     padding: "6px 14px",
     cursor: "pointer",
     fontWeight: 600,
     fontSize: 13,
+    transition: "background 0.15s ease",
+  },
+  logoutBtn: {
+    background: "transparent",
+    color: COLORS.textSecondary,
+    border: "1px solid rgba(255,255,255,0.15)",
+    borderRadius: 6,
+    padding: "6px 14px",
+    cursor: "pointer",
+    fontWeight: 600,
+    fontSize: 13,
+    transition: "all 0.15s ease",
   },
 };

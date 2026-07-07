@@ -110,6 +110,18 @@ describe("LeaderboardPage", () => {
     expect(api.fetchLeaderboard).toHaveBeenCalledWith("KR", "RANKED_SOLO_5x5", "challenger");
   });
 
+  it("refetches when queue is changed to Flex", async () => {
+    const user = userEvent.setup();
+    render(<LeaderboardPage />);
+    await waitFor(() => {
+      expect(screen.getByText("Faker")).toBeInTheDocument();
+    });
+
+    const select = screen.getByDisplayValue("Solo/Duo");
+    await user.selectOptions(select, "RANKED_FLEX_SR");
+    expect(api.fetchLeaderboard).toHaveBeenCalledWith("NA", "RANKED_FLEX_SR", "challenger");
+  });
+
   it("navigates home when back button is clicked", async () => {
     const user = userEvent.setup();
     render(<LeaderboardPage />);

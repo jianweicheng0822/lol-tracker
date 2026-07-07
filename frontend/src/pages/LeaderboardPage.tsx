@@ -27,9 +27,16 @@ const TIER_LABELS: Record<Tier, string> = {
   master: "Master",
 };
 
+const QUEUES = [
+  { value: "RANKED_SOLO_5x5", label: "Solo/Duo" },
+  { value: "RANKED_FLEX_SR", label: "Flex" },
+] as const;
+type Queue = (typeof QUEUES)[number]["value"];
+
 export default function LeaderboardPage() {
   const navigate = useNavigate();
   const [region, setRegion] = useState<Region>("NA");
+  const [queue, setQueue] = useState<Queue>("RANKED_SOLO_5x5");
   const [tier, setTier] = useState<Tier>("challenger");
   const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
   const [status, setStatus] = useState<"loading" | "error" | "done">("loading");
@@ -38,13 +45,14 @@ export default function LeaderboardPage() {
   // Track which request key is active so stale responses are discarded
   const [fetchKey, setFetchKey] = useState(0);
 
-  // Reset to loading when region or tier changes
+  // Reset to loading when region, queue, or tier changes
   function changeRegion(r: Region) { setRegion(r); setStatus("loading"); setErrorMsg(""); setFetchKey((k) => k + 1); }
+  function changeQueue(q: Queue) { setQueue(q); setStatus("loading"); setErrorMsg(""); setFetchKey((k) => k + 1); }
   function changeTier(t: Tier) { setTier(t); setStatus("loading"); setErrorMsg(""); setFetchKey((k) => k + 1); }
 
   useEffect(() => {
     let active = true;
-    fetchLeaderboard(region, "RANKED_SOLO_5x5", tier).then(
+    fetchLeaderboard(region, queue, tier).then(
       (data) => { if (active) { setEntries(data); setStatus("done"); } },
       (e: unknown) => { if (active) { setStatus("error"); setErrorMsg(e instanceof Error ? e.message : "Something went wrong."); } },
     );
@@ -73,6 +81,21 @@ export default function LeaderboardPage() {
             {REGIONS.map((r) => (
               <option key={r} value={r}>
                 {r}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div style={styles.controlGroup}>
+          <label style={styles.controlLabel}>Queue</label>
+          <select
+            value={queue}
+            onChange={(e) => changeQueue(e.target.value as Queue)}
+            style={styles.select}
+          >
+            {QUEUES.map((q) => (
+              <option key={q.value} value={q.value}>
+                {q.label}
               </option>
             ))}
           </select>

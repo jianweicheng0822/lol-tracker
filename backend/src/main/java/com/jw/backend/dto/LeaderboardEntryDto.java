@@ -10,6 +10,7 @@ package com.jw.backend.dto;
  */
 public record LeaderboardEntryDto(
         String summonerName,
+        String puuid,
         String tier,
         String rank,
         int leaguePoints,

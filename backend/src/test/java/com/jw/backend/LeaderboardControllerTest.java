@@ -33,51 +33,55 @@ class LeaderboardControllerTest {
     @Test
     void getLeaderboard_withValidParams_returnsOk() throws Exception {
         List<LeaderboardEntryDto> entries = List.of(
-            new LeaderboardEntryDto("Faker", "CHALLENGER", "I", 1500, 200, 80, 71.4),
-            new LeaderboardEntryDto("Zeus", "CHALLENGER", "I", 1200, 180, 90, 66.7)
+            new LeaderboardEntryDto("Faker", "puuid-1", "CHALLENGER", "I", 1500, 200, 80, 71.4),
+            new LeaderboardEntryDto("Zeus", "puuid-2", "CHALLENGER", "I", 1200, 180, 90, 66.7)
         );
-        when(leaderboardService.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.KR)).thenReturn(entries);
+        when(leaderboardService.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.KR, 0, 50))
+            .thenReturn(new LeaderboardService.LeaderboardPage(entries, 2));
 
         mockMvc.perform(get("/api/leaderboard")
                 .param("region", "KR")
                 .param("queue", "RANKED_SOLO_5x5")
                 .param("tier", "challenger"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.length()").value(2))
-            .andExpect(jsonPath("$[0].summonerName").value("Faker"))
-            .andExpect(jsonPath("$[0].tier").value("CHALLENGER"))
-            .andExpect(jsonPath("$[0].leaguePoints").value(1500))
-            .andExpect(jsonPath("$[0].winRate").value(71.4))
-            .andExpect(jsonPath("$[1].summonerName").value("Zeus"));
+            .andExpect(jsonPath("$.entries.length()").value(2))
+            .andExpect(jsonPath("$.totalEntries").value(2))
+            .andExpect(jsonPath("$.entries[0].summonerName").value("Faker"))
+            .andExpect(jsonPath("$.entries[0].puuid").value("puuid-1"))
+            .andExpect(jsonPath("$.entries[0].tier").value("CHALLENGER"))
+            .andExpect(jsonPath("$.entries[0].leaguePoints").value(1500))
+            .andExpect(jsonPath("$.entries[0].winRate").value(71.4))
+            .andExpect(jsonPath("$.entries[1].summonerName").value("Zeus"));
     }
 
     @Test
     void getLeaderboard_withDefaultParams_usesDefaults() throws Exception {
-        when(leaderboardService.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA))
-            .thenReturn(List.of());
+        when(leaderboardService.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 50))
+            .thenReturn(new LeaderboardService.LeaderboardPage(List.of(), 0));
 
         mockMvc.perform(get("/api/leaderboard"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$.length()").value(0));
+            .andExpect(jsonPath("$.entries.length()").value(0));
 
-        verify(leaderboardService).getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA);
+        verify(leaderboardService).getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 50);
     }
 
     @Test
     void getLeaderboard_withGrandmaster_returnsOk() throws Exception {
-        when(leaderboardService.getLeaderboard("grandmaster", "RANKED_SOLO_5x5", RiotRegion.NA))
-            .thenReturn(List.of(new LeaderboardEntryDto("GM Player", "GRANDMASTER", "I", 600, 100, 50, 66.7)));
+        when(leaderboardService.getLeaderboard("grandmaster", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 50))
+            .thenReturn(new LeaderboardService.LeaderboardPage(
+                List.of(new LeaderboardEntryDto("GM Player", "puuid-gm", "GRANDMASTER", "I", 600, 100, 50, 66.7)), 1));
 
         mockMvc.perform(get("/api/leaderboard")
                 .param("tier", "grandmaster"))
             .andExpect(status().isOk())
-            .andExpect(jsonPath("$[0].tier").value("GRANDMASTER"));
+            .andExpect(jsonPath("$.entries[0].tier").value("GRANDMASTER"));
     }
 
     @Test
     void getLeaderboard_withMaster_returnsOk() throws Exception {
-        when(leaderboardService.getLeaderboard("master", "RANKED_SOLO_5x5", RiotRegion.EUW))
-            .thenReturn(List.of());
+        when(leaderboardService.getLeaderboard("master", "RANKED_SOLO_5x5", RiotRegion.EUW, 0, 50))
+            .thenReturn(new LeaderboardService.LeaderboardPage(List.of(), 0));
 
         mockMvc.perform(get("/api/leaderboard")
                 .param("region", "EUW")
@@ -91,7 +95,7 @@ class LeaderboardControllerTest {
                 .param("tier", "diamond"))
             .andExpect(status().isBadRequest());
 
-        verify(leaderboardService, never()).getLeaderboard(anyString(), anyString(), any());
+        verify(leaderboardService, never()).getLeaderboard(anyString(), anyString(), any(), anyInt(), anyInt());
     }
 
     @Test
@@ -103,13 +107,27 @@ class LeaderboardControllerTest {
 
     @Test
     void getLeaderboard_tierIsCaseInsensitive() throws Exception {
-        when(leaderboardService.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA))
-            .thenReturn(List.of());
+        when(leaderboardService.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 50))
+            .thenReturn(new LeaderboardService.LeaderboardPage(List.of(), 0));
 
         mockMvc.perform(get("/api/leaderboard")
                 .param("tier", "CHALLENGER"))
             .andExpect(status().isOk());
 
-        verify(leaderboardService).getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA);
+        verify(leaderboardService).getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 50);
+    }
+
+    @Test
+    void getLeaderboard_withPageAndSize_passesParams() throws Exception {
+        when(leaderboardService.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 2, 25))
+            .thenReturn(new LeaderboardService.LeaderboardPage(List.of(), 100));
+
+        mockMvc.perform(get("/api/leaderboard")
+                .param("page", "2")
+                .param("size", "25"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.totalEntries").value(100));
+
+        verify(leaderboardService).getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 2, 25);
     }
 }

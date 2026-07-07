@@ -179,6 +179,7 @@ export type LpSnapshot = {
 /** A single entry in the ranked leaderboard (Challenger/Grandmaster/Master). */
 export type LeaderboardEntry = {
   summonerName: string;
+  puuid: string;
   tier: string;
   rank: string;
   leaguePoints: number;

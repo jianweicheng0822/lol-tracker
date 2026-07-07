@@ -14,9 +14,9 @@ vi.mock("../api", () => ({
 }));
 
 const MOCK_ENTRIES = [
-  { summonerName: "Faker", tier: "CHALLENGER", rank: "I", leaguePoints: 1500, wins: 200, losses: 80, winRate: 71.4 },
-  { summonerName: "Zeus", tier: "CHALLENGER", rank: "I", leaguePoints: 1200, wins: 180, losses: 90, winRate: 66.7 },
-  { summonerName: "Gumayusi", tier: "CHALLENGER", rank: "I", leaguePoints: 1000, wins: 150, losses: 100, winRate: 60.0 },
+  { summonerName: "Faker", puuid: "puuid-faker", tier: "CHALLENGER", rank: "I", leaguePoints: 1500, wins: 200, losses: 80, winRate: 71.4 },
+  { summonerName: "Zeus", puuid: "puuid-zeus", tier: "CHALLENGER", rank: "I", leaguePoints: 1200, wins: 180, losses: 90, winRate: 66.7 },
+  { summonerName: "Gumayusi", puuid: "puuid-guma", tier: "CHALLENGER", rank: "I", leaguePoints: 1000, wins: 150, losses: 100, winRate: 60.0 },
 ];
 
 const MOCK_RESPONSE = { entries: MOCK_ENTRIES, totalEntries: 3 };
@@ -174,6 +174,17 @@ describe("LeaderboardPage", () => {
     expect(screen.getByText("Page 1 of 3")).toBeInTheDocument();
     expect(screen.getByText(/Prev/)).toBeDisabled();
     expect(screen.getByText(/Next/)).not.toBeDisabled();
+  });
+
+  it("navigates to player page when row is clicked", async () => {
+    const user = userEvent.setup();
+    render(<LeaderboardPage />);
+    await waitFor(() => {
+      expect(screen.getByText("Faker")).toBeInTheDocument();
+    });
+
+    await user.click(screen.getByText("Faker"));
+    expect(mockNavigate).toHaveBeenCalledWith("/player/puuid/NA/puuid-faker");
   });
 
   it("advances to next page when Next is clicked", async () => {

@@ -70,12 +70,12 @@ public class LeaderboardService {
                         String name = resolveName(raw.puuid(), raw.fallbackName(), region);
                         int total = raw.wins() + raw.losses();
                         double winRate = total > 0 ? Math.round((double) raw.wins() / total * 1000.0) / 10.0 : 0.0;
-                        return new LeaderboardEntryDto(name, leagueTier, raw.rank(), raw.lp(), raw.wins(), raw.losses(), winRate);
+                        return new LeaderboardEntryDto(name, raw.puuid(), leagueTier, raw.rank(), raw.lp(), raw.wins(), raw.losses(), winRate);
                     }, nameResolver).orTimeout(10, TimeUnit.SECONDS).exceptionally(ex -> {
                         String name = raw.fallbackName().isEmpty() ? "Unknown" : raw.fallbackName();
                         int total = raw.wins() + raw.losses();
                         double winRate = total > 0 ? Math.round((double) raw.wins() / total * 1000.0) / 10.0 : 0.0;
-                        return new LeaderboardEntryDto(name, leagueTier, raw.rank(), raw.lp(), raw.wins(), raw.losses(), winRate);
+                        return new LeaderboardEntryDto(name, raw.puuid(), leagueTier, raw.rank(), raw.lp(), raw.wins(), raw.losses(), winRate);
                     }))
                     .toList();
 

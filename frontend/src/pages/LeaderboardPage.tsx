@@ -172,8 +172,11 @@ export default function LeaderboardPage() {
                 const globalRank = page * PAGE_SIZE + i + 1;
                 return (
                   <tr
-                    key={`${entry.summonerName}-${i}`}
+                    key={`${entry.puuid || entry.summonerName}-${i}`}
                     style={styles.row}
+                    onClick={() => {
+                      if (entry.puuid) navigate(`/player/puuid/${region}/${encodeURIComponent(entry.puuid)}`);
+                    }}
                     onMouseEnter={(e) => {
                       (e.currentTarget as HTMLTableRowElement).style.background =
                         "rgba(255,255,255,0.04)";
@@ -387,7 +390,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   row: {
     transition: "background 0.1s ease",
-    cursor: "default",
+    cursor: "pointer",
   },
   td: {
     padding: "10px 16px",

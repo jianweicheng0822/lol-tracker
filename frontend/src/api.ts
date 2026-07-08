@@ -371,6 +371,26 @@ export async function createPortalSession(): Promise<{ url: string }> {
  * @param tier - The apex tier: "challenger", "grandmaster", or "master".
  * @returns An array of leaderboard entries sorted by LP descending.
  */
+export async function fetchMultiSearch(players: string[], region: string) {
+  const res = await fetch(`${BASE}/api/multi-search`, fetchOpts({
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ players, region }),
+  }));
+  if (!res.ok) throw new Error(await readErrorMessage(res));
+  return res.json();
+}
+
+export async function fetchLiveGame(puuid: string, region: string) {
+  const res = await fetch(
+    `${BASE}/api/live-game?puuid=${encodeURIComponent(puuid)}&region=${region}`,
+    fetchOpts()
+  );
+  if (res.status === 404) return null;
+  if (!res.ok) throw new Error(await readErrorMessage(res));
+  return res.json();
+}
+
 export async function fetchLeaderboard(region: string, queue: string, tier: string, page = 0, size = 50) {
   const res = await fetch(
     `${BASE}/api/leaderboard?region=${encodeURIComponent(region)}&queue=${encodeURIComponent(queue)}&tier=${encodeURIComponent(tier)}&page=${page}&size=${size}`,

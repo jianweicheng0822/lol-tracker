@@ -15,8 +15,9 @@ import TabBar from "../components/TabBar";
 import OverviewTab from "../components/tabs/OverviewTab";
 import ChampionsTab from "../components/tabs/ChampionsTab";
 import { useTabNavigation } from "../hooks/useTabNavigation";
-import { fetchAccount, fetchAccountByPuuid, fetchMatchSummaries, fetchStats, fetchRanked, checkIsFavorite, addFavorite, removeFavorite, fetchTier, getAuthToken, setAuthToken } from "../api";
-import type { Region, Account, MatchSummary, PlayerStats, RankedEntry } from "../types";
+import { fetchAccount, fetchAccountByPuuid, fetchMatchSummaries, fetchStats, fetchRanked, checkIsFavorite, addFavorite, removeFavorite, fetchTier, fetchLiveGame, getAuthToken, setAuthToken } from "../api";
+import type { Region, Account, MatchSummary, PlayerStats, RankedEntry, LiveGame } from "../types";
+import LiveGameBanner from "../components/LiveGameBanner";
 import { computeStreak, computeClimbStatus } from "../utils/playerInsights";
 import { COLORS } from "../utils/colors";
 
@@ -33,6 +34,7 @@ export default function PlayerPage() {
   const [ranked, setRanked] = useState<RankedEntry[]>([]);
   const [isFav, setIsFav] = useState(false);
   const [tier, setTier] = useState(0);
+  const [liveGame, setLiveGame] = useState<LiveGame | null>(null);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
@@ -52,6 +54,7 @@ export default function PlayerPage() {
     setStats(null);
     setRanked([]);
     setIsFav(false);
+    setLiveGame(null);
     setHasMore(true);
 
     try {
@@ -66,11 +69,12 @@ export default function PlayerPage() {
       setTier(tierData.tier);
 
       const matchCount = 20;
-      const [matchData, statsData, rankedData, favStatus] = await Promise.all([
+      const [matchData, statsData, rankedData, favStatus, liveGameData] = await Promise.all([
         fetchMatchSummaries(acc.puuid, region, matchCount),
         fetchStats(acc.puuid, region, 20),
         fetchRanked(acc.puuid, region).catch((e) => { console.error("Ranked fetch failed:", e); return []; }),
         checkIsFavorite(acc.puuid),
+        fetchLiveGame(acc.puuid, region).catch(() => null),
       ]);
 
       if (cancelled.current) return;
@@ -80,6 +84,7 @@ export default function PlayerPage() {
       setStats(statsData);
       setRanked(Array.isArray(rankedData) ? rankedData : []);
       setIsFav(favStatus);
+      setLiveGame(liveGameData || null);
       setStatus("done");
     } catch (e: unknown) {
       if (cancelled.current) return;
@@ -193,6 +198,8 @@ export default function PlayerPage() {
               streak={computeStreak(matches)}
               climbStatus={computeClimbStatus(ranked)}
             />
+
+            {liveGame && <LiveGameBanner game={liveGame} region={region!} />}
 
             <TabBar activeTab={activeTab} onTabChange={setTab} />
 

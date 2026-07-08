@@ -188,6 +188,42 @@ export type LeaderboardEntry = {
   winRate: number;
 };
 
+/** A player result from multi-search lookup. */
+export type MultiSearchPlayer = {
+  gameName: string;
+  tagLine: string;
+  puuid: string | null;
+  profileIconId: number;
+  rankedEntries: RankedEntry[];
+  error: string | null;
+};
+
+/** Live game data for a player currently in a match. */
+export type LiveGameParticipant = {
+  puuid: string;
+  gameName: string;
+  tagLine: string;
+  championId: number;
+  teamId: number;
+  spell1Id: number;
+  spell2Id: number;
+  tier: string | null;
+  rank: string | null;
+  leaguePoints: number;
+  wins: number;
+  losses: number;
+  winRate: number;
+};
+
+/** Live game overview with all participants. */
+export type LiveGame = {
+  gameId: number;
+  gameMode: string;
+  gameStartTime: number;
+  gameLength: number;
+  participants: LiveGameParticipant[];
+};
+
 /** A saved favorite player entry persisted in the user's profile. */
 export type FavoritePlayer = {
   id: number;

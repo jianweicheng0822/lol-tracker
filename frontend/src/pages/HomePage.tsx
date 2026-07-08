@@ -42,6 +42,14 @@ export default function HomePage() {
     <div style={styles.page}>
       <div style={styles.authCorner}>
         <button
+          onClick={() => navigate("/multi-search")}
+          style={styles.navLink}
+          onMouseEnter={(e) => { e.currentTarget.style.background = `${COLORS.gold}20`; }}
+          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+        >
+          Multi-Search
+        </button>
+        <button
           onClick={() => navigate("/leaderboard")}
           style={styles.navLink}
           onMouseEnter={(e) => { e.currentTarget.style.background = `${COLORS.gold}20`; }}

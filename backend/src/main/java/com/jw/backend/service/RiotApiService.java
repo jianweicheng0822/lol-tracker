@@ -243,6 +243,34 @@ public class RiotApiService {
         return result;
     }
 
+    /**
+     * Spectator-v5 active game lookup. 30s TTL — game state changes rapidly.
+     * Returns null if the player is not currently in a game (Riot returns 404).
+     */
+    public String getActiveGame(String puuid, RiotRegion region) {
+        long ttlMs = 30_000;
+
+        String baseUrl = "https://" + region.platform() + ".api.riotgames.com";
+        String cacheKey = "spectator:" + region.platform() + ":" + puuid;
+
+        String cached = getCached(cacheKey);
+        if (cached != null) return cached;
+
+        riotRateLimiter.acquire();
+        try {
+            String result = getClient(baseUrl).get()
+                    .uri("/lol/spectator/v5/active-games/by-summoner/{puuid}", puuid)
+                    .header("X-Riot-Token", apiKey)
+                    .retrieve()
+                    .body(String.class);
+
+            putCached(cacheKey, result, ttlMs);
+            return result;
+        } catch (org.springframework.web.client.HttpClientErrorException.NotFound e) {
+            return null;
+        }
+    }
+
     private final Executor riotExecutor = Executors.newFixedThreadPool(6);
 
     public List<com.jw.backend.dto.MatchSummaryDto> getRecentMatchSummaries(String puuid, RiotRegion region, int count) {

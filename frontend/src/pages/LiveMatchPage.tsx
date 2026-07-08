@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import type { LiveGame, LiveGameParticipant } from "../types";
 import type { Champion } from "../utils/champion";
@@ -46,33 +46,31 @@ export default function LiveMatchPage() {
     loadChampionMap(version).then(setChampionMap);
   }, [version]);
 
-  useEffect(() => {
+  const load = useCallback(async (cancelled = { current: false }) => {
     if (!region || !gameName || !tag) return;
-
-    let cancelled = false;
-    setStatus("loading");
-
-    (async () => {
-      try {
-        const acc = await fetchAccount(decodeURIComponent(gameName), decodeURIComponent(tag), region);
-        const liveData = await fetchLiveGame(acc.puuid, region);
-        if (cancelled) return;
-        if (!liveData) {
-          setStatus("error");
-          setErrorMsg("This player is not currently in a game.");
-          return;
-        }
-        setGame(liveData);
-        setStatus("done");
-      } catch (e) {
-        if (cancelled) return;
+    try {
+      const acc = await fetchAccount(decodeURIComponent(gameName), decodeURIComponent(tag), region);
+      const liveData = await fetchLiveGame(acc.puuid, region);
+      if (cancelled.current) return;
+      if (!liveData) {
         setStatus("error");
-        setErrorMsg(e instanceof Error ? e.message : "Failed to load live game data.");
+        setErrorMsg("This player is not currently in a game.");
+        return;
       }
-    })();
-
-    return () => { cancelled = true; };
+      setGame(liveData);
+      setStatus("done");
+    } catch (e) {
+      if (cancelled.current) return;
+      setStatus("error");
+      setErrorMsg(e instanceof Error ? e.message : "Failed to load live game data.");
+    }
   }, [region, gameName, tag]);
+
+  useEffect(() => {
+    const cancelled = { current: false };
+    load(cancelled);
+    return () => { cancelled.current = true; };
+  }, [load]);
 
   const blueTeam = game?.participants.filter((p) => p.teamId === 100) || [];
   const redTeam = game?.participants.filter((p) => p.teamId === 200) || [];

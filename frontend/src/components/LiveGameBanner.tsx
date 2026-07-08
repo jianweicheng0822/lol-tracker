@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { LiveGame, LiveGameParticipant } from "../types";
-import { useDdragonVersion, ddragonBase, spellIconUrl, hideOnError } from "../utils/ddragon";
-import { loadChampionMap, getChampionName } from "../utils/champion";
+import { useDdragonVersion, ddragonBase, hideOnError } from "../utils/ddragon";
+import { loadChampionMap } from "../utils/champion";
 import { TIER_COLORS } from "../utils/lp";
 import { COLORS, winRateColor } from "../utils/colors";
 
@@ -41,14 +41,6 @@ export default function LiveGameBanner({ game, region }: { game: LiveGame; regio
 
   const blueTeam = game.participants.filter(p => p.teamId === 100);
   const redTeam = game.participants.filter(p => p.teamId === 200);
-
-  const getChampIconUrl = (championId: number): string => {
-    const name = championMap[championId];
-    if (!name) return "";
-    // DDragon uses internal name (no spaces), but champion.json name may differ
-    // We use the ID-based lookup from champion.json which gives us the proper name
-    return `${base}/champion/${name.replace(/[^a-zA-Z]/g, "")}.png`;
-  };
 
   return (
     <div style={styles.banner}>

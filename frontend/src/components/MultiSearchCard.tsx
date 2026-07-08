@@ -4,11 +4,6 @@ import { useDdragonVersion, ddragonBase, hideOnError } from "../utils/ddragon";
 import { TIER_COLORS } from "../utils/lp";
 import { COLORS, winRateColor } from "../utils/colors";
 
-const QUEUE_LABELS: Record<string, string> = {
-  RANKED_SOLO_5x5: "Solo/Duo",
-  RANKED_FLEX_SR: "Flex",
-};
-
 const TIER_ICON_BASE =
   "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-mini-crests";
 

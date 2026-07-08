@@ -1,5 +1,3 @@
-import { useDdragonVersion } from "./ddragon";
-
 let cachedMap: Record<number, string> | null = null;
 let mapPromise: Promise<Record<number, string>> | null = null;
 

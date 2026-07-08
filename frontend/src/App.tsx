@@ -10,6 +10,7 @@ import MatchDetailPage from "./pages/MatchDetailPage";
 import { CheckoutSuccessPage, CheckoutCancelPage } from "./pages/CheckoutResultPage";
 import LeaderboardPage from "./pages/LeaderboardPage";
 import MultiSearchPage from "./pages/MultiSearchPage";
+import LiveMatchPage from "./pages/LiveMatchPage";
 
 export default function App() {
   return (
@@ -20,6 +21,7 @@ export default function App() {
       <Route path="/match/:region/:matchId" element={<MatchDetailPage />} />
       <Route path="/leaderboard" element={<LeaderboardPage />} />
       <Route path="/multi-search" element={<MultiSearchPage />} />
+      <Route path="/live/:region/:gameName/:tag" element={<LiveMatchPage />} />
       <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
       <Route path="/checkout/cancel" element={<CheckoutCancelPage />} />
     </Routes>

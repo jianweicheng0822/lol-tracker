@@ -17,7 +17,7 @@ import ChampionsTab from "../components/tabs/ChampionsTab";
 import { useTabNavigation } from "../hooks/useTabNavigation";
 import { fetchAccount, fetchAccountByPuuid, fetchMatchSummaries, fetchStats, fetchRanked, checkIsFavorite, addFavorite, removeFavorite, fetchTier, fetchLiveGame, getAuthToken, setAuthToken } from "../api";
 import type { Region, Account, MatchSummary, PlayerStats, RankedEntry, LiveGame } from "../types";
-import LiveGameBanner from "../components/LiveGameBanner";
+import LiveGameCard from "../components/LiveGameCard";
 import { computeStreak, computeClimbStatus } from "../utils/playerInsights";
 import { COLORS } from "../utils/colors";
 
@@ -102,6 +102,17 @@ export default function PlayerPage() {
   /** Re-fetches all data when the refresh button is clicked in ProfileHeader. */
   const handleRefresh = () => {
     load();
+  };
+
+  /** Re-checks live game status when the user clicks "Check Again". */
+  const handleCheckAgain = async () => {
+    if (!account || !region) return;
+    try {
+      const data = await fetchLiveGame(account.puuid, region);
+      setLiveGame(data || null);
+    } catch {
+      setLiveGame(null);
+    }
   };
 
   /** Fetches the next 10 matches starting at the current offset and appends to the list. */
@@ -199,7 +210,13 @@ export default function PlayerPage() {
               climbStatus={computeClimbStatus(ranked)}
             />
 
-            {liveGame && <LiveGameBanner game={liveGame} region={region!} />}
+            <LiveGameCard
+              game={liveGame}
+              region={region!}
+              gameName={account.gameName}
+              tag={account.tagLine}
+              onCheckAgain={handleCheckAgain}
+            />
 
             <TabBar activeTab={activeTab} onTabChange={setTab} />
 

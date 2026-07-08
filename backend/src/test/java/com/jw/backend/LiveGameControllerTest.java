@@ -35,7 +35,7 @@ class LiveGameControllerTest {
     @Test
     void getLiveGame_inGame_returnsOk() throws Exception {
         LiveGameDto dto = new LiveGameDto(
-                123456L, "CLASSIC", System.currentTimeMillis(), 300,
+                123456L, "CLASSIC", 420, System.currentTimeMillis(), 300,
                 List.of(
                         new LiveGameParticipantDto("puuid-1", "Player1", "NA1", 103, 100, 4, 14,
                                 "GOLD", "II", 45, 50, 40, 55.6),
@@ -51,6 +51,7 @@ class LiveGameControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.gameId").value(123456))
                 .andExpect(jsonPath("$.gameMode").value("CLASSIC"))
+                .andExpect(jsonPath("$.queueId").value(420))
                 .andExpect(jsonPath("$.participants.length()").value(2))
                 .andExpect(jsonPath("$.participants[0].gameName").value("Player1"))
                 .andExpect(jsonPath("$.participants[0].tier").value("GOLD"))

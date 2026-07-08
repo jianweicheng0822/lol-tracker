@@ -43,6 +43,7 @@ public class LiveGameService {
             JsonNode root = objectMapper.readTree(spectatorJson);
             long gameId = root.path("gameId").asLong(0);
             String gameMode = root.path("gameMode").asText("CLASSIC");
+            int queueId = root.path("gameQueueConfigId").asInt(0);
             long gameStartTime = root.path("gameStartTime").asLong(0);
             long gameLength = root.path("gameLength").asLong(0);
 
@@ -64,7 +65,7 @@ public class LiveGameService {
                     .map(CompletableFuture::join)
                     .toList();
 
-            return Optional.of(new LiveGameDto(gameId, gameMode, gameStartTime, gameLength, participants));
+            return Optional.of(new LiveGameDto(gameId, gameMode, queueId, gameStartTime, gameLength, participants));
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse active game JSON", e);
         }

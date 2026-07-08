@@ -219,6 +219,7 @@ export type LiveGameParticipant = {
 export type LiveGame = {
   gameId: number;
   gameMode: string;
+  queueId: number;
   gameStartTime: number;
   gameLength: number;
   participants: LiveGameParticipant[];

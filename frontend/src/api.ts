@@ -13,6 +13,14 @@ const BASE = import.meta.env.DEV ? "http://localhost:8080" : "";
 
 const TOKEN_KEY = "lol_tracker_jwt";
 
+const DEFAULT_TIMEOUT_MS = 15_000;
+
+function fetchWithTimeout(url: string, opts?: RequestInit, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...opts, signal: controller.signal }).finally(() => clearTimeout(timer));
+}
+
 /**
  * Persist or clear the JWT authentication token in local storage.
  *
@@ -63,7 +71,7 @@ function fetchOpts(extra?: RequestInit): RequestInit {
  * @returns The authentication response containing the JWT token.
  */
 export async function login(username: string, password: string) {
-  const res = await fetch(`${BASE}/api/auth/login`, {
+  const res = await fetchWithTimeout(`${BASE}/api/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password }),
@@ -82,7 +90,7 @@ export async function login(username: string, password: string) {
  * @returns The registration response containing the JWT token.
  */
 export async function register(username: string, password: string) {
-  const res = await fetch(`${BASE}/api/auth/register`, {
+  const res = await fetchWithTimeout(`${BASE}/api/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password }),
@@ -121,7 +129,7 @@ export async function readErrorMessage(res: Response): Promise<string> {
  * @returns The resolved account object including PUUID and profile icon.
  */
 export async function fetchAccount(gameName: string, tag: string, region: string) {
-  const res = await fetch(
+  const res = await fetchWithTimeout(
     `${BASE}/api/summoner?gameName=${encodeURIComponent(gameName)}&tag=${encodeURIComponent(tag)}&region=${region}`,
     fetchOpts()
   );
@@ -137,7 +145,7 @@ export async function fetchAccount(gameName: string, tag: string, region: string
  * @returns The resolved account object including current gameName/tagLine and profile icon.
  */
 export async function fetchAccountByPuuid(puuid: string, region: string) {
-  const res = await fetch(
+  const res = await fetchWithTimeout(
     `${BASE}/api/summoner/by-puuid?puuid=${encodeURIComponent(puuid)}&region=${region}`,
     fetchOpts()
   );
@@ -155,9 +163,10 @@ export async function fetchAccountByPuuid(puuid: string, region: string) {
  * @returns An array of match summary objects.
  */
 export async function fetchMatchSummaries(puuid: string, region: string, count = 10, start = 0) {
-  const res = await fetch(
+  const res = await fetchWithTimeout(
     `${BASE}/api/matches/summary?puuid=${encodeURIComponent(puuid)}&region=${region}&count=${count}&start=${start}`,
-    fetchOpts()
+    fetchOpts(),
+    30_000
   );
   if (!res.ok) throw new Error(await readErrorMessage(res));
   return res.json();
@@ -172,9 +181,10 @@ export async function fetchMatchSummaries(puuid: string, region: string, count =
  * @returns Aggregated stats including win rate, average KDA, etc.
  */
 export async function fetchStats(puuid: string, region: string, count = 10) {
-  const res = await fetch(
+  const res = await fetchWithTimeout(
     `${BASE}/api/stats?puuid=${encodeURIComponent(puuid)}&region=${region}&count=${count}`,
-    fetchOpts()
+    fetchOpts(),
+    30_000
   );
   if (!res.ok) throw new Error(await readErrorMessage(res));
   return res.json();
@@ -188,7 +198,7 @@ export async function fetchStats(puuid: string, region: string, count = 10) {
  * @returns An array of ranked entry objects with tier, rank, and LP.
  */
 export async function fetchRanked(puuid: string, region: string) {
-  const res = await fetch(
+  const res = await fetchWithTimeout(
     `${BASE}/api/ranked?puuid=${encodeURIComponent(puuid)}&region=${region}`,
     fetchOpts()
   );
@@ -204,7 +214,7 @@ export async function fetchRanked(puuid: string, region: string) {
  * @returns The complete match detail with participant stats and team data.
  */
 export async function fetchMatchDetail(matchId: string, region: string) {
-  const res = await fetch(
+  const res = await fetchWithTimeout(
     `${BASE}/api/matches/full-detail?matchId=${encodeURIComponent(matchId)}&region=${region}`,
     fetchOpts()
   );
@@ -218,7 +228,7 @@ export async function fetchMatchDetail(matchId: string, region: string) {
  * @returns An array of saved favorite player objects.
  */
 export async function fetchFavorites() {
-  const res = await fetch(`${BASE}/api/favorites`, fetchOpts());
+  const res = await fetchWithTimeout(`${BASE}/api/favorites`, fetchOpts());
   if (!res.ok) throw new Error(await readErrorMessage(res));
   return res.json();
 }
@@ -230,7 +240,7 @@ export async function fetchFavorites() {
  * @returns True if the player is favorited, false otherwise.
  */
 export async function checkIsFavorite(puuid: string): Promise<boolean> {
-  const res = await fetch(`${BASE}/api/favorites/check/${puuid}`, fetchOpts());
+  const res = await fetchWithTimeout(`${BASE}/api/favorites/check/${puuid}`, fetchOpts());
   if (!res.ok) return false;
   const data = await res.json();
   return data.isFavorite;
@@ -246,7 +256,7 @@ export async function checkIsFavorite(puuid: string): Promise<boolean> {
  * @returns The created favorite entry.
  */
 export async function addFavorite(puuid: string, gameName: string, tagLine: string, region: string) {
-  const res = await fetch(`${BASE}/api/favorites`, fetchOpts({
+  const res = await fetchWithTimeout(`${BASE}/api/favorites`, fetchOpts({
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify({ puuid, gameName, tagLine, region }),
@@ -261,7 +271,7 @@ export async function addFavorite(puuid: string, gameName: string, tagLine: stri
  * @param puuid - The PUUID of the player to remove.
  */
 export async function removeFavorite(puuid: string) {
-  const res = await fetch(`${BASE}/api/favorites/${puuid}`, fetchOpts({ method: "DELETE" }));
+  const res = await fetchWithTimeout(`${BASE}/api/favorites/${puuid}`, fetchOpts({ method: "DELETE" }));
   if (!res.ok) throw new Error(await readErrorMessage(res));
 }
 
@@ -275,7 +285,7 @@ export async function fetchChampionStats(puuid: string, count?: number, queueId?
   const params = new URLSearchParams({ puuid });
   if (count != null) params.set("count", String(count));
   if (queueId != null) params.set("queueId", String(queueId));
-  const res = await fetch(
+  const res = await fetchWithTimeout(
     `${BASE}/api/trends/champions?${params}`,
     fetchOpts()
   );
@@ -290,7 +300,7 @@ export async function fetchChampionStats(puuid: string, count?: number, queueId?
  * @returns An array of match trend point objects ordered chronologically.
  */
 export async function fetchMatchTrends(puuid: string) {
-  const res = await fetch(
+  const res = await fetchWithTimeout(
     `${BASE}/api/trends/matches?puuid=${encodeURIComponent(puuid)}`,
     fetchOpts()
   );
@@ -306,7 +316,7 @@ export async function fetchMatchTrends(puuid: string) {
  * @returns An array of LP snapshot objects ordered chronologically.
  */
 export async function fetchLpHistory(puuid: string, queueType = "RANKED_SOLO_5x5") {
-  const res = await fetch(
+  const res = await fetchWithTimeout(
     `${BASE}/api/trends/lp?puuid=${encodeURIComponent(puuid)}&queueType=${encodeURIComponent(queueType)}`,
     fetchOpts()
   );
@@ -320,7 +330,7 @@ export async function fetchLpHistory(puuid: string, queueType = "RANKED_SOLO_5x5
  * @returns An object containing the numeric tier value.
  */
 export async function fetchTier(): Promise<{ tier: number }> {
-  const res = await fetch(`${BASE}/api/tier`, fetchOpts());
+  const res = await fetchWithTimeout(`${BASE}/api/tier`, fetchOpts());
   if (!res.ok) throw new Error(await readErrorMessage(res));
   return res.json();
 }
@@ -332,7 +342,7 @@ export async function fetchTier(): Promise<{ tier: number }> {
  */
 /** Create a Stripe Checkout session and return the redirect URL. */
 export async function createCheckoutSession(): Promise<{ url: string }> {
-  const res = await fetch(`${BASE}/api/checkout/session`, { ...fetchOpts(), method: "POST" });
+  const res = await fetchWithTimeout(`${BASE}/api/checkout/session`, { ...fetchOpts(), method: "POST" });
   if (!res.ok) throw new Error(await readErrorMessage(res));
   return res.json();
 }
@@ -344,21 +354,21 @@ export async function fetchSubscription(): Promise<{
   currentPeriodEnd?: number;
   cancelAtPeriodEnd?: boolean;
 }> {
-  const res = await fetch(`${BASE}/api/subscription`, fetchOpts());
+  const res = await fetchWithTimeout(`${BASE}/api/subscription`, fetchOpts());
   if (!res.ok) throw new Error(await readErrorMessage(res));
   return res.json();
 }
 
 /** Cancel subscription at end of current billing period. */
 export async function cancelSubscription(): Promise<{ cancelAtPeriodEnd: boolean }> {
-  const res = await fetch(`${BASE}/api/subscription/cancel`, { ...fetchOpts(), method: "POST" });
+  const res = await fetchWithTimeout(`${BASE}/api/subscription/cancel`, { ...fetchOpts(), method: "POST" });
   if (!res.ok) throw new Error(await readErrorMessage(res));
   return res.json();
 }
 
 /** Open Stripe Customer Portal for billing management. */
 export async function createPortalSession(): Promise<{ url: string }> {
-  const res = await fetch(`${BASE}/api/checkout/portal`, { ...fetchOpts(), method: "POST" });
+  const res = await fetchWithTimeout(`${BASE}/api/checkout/portal`, { ...fetchOpts(), method: "POST" });
   if (!res.ok) throw new Error(await readErrorMessage(res));
   return res.json();
 }
@@ -372,7 +382,7 @@ export async function createPortalSession(): Promise<{ url: string }> {
  * @returns An array of leaderboard entries sorted by LP descending.
  */
 export async function fetchMultiSearch(players: string[], region: string) {
-  const res = await fetch(`${BASE}/api/multi-search`, fetchOpts({
+  const res = await fetchWithTimeout(`${BASE}/api/multi-search`, fetchOpts({
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify({ players, region }),
@@ -382,7 +392,7 @@ export async function fetchMultiSearch(players: string[], region: string) {
 }
 
 export async function fetchLiveGame(puuid: string, region: string) {
-  const res = await fetch(
+  const res = await fetchWithTimeout(
     `${BASE}/api/live-game?puuid=${encodeURIComponent(puuid)}&region=${region}`,
     fetchOpts()
   );
@@ -392,7 +402,7 @@ export async function fetchLiveGame(puuid: string, region: string) {
 }
 
 export async function fetchLeaderboard(region: string, queue: string, tier: string, page = 0, size = 50) {
-  const res = await fetch(
+  const res = await fetchWithTimeout(
     `${BASE}/api/leaderboard?region=${encodeURIComponent(region)}&queue=${encodeURIComponent(queue)}&tier=${encodeURIComponent(tier)}&page=${page}&size=${size}`,
     fetchOpts()
   );

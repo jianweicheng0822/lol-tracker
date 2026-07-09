@@ -69,13 +69,18 @@ export default function PlayerPage() {
       setTier(tierData.tier);
 
       const matchCount = 20;
-      const [matchData, statsData, rankedData, favStatus, liveGameData] = await Promise.all([
+      // Fetch matches first so their details populate the Redis cache,
+      // then stats can reuse the cached match data instead of re-fetching.
+      const [matchData, rankedData, favStatus, liveGameData] = await Promise.all([
         fetchMatchSummaries(acc.puuid, region, matchCount),
-        fetchStats(acc.puuid, region, 20),
         fetchRanked(acc.puuid, region).catch((e) => { console.error("Ranked fetch failed:", e); return []; }),
         checkIsFavorite(acc.puuid),
         fetchLiveGame(acc.puuid, region).catch(() => null),
       ]);
+
+      if (cancelled.current) return;
+
+      const statsData = await fetchStats(acc.puuid, region, 20);
 
       if (cancelled.current) return;
       const matchList = Array.isArray(matchData) ? matchData : [];

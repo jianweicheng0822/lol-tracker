@@ -6,6 +6,7 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.Semaphore;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Semaphore-based token bucket that enforces Riot API rate limits (100 req / 2 min)
@@ -17,15 +18,20 @@ public class RiotRateLimiter {
 
     private static final Logger log = LoggerFactory.getLogger(RiotRateLimiter.class);
     private static final int MAX_PERMITS = 100;
+    private static final long ACQUIRE_TIMEOUT_SECONDS = 10;
 
     private final Semaphore semaphore = new Semaphore(MAX_PERMITS, true);
 
     /**
-     * Blocking acquire — used by background ingestion. Waits until a permit is available.
+     * Acquire a permit with a timeout. Waits up to 10 seconds for a permit
+     * to become available; throws if none is available within the deadline.
      */
     public void acquire() {
         try {
-            semaphore.acquire();
+            boolean acquired = semaphore.tryAcquire(ACQUIRE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+            if (!acquired) {
+                throw new RuntimeException("Riot API rate limit exhausted. Please try again shortly.");
+            }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new RuntimeException("Rate limiter interrupted", e);

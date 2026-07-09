@@ -13,6 +13,8 @@ import com.jw.backend.service.LpTrackingService;
 import com.jw.backend.service.PlayerTrackingService;
 import com.jw.backend.service.RiotApiService;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.client.HttpClientErrorException;
+import org.springframework.web.client.HttpServerErrorException;
 
 /**
  * Combine Riot Account-v1 and Summoner-v4 responses into a single enriched payload.
@@ -67,6 +69,8 @@ public class SummonerController {
         try {
             String accountJson = riotApiService.getAccountByRiotId(gameName, tag, region);
             return enrichAccount(accountJson, region);
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException("Failed to enrich account data", e);
         }
@@ -90,6 +94,8 @@ public class SummonerController {
         try {
             String accountJson = riotApiService.getAccountByPuuid(puuid, region);
             return enrichAccount(accountJson, region);
+        } catch (HttpClientErrorException | HttpServerErrorException e) {
+            throw e;
         } catch (Exception e) {
             throw new RuntimeException("Failed to enrich account data by PUUID", e);
         }

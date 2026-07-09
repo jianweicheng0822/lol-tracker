@@ -26,6 +26,10 @@ export default function HomePage() {
   const [topPlayers, setTopPlayers] = useState<LeaderboardEntry[]>([]);
 
   const loadFavorites = useCallback(() => {
+    if (!getAuthToken()) {
+      setFavorites([]);
+      return;
+    }
     fetchFavorites()
       .then(data => setFavorites(data))
       .catch(e => console.error("Failed to load favorites:", e));

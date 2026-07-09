@@ -69,9 +69,16 @@ describe("HomePage", () => {
     expect(screen.getByText("Log out")).toBeInTheDocument();
   });
 
-  it("loads favorites on mount", () => {
+  it("loads favorites on mount when authenticated", () => {
+    vi.mocked(api.getAuthToken).mockReturnValue("some-token");
     render(<HomePage />);
     expect(api.fetchFavorites).toHaveBeenCalled();
+  });
+
+  it("skips loading favorites when not authenticated", () => {
+    vi.mocked(api.getAuthToken).mockReturnValue(null);
+    render(<HomePage />);
+    expect(api.fetchFavorites).not.toHaveBeenCalled();
   });
 
   it("renders favorites list component", () => {

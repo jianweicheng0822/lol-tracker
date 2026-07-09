@@ -36,11 +36,15 @@ export default function HomePage() {
   }, []);
 
   useEffect(() => {
-    loadFavorites();
+    if (getAuthToken()) {
+      fetchFavorites()
+        .then(data => setFavorites(data))
+        .catch(e => console.error("Failed to load favorites:", e));
+    }
     fetchLeaderboard("NA", "RANKED_SOLO_5x5", "challenger", 0, 3)
       .then((data: { entries: LeaderboardEntry[] }) => setTopPlayers(data.entries))
       .catch(e => console.error("Failed to load leaderboard preview:", e));
-  }, [loadFavorites]);
+  }, []);
 
   return (
     <div style={styles.page}>

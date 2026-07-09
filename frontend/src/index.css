@@ -22,3 +22,8 @@ body {
   border-color: rgba(212,160,23,0.45) !important;
   box-shadow: 0 0 0 2px rgba(212,160,23,0.25);
 }
+
+@keyframes shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}

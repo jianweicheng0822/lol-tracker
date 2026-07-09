@@ -38,6 +38,7 @@ export default function PlayerPage() {
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [hasMore, setHasMore] = useState(true);
 
+  const [isCheckingLive, setIsCheckingLive] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
 
   const [status, setStatus] = useState<"loading" | "error" | "done">("loading");
@@ -111,12 +112,15 @@ export default function PlayerPage() {
 
   /** Re-checks live game status when the user clicks "Check Again". */
   const handleCheckAgain = async () => {
-    if (!account || !region) return;
+    if (!account || !region || isCheckingLive) return;
+    setIsCheckingLive(true);
     try {
       const data = await fetchLiveGame(account.puuid, region);
       setLiveGame(data || null);
     } catch {
       setLiveGame(null);
+    } finally {
+      setIsCheckingLive(false);
     }
   };
 
@@ -221,6 +225,7 @@ export default function PlayerPage() {
               gameName={account.gameName}
               tag={account.tagLine}
               onCheckAgain={handleCheckAgain}
+              isChecking={isCheckingLive}
             />
 
             <TabBar activeTab={activeTab} onTabChange={setTab} />

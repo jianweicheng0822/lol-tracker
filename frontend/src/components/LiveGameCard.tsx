@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import type { LiveGame } from "../types";
 import type { Champion } from "../utils/champion";
-import { useDdragonVersion, ddragonBase, hideOnError, QUEUE_NAMES } from "../utils/ddragon";
+import { useDdragonVersion, ddragonBase, QUEUE_NAMES, championIconOnError } from "../utils/ddragon";
 import { loadChampionMap } from "../utils/champion";
 import { COLORS } from "../utils/colors";
 
@@ -21,12 +21,14 @@ export default function LiveGameCard({
   gameName,
   tag,
   onCheckAgain,
+  isChecking = false,
 }: {
   game: LiveGame | null;
   region: string;
   gameName: string;
   tag: string;
   onCheckAgain: () => void;
+  isChecking?: boolean;
 }) {
   const navigate = useNavigate();
   const version = useDdragonVersion();
@@ -44,8 +46,12 @@ export default function LiveGameCard({
           <span style={styles.title}>Live Game</span>
         </div>
         <p style={styles.notInGame}>Not currently in a game</p>
-        <button style={styles.checkBtn} onClick={onCheckAgain}>
-          Check Again
+        <button
+          style={{ ...styles.checkBtn, ...(isChecking ? { opacity: 0.6, cursor: "default" } : {}) }}
+          onClick={isChecking ? undefined : onCheckAgain}
+          disabled={isChecking}
+        >
+          {isChecking ? "Checking..." : "Check Again"}
         </button>
       </div>
     );
@@ -114,7 +120,7 @@ function TeamIcons({
               alt={champName}
               title={champName}
               style={styles.champIcon}
-              onError={hideOnError}
+              onError={championIconOnError(champId)}
             />
           );
         })}

@@ -109,6 +109,23 @@ export const SUMMONER_SPELLS: Record<number, string> = {
 export const championIconUrl = (name: string, base: string) =>
   `${base}/champion/${name}.png`;
 
+export const championIconFallbackUrl = (name: string) =>
+  `https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-icons/${name.toLowerCase()}.png`;
+
+/**
+ * onError handler for champion icon <img> elements that falls back to Community Dragon.
+ * If the Community Dragon URL also fails, the image is hidden.
+ */
+export const championIconOnError = (champId: string) => (e: React.SyntheticEvent<HTMLImageElement>) => {
+  const img = e.target as HTMLImageElement;
+  const fallback = championIconFallbackUrl(champId);
+  if (!img.src.includes("communitydragon.org")) {
+    img.src = fallback;
+  } else {
+    img.style.display = "none";
+  }
+};
+
 export const itemIconUrl = (id: number, base: string) =>
   `${base}/item/${id}.png`;
 

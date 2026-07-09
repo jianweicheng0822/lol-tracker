@@ -15,6 +15,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -25,9 +26,17 @@ import org.slf4j.LoggerFactory;
 public class LeaderboardService {
 
     private static final Logger log = LoggerFactory.getLogger(LeaderboardService.class);
+    private static final long CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
     private final RiotApiService riotApiService;
     private final ObjectMapper objectMapper;
     private final Executor nameResolver = Executors.newFixedThreadPool(8);
+
+    private record CachedPage(LeaderboardPage page, long timestamp) {
+        boolean isExpired() { return System.currentTimeMillis() - timestamp > CACHE_TTL_MS; }
+    }
+
+    private final ConcurrentHashMap<String, CachedPage> pageCache = new ConcurrentHashMap<>();
 
     public LeaderboardService(RiotApiService riotApiService, ObjectMapper objectMapper) {
         this.riotApiService = riotApiService;
@@ -37,6 +46,15 @@ public class LeaderboardService {
     public record LeaderboardPage(List<LeaderboardEntryDto> entries, int totalEntries) {}
 
     public LeaderboardPage getLeaderboard(String tier, String queue, RiotRegion region, int page, int size) {
+        String cacheKey = tier + ":" + queue + ":" + region.name() + ":" + page + ":" + size;
+        CachedPage cached = pageCache.get(cacheKey);
+        if (cached != null && !cached.isExpired()) {
+            log.debug("Leaderboard cache hit for {}", cacheKey);
+            return cached.page();
+        }
+        // Evict expired entries lazily
+        pageCache.entrySet().removeIf(e -> e.getValue().isExpired());
+
         String json = riotApiService.getLeagueByTier(tier, queue, region);
         try {
             JsonNode root = objectMapper.readTree(json);
@@ -80,7 +98,9 @@ public class LeaderboardService {
                     .toList();
 
             List<LeaderboardEntryDto> resolved = futures.stream().map(CompletableFuture::join).toList();
-            return new LeaderboardPage(resolved, totalEntries);
+            LeaderboardPage result = new LeaderboardPage(resolved, totalEntries);
+            pageCache.put(cacheKey, new CachedPage(result, System.currentTimeMillis()));
+            return result;
         } catch (Exception e) {
             throw new RuntimeException("Failed to parse league JSON for " + tier, e);
         }

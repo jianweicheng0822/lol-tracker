@@ -141,11 +141,50 @@ export default function LeaderboardPage() {
       </div>
 
       {status === "loading" && (
-        <div style={styles.statusMsg}>Loading leaderboard...</div>
+        <div style={styles.tableWrapper}>
+          <table style={styles.table}>
+            <thead>
+              <tr>
+                <th style={{ ...styles.th, width: 60, textAlign: "center" }}>#</th>
+                <th style={styles.th}>Player</th>
+                <th style={{ ...styles.th, width: 140, textAlign: "center" }}>LP</th>
+                <th style={{ ...styles.th, width: 100, textAlign: "center" }}>Win Rate</th>
+                <th style={{ ...styles.th, width: 120, textAlign: "center" }}>W / L</th>
+              </tr>
+            </thead>
+            <tbody>
+              {Array.from({ length: 10 }).map((_, i) => (
+                <tr key={i}>
+                  <td style={{ ...styles.td, textAlign: "center" }}>
+                    <div style={styles.skeleton} />
+                  </td>
+                  <td style={styles.td}>
+                    <div style={{ ...styles.skeleton, width: "60%" }} />
+                  </td>
+                  <td style={{ ...styles.td, textAlign: "center" }}>
+                    <div style={{ ...styles.skeleton, width: "50%", margin: "0 auto" }} />
+                  </td>
+                  <td style={{ ...styles.td, textAlign: "center" }}>
+                    <div style={{ ...styles.skeleton, width: "40%", margin: "0 auto" }} />
+                  </td>
+                  <td style={{ ...styles.td, textAlign: "center" }}>
+                    <div style={{ ...styles.skeleton, width: "50%", margin: "0 auto" }} />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
       {status === "error" && (
-        <div style={{ ...styles.statusMsg, color: "#E84057" }}>
-          <strong>Error:</strong> {errorMsg}
+        <div style={styles.errorBox}>
+          <div><strong>Error:</strong> {errorMsg}</div>
+          <button
+            style={styles.retryBtn}
+            onClick={() => { setStatus("loading"); setFetchKey((k) => k + 1); }}
+          >
+            Retry
+          </button>
         </div>
       )}
       {status === "done" && (
@@ -433,5 +472,33 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 13,
     color: COLORS.textSecondary,
     fontWeight: 600,
+  },
+  skeleton: {
+    height: 14,
+    width: "30%",
+    borderRadius: 4,
+    background: `linear-gradient(90deg, ${COLORS.cardBorder} 25%, rgba(255,255,255,0.06) 50%, ${COLORS.cardBorder} 75%)`,
+    backgroundSize: "200% 100%",
+    animation: "shimmer 1.5s infinite",
+  },
+  errorBox: {
+    textAlign: "center" as const,
+    color: "#E84057",
+    padding: "40px 0",
+    fontSize: 15,
+    display: "flex",
+    flexDirection: "column" as const,
+    alignItems: "center",
+    gap: 12,
+  },
+  retryBtn: {
+    background: "transparent",
+    color: COLORS.textSecondary,
+    border: `1px solid ${COLORS.cardBorder}`,
+    borderRadius: 6,
+    padding: "8px 18px",
+    cursor: "pointer",
+    fontWeight: 600,
+    fontSize: 13,
   },
 };

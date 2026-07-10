@@ -94,7 +94,7 @@ export default function PerformanceModal({ puuid, onClose }: Props) {
     <div style={styles.overlay} onClick={onClose}>
       <div style={styles.modal} onClick={(e) => e.stopPropagation()}>
         <div style={styles.header}>
-          <span style={styles.headerTitle}>LP History</span>
+          <span style={styles.headerTitle}>Ranked Progression</span>
           <button style={styles.closeBtn} onClick={onClose}>&times;</button>
         </div>
 

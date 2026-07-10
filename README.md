@@ -40,6 +40,12 @@ Full-stack League of Legends analytics dashboard with AI-powered match coaching.
 
 **Performance Analytics** — LP progression chart, rolling win rate trend, KDA and damage trends with moving average overlays, per-champion stats grid
 
+**Leaderboard** — Regional leaderboards for Challenger, Grandmaster, and Master tiers. Click any player to jump directly to their profile
+
+**Live Game** — Real-time in-game view for any active player via the Spectator API. Displays champions, ranks, and team compositions for the current match
+
+**Multi-Search** — Batch player lookup. Paste multiple Riot IDs to quickly view ranked stats and recent performance side by side
+
 **AI Match Analysis** — Click the sparkle button on any match to open a chat modal. Streaming responses via SSE for real-time coaching. System prompt constructed server-side from structured match data
 
 **JWT Authentication** — Stateless authentication with Bearer tokens. Register/login endpoints return JWTs. Anonymous users have full access to all features except AI coaching
@@ -112,7 +118,7 @@ graph TB
 | React Testing Library | Component rendering and interaction testing |
 
 ### External APIs
-- **[Riot Games API](https://developer.riotgames.com)** — Account, match, ranked, and summoner data
+- **[Riot Games API](https://developer.riotgames.com)** — Account, match, ranked, summoner, and live game (spectator) data
 - **[OpenAI API](https://platform.openai.com)** — GPT-4o-mini for AI match analysis
 - **[Stripe API](https://stripe.com)** — Checkout sessions, subscription lifecycle, and webhooks
 - **[DDragon CDN](https://ddragon.leagueoflegends.com)** — Champion, item, spell, and profile icons
@@ -216,6 +222,9 @@ Interactive Swagger UI is available at `/swagger-ui.html` when the app is runnin
 | | POST | `/api/subscription/cancel` | Cancel subscription at period end |
 | Checkout | POST | `/api/checkout/session` | Create Stripe Checkout session |
 | | POST | `/api/checkout/portal` | Create Stripe Customer Portal session |
+| Leaderboard | GET | `/api/leaderboard` | Regional ranked leaderboard (Challenger/Grandmaster/Master) |
+| Live Game | GET | `/api/live-game` | Active game data via Spectator API |
+| Multi-Search | POST | `/api/multi-search` | Batch player lookup |
 | Webhook | POST | `/api/stripe/webhook` | Stripe webhook handler |
 | Health | GET | `/health` | Health check |
 
@@ -276,6 +285,7 @@ PostgreSQL with Flyway-managed migrations:
 | `V3__add_tracked_players.sql` | Adds `tracked_players` table for background match ingestion |
 | `V4__add_user_id_to_favorites.sql` | Links `favorite_players` to `app_users` with foreign key |
 | `V5__add_stripe_fields.sql` | Adds Stripe customer ID, subscription ID, and status to `app_users` |
+| `V6__add_composite_match_index.sql` | Adds composite index on `match_records` for query performance |
 
 Schema is validated at startup (`ddl-auto=validate`) — Flyway is the single source of truth for DDL.
 

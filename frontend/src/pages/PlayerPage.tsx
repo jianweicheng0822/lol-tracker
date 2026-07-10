@@ -10,6 +10,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import SearchBar from "../components/SearchBar";
 import AuthModal from "../components/AuthModal";
+import Toast from "../components/Toast";
 import ProfileHeader from "../components/ProfileHeader";
 import TabBar from "../components/TabBar";
 import OverviewTab from "../components/tabs/OverviewTab";
@@ -40,6 +41,7 @@ export default function PlayerPage() {
 
   const [isCheckingLive, setIsCheckingLive] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   const [status, setStatus] = useState<"loading" | "error" | "done">("loading");
   const [errorMsg, setErrorMsg] = useState("");
@@ -158,6 +160,7 @@ export default function PlayerPage() {
 
   return (
     <div style={styles.page}>
+      {toastMsg && <Toast message={toastMsg} onDone={() => setToastMsg(null)} />}
       {/* Top bar with search */}
       <div style={styles.topBar}>
         <span style={styles.logo} onClick={() => window.location.href = "/"}>LoL Tracker</span>
@@ -172,7 +175,7 @@ export default function PlayerPage() {
         <div style={{ flexShrink: 0 }}>
           {getAuthToken() ? (
             <button
-              onClick={() => { setAuthToken(null); setTier(0); }}
+              onClick={() => { setAuthToken(null); setTier(0); setToastMsg("Logged out successfully"); }}
               style={styles.authBtn}
             >
               Log out
@@ -190,6 +193,7 @@ export default function PlayerPage() {
           onSuccess={async () => {
             const d = await fetchTier().catch(() => ({ tier: 0 }));
             setTier(d.tier);
+            setToastMsg("Logged in successfully");
           }}
           onClose={() => setShowAuthModal(false)}
         />

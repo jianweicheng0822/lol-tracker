@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Bash(./mvnw test:*)"
+      "Bash(./mvnw test:*)",
+      "Bash(npx vitest run)",
+      "Bash(npx react-scripts test --watchAll=false)",
+      "Bash(npx react-scripts test --watchAll=false --testPathPattern=\"\\(MatchList|ChampionsTab|ScoreboardTable|StatsBar\\)\")"
     ]
   }
 }

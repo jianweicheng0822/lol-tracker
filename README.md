@@ -32,6 +32,10 @@ Full-stack League of Legends analytics dashboard with AI-powered match coaching.
 |---------------|-------------|
 | ![Match History](screenshots/match-history.png) | ![AI Analysis](screenshots/ai-analysis.png) |
 
+| Leaderboard | Multi-Search |
+|-------------|--------------|
+| ![Leaderboard](screenshots/leaderboard.png) | ![Multi-Search](screenshots/multi-search.png) |
+
 ## Features
 
 **Player Dashboard** — Tabbed profile (Overview, Performance, Champions, Match History) with URL-driven navigation, ranked badges, and persistent favorites

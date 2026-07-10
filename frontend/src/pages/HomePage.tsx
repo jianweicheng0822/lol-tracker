@@ -7,6 +7,7 @@ import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SearchBar from "../components/SearchBar";
 import AuthModal from "../components/AuthModal";
+import Toast from "../components/Toast";
 import FavoritesList from "../components/FavoritesList";
 import { fetchFavorites, fetchLeaderboard, getAuthToken, setAuthToken } from "../api";
 import { COLORS } from "../utils/colors";
@@ -24,6 +25,7 @@ export default function HomePage() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [loggedIn, setLoggedIn] = useState(!!getAuthToken());
   const [topPlayers, setTopPlayers] = useState<LeaderboardEntry[]>([]);
+  const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   const loadFavorites = useCallback(() => {
     if (!getAuthToken()) {
@@ -48,6 +50,7 @@ export default function HomePage() {
 
   return (
     <div style={styles.page}>
+      {toastMsg && <Toast message={toastMsg} onDone={() => setToastMsg(null)} />}
       <div style={styles.authCorner}>
         <button
           onClick={() => navigate("/multi-search")}
@@ -67,7 +70,7 @@ export default function HomePage() {
         </button>
         {loggedIn ? (
           <button
-            onClick={() => { setAuthToken(null); setLoggedIn(false); }}
+            onClick={() => { setAuthToken(null); setLoggedIn(false); setToastMsg("Logged out successfully"); }}
             style={styles.logoutBtn}
             onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(232,64,87,0.12)"; e.currentTarget.style.borderColor = "rgba(232,64,87,0.5)"; e.currentTarget.style.color = "#E84057"; }}
             onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; e.currentTarget.style.color = COLORS.textSecondary; }}
@@ -87,7 +90,7 @@ export default function HomePage() {
       </div>
       {showAuthModal && (
         <AuthModal
-          onSuccess={() => { setLoggedIn(true); loadFavorites(); }}
+          onSuccess={() => { setLoggedIn(true); loadFavorites(); setToastMsg("Logged in successfully"); }}
           onClose={() => setShowAuthModal(false)}
         />
       )}

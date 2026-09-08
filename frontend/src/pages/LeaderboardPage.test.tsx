@@ -29,8 +29,9 @@ describe("LeaderboardPage", () => {
 
   it("shows loading state initially", () => {
     vi.mocked(api.fetchLeaderboard).mockReturnValue(new Promise(() => {}));
-    render(<LeaderboardPage />);
-    expect(screen.getByText("Loading leaderboard...")).toBeInTheDocument();
+    const { container } = render(<LeaderboardPage />);
+    const skeletons = container.querySelectorAll("div[style*='animation']");
+    expect(skeletons.length).toBeGreaterThan(0);
   });
 
   it("shows error state on fetch failure", async () => {

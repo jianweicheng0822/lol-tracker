@@ -75,7 +75,7 @@ describe("PerformanceModal", () => {
     vi.mocked(fetchLpHistory).mockResolvedValue([]);
     const onClose = vi.fn();
     const { container } = render(<PerformanceModal puuid="test" onClose={onClose} />);
-    await waitFor(() => screen.getByText("LP History"));
+    await waitFor(() => screen.getByText("Ranked Progression"));
     const overlay = container.firstChild as HTMLElement;
     fireEvent.click(overlay);
     expect(onClose).toHaveBeenCalled();
@@ -86,8 +86,8 @@ describe("PerformanceModal", () => {
     const user = userEvent.setup();
     const onClose = vi.fn();
     render(<PerformanceModal puuid="test" onClose={onClose} />);
-    await waitFor(() => screen.getByText("LP History"));
-    await user.click(screen.getByText("LP History"));
+    await waitFor(() => screen.getByText("Ranked Progression"));
+    await user.click(screen.getByText("Ranked Progression"));
     expect(onClose).not.toHaveBeenCalled();
   });
 

@@ -105,7 +105,6 @@ graph TB
 | Redis 7 | Distributed cache for Riot API responses (cache-aside, per-endpoint TTLs) |
 | Flyway | Database schema migrations |
 | Spring WebFlux | WebClient for OpenAI streaming |
-| Lombok | Reduces boilerplate in entities and DTOs |
 | Stripe Java SDK | Payment processing and subscription management |
 | Springdoc OpenAPI | Swagger UI + API documentation |
 | Testcontainers | Integration tests with real PostgreSQL |
@@ -163,6 +162,7 @@ Create a `backend/.env` file (or set env vars). The backend uses [spring-dotenv]
 | `OPENAI_API_KEY` | Yes | — | OpenAI API key for AI analysis |
 | `JWT_SECRET` | Yes | dev default | Secret for signing JWTs (min 32 chars) |
 | `REDIS_HOST` | No | `localhost` | Redis host (used for Riot API response caching) |
+| `REDIS_PASSWORD` | No | `changeme` | Redis password (must match the Redis server) |
 | `DB_HOST` | No | `localhost` | PostgreSQL host |
 | `DB_PORT` | No | `5432` | PostgreSQL port |
 | `DB_NAME` | No | `lol_tracker` | PostgreSQL database name |
@@ -187,7 +187,7 @@ docker run -d --name lol-redis -p 6379:6379 redis:7-alpine \
 cd backend
 ./mvnw spring-boot:run
 
-# Frontend — starts at http://localhost:5173 (proxies API to backend)
+# Frontend — starts at http://localhost:5173 (calls backend directly)
 cd frontend
 npm install
 npm run dev
@@ -249,7 +249,7 @@ cd backend
 
 | Suite | Count | Database | Docker required |
 |-------|-------|----------|-----------------|
-| Unit tests | 192 | None (mocked) | No |
+| Unit tests | 230 | None (mocked) | No |
 | Integration tests | 12 | PostgreSQL (Testcontainers) | Yes |
 
 Unit tests use `@WebMvcTest` with MockMvc and mocked service layers — no database is involved. Integration tests use Testcontainers to spin up a real PostgreSQL container and run Flyway migrations, validating the full stack end-to-end.
@@ -271,11 +271,11 @@ npm run test:coverage
 
 | Suite | Count | Description |
 |-------|-------|-------------|
-| Utility tests | 37 | `playerInsights`, `trends`, `lp` conversion |
-| Component tests | 159 | MatchList, ScoreboardTable, ProfileHeader, RankSummary, OverviewTab, ChampionsTab, etc. |
+| Utility tests | 54 | `playerInsights`, `trends`, `lp` conversion |
+| Component tests | 172 | MatchList, ScoreboardTable, ProfileHeader, RankSummary, OverviewTab, ChampionsTab, etc. |
 | Hook tests | 9 | `useIsMobile`, `useTabNavigation` |
-| API module tests | 11 | Token management, login/register, error parsing |
-| Page tests | 15 | HomePage, MatchDetailPage rendering and state |
+| API module tests | 41 | Token management, login/register, error parsing |
+| Page tests | 53 | HomePage, MatchDetailPage, LeaderboardPage, MultiSearchPage rendering and state |
 
 Frontend tests use Vitest with jsdom and React Testing Library. Components are tested for rendering, user interaction, form validation, and navigation. API tests mock `fetch` and `localStorage` to verify request construction and token handling.
 

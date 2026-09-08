@@ -180,7 +180,8 @@ Create a `backend/.env` file (or set env vars). The backend uses [spring-dotenv]
 docker run -d --name lol-pg -p 5432:5432 \
   -e POSTGRES_DB=lol_tracker -e POSTGRES_PASSWORD=postgres \
   postgres:16-alpine
-docker run -d --name lol-redis -p 6379:6379 redis:7-alpine
+docker run -d --name lol-redis -p 6379:6379 redis:7-alpine \
+  redis-server --requirepass changeme
 
 # Backend — starts at http://localhost:8080
 cd backend

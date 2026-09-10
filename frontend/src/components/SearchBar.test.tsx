@@ -2,13 +2,14 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import SearchBar from "./SearchBar";
+import type { SearchEntry } from "../utils/searchHistory";
 
 const mockNavigate = vi.fn();
 vi.mock("react-router-dom", () => ({
   useNavigate: () => mockNavigate,
 }));
 
-const mockGetAuthToken = vi.fn(() => null);
+const mockGetAuthToken = vi.fn((): string | null => null);
 const mockFetchSearchHistory = vi.fn();
 const mockRemoveSearchHistory = vi.fn();
 const mockClearAllSearchHistory = vi.fn();
@@ -20,7 +21,7 @@ vi.mock("../api", () => ({
   clearAllSearchHistory: (...args: unknown[]) => mockClearAllSearchHistory(...args),
 }));
 
-const mockGetLocalHistory = vi.fn(() => []);
+const mockGetLocalHistory = vi.fn((): SearchEntry[] => []);
 const mockRemoveLocalEntry = vi.fn();
 const mockClearLocalHistory = vi.fn();
 

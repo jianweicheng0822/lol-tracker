@@ -139,11 +139,6 @@ export default function SearchBar({ compact, initialRegion, initialGameName, ini
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // Reset highlight when filter changes
-  useEffect(() => {
-    setHighlightIndex(-1);
-  }, [gameName, tag]);
-
   // Close dropdown if filtered results become empty (but not when input is empty)
   const shouldShowDropdown = showHistory && (filteredItems.length > 0 || historyItems.length === 0);
 
@@ -172,7 +167,7 @@ export default function SearchBar({ compact, initialRegion, initialGameName, ini
           style={{ ...styles.input, width: "100%", padding: inputPadding, fontSize: inputFontSize }}
           placeholder="Game Name"
           value={gameName}
-          onChange={(e) => setGameName(e.target.value)}
+          onChange={(e) => { setGameName(e.target.value); setHighlightIndex(-1); }}
           onKeyDown={handleKeyDown}
           onFocus={handleFocus}
           autoComplete="off"
@@ -214,7 +209,7 @@ export default function SearchBar({ compact, initialRegion, initialGameName, ini
         style={{ ...styles.input, width: compact ? 90 : 120, padding: inputPadding, fontSize: inputFontSize }}
         placeholder="#Tag"
         value={tag}
-        onChange={(e) => setTag(e.target.value)}
+        onChange={(e) => { setTag(e.target.value); setHighlightIndex(-1); }}
         onKeyDown={handleKeyDown}
       />
 

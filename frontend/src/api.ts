@@ -410,6 +410,18 @@ export async function fetchLeaderboard(region: string, queue: string, tier: stri
   return res.json();
 }
 
+// --- OAuth2 ---
+
+export function getOAuthUrl(provider: "google" | "discord"): string {
+  return `${BASE}/api/oauth2/${provider}/authorize`;
+}
+
+export async function fetchOAuthProviders(): Promise<{ google: boolean; discord: boolean }> {
+  const res = await fetchWithTimeout(`${BASE}/api/oauth2/providers`);
+  if (!res.ok) return { google: false, discord: false };
+  return res.json();
+}
+
 // --- Search History ---
 
 export async function fetchSearchHistory(): Promise<{ gameName: string; tagLine: string; region: string; searchedAt: string }[]> {

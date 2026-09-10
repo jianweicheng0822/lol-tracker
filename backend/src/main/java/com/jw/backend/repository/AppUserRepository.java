@@ -36,4 +36,6 @@ public interface AppUserRepository extends JpaRepository<AppUser, Long> {
     Optional<AppUser> findByStripeCustomerId(String stripeCustomerId);
 
     Optional<AppUser> findByStripeSubscriptionId(String stripeSubscriptionId);
+
+    Optional<AppUser> findByEmail(String email);
 }

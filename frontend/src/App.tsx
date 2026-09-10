@@ -11,6 +11,7 @@ import { CheckoutSuccessPage, CheckoutCancelPage } from "./pages/CheckoutResultP
 import LeaderboardPage from "./pages/LeaderboardPage";
 import MultiSearchPage from "./pages/MultiSearchPage";
 import LiveMatchPage from "./pages/LiveMatchPage";
+import OAuthCallbackPage from "./pages/OAuthCallbackPage";
 
 export default function App() {
   return (
@@ -24,6 +25,7 @@ export default function App() {
       <Route path="/live/:region/:gameName/:tag" element={<LiveMatchPage />} />
       <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
       <Route path="/checkout/cancel" element={<CheckoutCancelPage />} />
+      <Route path="/oauth-callback" element={<OAuthCallbackPage />} />
     </Routes>
   );
 }

@@ -42,6 +42,8 @@ public class AppUser {
     @Column(name = "subscription_status", nullable = false)
     private String subscriptionStatus = "none";
 
+    private String email;
+
     /** Default constructor for JPA and transient anonymous user instances. */
     public AppUser() {
     }
@@ -131,5 +133,13 @@ public class AppUser {
 
     public void setSubscriptionStatus(String subscriptionStatus) {
         this.subscriptionStatus = subscriptionStatus;
+    }
+
+    public String getEmail() {
+        return email;
+    }
+
+    public void setEmail(String email) {
+        this.email = email;
     }
 }

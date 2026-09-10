@@ -7,6 +7,8 @@ import * as api from "../api";
 vi.mock("../api", () => ({
   login: vi.fn(),
   register: vi.fn(),
+  getOAuthUrl: vi.fn((provider: string) => `http://localhost:8080/api/oauth2/${provider}/authorize`),
+  fetchOAuthProviders: vi.fn(),
 }));
 
 describe("AuthModal", () => {
@@ -15,6 +17,7 @@ describe("AuthModal", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(api.fetchOAuthProviders).mockResolvedValue({ google: false, discord: false });
   });
 
   it("renders login form by default", () => {
@@ -101,5 +104,50 @@ describe("AuthModal", () => {
     const backdrop = heading.closest("[style*='position: fixed']")!;
     await user.click(backdrop);
     expect(onClose).toHaveBeenCalled();
+  });
+
+  // --- OAuth2 tests ---
+
+  it("shows Google button when provider is configured", async () => {
+    vi.mocked(api.fetchOAuthProviders).mockResolvedValue({ google: true, discord: false });
+    render(<AuthModal onSuccess={onSuccess} onClose={onClose} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Continue with Google")).toBeInTheDocument();
+    });
+    expect(screen.queryByText("Continue with Discord")).not.toBeInTheDocument();
+  });
+
+  it("shows Discord button when provider is configured", async () => {
+    vi.mocked(api.fetchOAuthProviders).mockResolvedValue({ google: false, discord: true });
+    render(<AuthModal onSuccess={onSuccess} onClose={onClose} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Continue with Discord")).toBeInTheDocument();
+    });
+    expect(screen.queryByText("Continue with Google")).not.toBeInTheDocument();
+  });
+
+  it("shows both OAuth buttons when both are configured", async () => {
+    vi.mocked(api.fetchOAuthProviders).mockResolvedValue({ google: true, discord: true });
+    render(<AuthModal onSuccess={onSuccess} onClose={onClose} />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Continue with Google")).toBeInTheDocument();
+      expect(screen.getByText("Continue with Discord")).toBeInTheDocument();
+    });
+  });
+
+  it("hides OAuth section when no providers configured", async () => {
+    vi.mocked(api.fetchOAuthProviders).mockResolvedValue({ google: false, discord: false });
+    render(<AuthModal onSuccess={onSuccess} onClose={onClose} />);
+
+    // Wait for fetch to complete
+    await waitFor(() => {
+      expect(api.fetchOAuthProviders).toHaveBeenCalled();
+    });
+    expect(screen.queryByText("Continue with Google")).not.toBeInTheDocument();
+    expect(screen.queryByText("Continue with Discord")).not.toBeInTheDocument();
+    expect(screen.queryByText("or")).not.toBeInTheDocument();
   });
 });

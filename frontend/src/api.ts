@@ -410,6 +410,37 @@ export async function fetchLeaderboard(region: string, queue: string, tier: stri
   return res.json();
 }
 
+// --- Search History ---
+
+export async function fetchSearchHistory(): Promise<{ gameName: string; tagLine: string; region: string; searchedAt: string }[]> {
+  const res = await fetchWithTimeout(`${BASE}/api/search-history`, fetchOpts());
+  if (!res.ok) throw new Error(await readErrorMessage(res));
+  return res.json();
+}
+
+export async function addSearchHistory(gameName: string, tagLine: string, region: string): Promise<void> {
+  const res = await fetchWithTimeout(`${BASE}/api/search-history`, fetchOpts({
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ gameName, tagLine, region }),
+  }));
+  if (!res.ok) throw new Error(await readErrorMessage(res));
+}
+
+export async function removeSearchHistory(gameName: string, tagLine: string, region: string): Promise<void> {
+  const res = await fetchWithTimeout(`${BASE}/api/search-history`, fetchOpts({
+    method: "DELETE",
+    headers: { "Content-Type": "application/json", ...authHeaders() },
+    body: JSON.stringify({ gameName, tagLine, region }),
+  }));
+  if (!res.ok) throw new Error(await readErrorMessage(res));
+}
+
+export async function clearAllSearchHistory(): Promise<void> {
+  const res = await fetchWithTimeout(`${BASE}/api/search-history/all`, fetchOpts({ method: "DELETE" }));
+  if (!res.ok) throw new Error(await readErrorMessage(res));
+}
+
 /**
  * Structured match data sent to the backend for AI analysis.
  * The backend constructs the LLM prompt from this data; no prompt text is sent from the frontend.

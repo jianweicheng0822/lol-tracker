@@ -16,7 +16,8 @@ import TabBar from "../components/TabBar";
 import OverviewTab from "../components/tabs/OverviewTab";
 import ChampionsTab from "../components/tabs/ChampionsTab";
 import { useTabNavigation } from "../hooks/useTabNavigation";
-import { fetchAccount, fetchAccountByPuuid, fetchMatchSummaries, fetchStats, fetchRanked, checkIsFavorite, addFavorite, removeFavorite, fetchTier, fetchLiveGame, getAuthToken, setAuthToken } from "../api";
+import { fetchAccount, fetchAccountByPuuid, fetchMatchSummaries, fetchStats, fetchRanked, checkIsFavorite, addFavorite, removeFavorite, fetchTier, fetchLiveGame, getAuthToken, setAuthToken, addSearchHistory } from "../api";
+import { addLocalEntry } from "../utils/searchHistory";
 import type { Region, Account, MatchSummary, PlayerStats, RankedEntry, LiveGame } from "../types";
 import LiveGameCard from "../components/LiveGameCard";
 import { computeStreak, computeClimbStatus } from "../utils/playerInsights";
@@ -70,6 +71,17 @@ export default function PlayerPage() {
       if (cancelled.current) return;
       setAccount(acc);
       setTier(tierData.tier);
+
+      // Save canonical gameName/tagLine to search history
+      try {
+        if (getAuthToken()) {
+          addSearchHistory(acc.gameName, acc.tagLine, region).catch(() => {});
+        } else {
+          addLocalEntry({ region, gameName: acc.gameName, tagLine: acc.tagLine, searchedAt: Date.now() });
+        }
+      } catch {
+        // ignore search history errors
+      }
 
       const matchCount = 20;
       // Fetch matches first so their details populate the Redis cache,

@@ -64,7 +64,7 @@ public class MatchIngestionService {
         log.info("Ingesting matches for {} player(s)", duePlayers.size());
 
         for (TrackedPlayer player : duePlayers) {
-            if (riotRateLimiter.availablePermits() < 50) {
+            if (riotRateLimiter.availablePermits() < 80) {
                 log.info("Ingestion pausing — rate limit permits low ({} available)", riotRateLimiter.availablePermits());
                 break;
             }

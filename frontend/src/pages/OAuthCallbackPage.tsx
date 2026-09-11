@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { setAuthToken } from "../api";
 import { COLORS } from "../utils/colors";
@@ -6,21 +6,22 @@ import { COLORS } from "../utils/colors";
 export default function OAuthCallbackPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
-  const [error, setError] = useState<string | null>(null);
+
+  const token = searchParams.get("token");
+  const errorParam = searchParams.get("error");
 
   useEffect(() => {
-    const token = searchParams.get("token");
-    const errorParam = searchParams.get("error");
-
     if (token) {
       setAuthToken(token);
       navigate("/", { replace: true });
-    } else if (errorParam) {
-      setError("Authentication failed. Please try again.");
-    } else {
-      setError("No authentication token received.");
     }
-  }, [searchParams, navigate]);
+  }, [token, navigate]);
+
+  const error = errorParam
+    ? "Authentication failed. Please try again."
+    : !token
+      ? "No authentication token received."
+      : null;
 
   if (error) {
     return (

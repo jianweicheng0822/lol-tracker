@@ -11,6 +11,8 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 
+import org.springframework.beans.factory.annotation.Autowired;
+
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Map;
@@ -30,6 +32,7 @@ public class OAuth2Service {
     private final ConcurrentHashMap<String, Long> stateStore = new ConcurrentHashMap<>();
     private static final long STATE_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
+    @Autowired
     public OAuth2Service(OAuth2Properties properties,
                          OAuthAccountRepository oauthRepository,
                          AppUserRepository appUserRepository) {

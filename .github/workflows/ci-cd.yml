@@ -92,11 +92,15 @@ jobs:
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
           STRIPE_PRICE_ID: ${{ secrets.STRIPE_PRICE_ID }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          DISCORD_CLIENT_ID: ${{ secrets.DISCORD_CLIENT_ID }}
+          DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
         with:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USER }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: IMAGE,RIOT_KEY,OPENAI_KEY,GH_TOKEN,GH_ACTOR,DB_NAME,DB_USER,DB_PASSWORD,JWT_SECRET,REDIS_PASSWORD,STRIPE_SECRET_KEY,STRIPE_WEBHOOK_SECRET,STRIPE_PRICE_ID
+          envs: IMAGE,RIOT_KEY,OPENAI_KEY,GH_TOKEN,GH_ACTOR,DB_NAME,DB_USER,DB_PASSWORD,JWT_SECRET,REDIS_PASSWORD,STRIPE_SECRET_KEY,STRIPE_WEBHOOK_SECRET,STRIPE_PRICE_ID,GOOGLE_CLIENT_ID,GOOGLE_CLIENT_SECRET,DISCORD_CLIENT_ID,DISCORD_CLIENT_SECRET
           script: |
             set -e
 
@@ -178,6 +182,10 @@ jobs:
               -e "STRIPE_WEBHOOK_SECRET=$STRIPE_WEBHOOK_SECRET" \
               -e "STRIPE_PRICE_ID=$STRIPE_PRICE_ID" \
               -e "APP_BASE_URL=https://loltracker.lol" \
+              -e "GOOGLE_CLIENT_ID=$GOOGLE_CLIENT_ID" \
+              -e "GOOGLE_CLIENT_SECRET=$GOOGLE_CLIENT_SECRET" \
+              -e "DISCORD_CLIENT_ID=$DISCORD_CLIENT_ID" \
+              -e "DISCORD_CLIENT_SECRET=$DISCORD_CLIENT_SECRET" \
               "$IMAGE"
 
             # --- Write Nginx config ---

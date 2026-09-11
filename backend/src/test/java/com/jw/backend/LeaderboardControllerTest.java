@@ -33,8 +33,8 @@ class LeaderboardControllerTest {
     @Test
     void getLeaderboard_withValidParams_returnsOk() throws Exception {
         List<LeaderboardEntryDto> entries = List.of(
-            new LeaderboardEntryDto("Faker", "puuid-1", "CHALLENGER", "I", 1500, 200, 80, 71.4),
-            new LeaderboardEntryDto("Zeus", "puuid-2", "CHALLENGER", "I", 1200, 180, 90, 66.7)
+            new LeaderboardEntryDto("Faker", "puuid-1", "CHALLENGER", "I", 1500, 200, 80, 71.4, 4567),
+            new LeaderboardEntryDto("Zeus", "puuid-2", "CHALLENGER", "I", 1200, 180, 90, 66.7, 1234)
         );
         when(leaderboardService.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.KR, 0, 50))
             .thenReturn(new LeaderboardService.LeaderboardPage(entries, 2));
@@ -70,7 +70,7 @@ class LeaderboardControllerTest {
     void getLeaderboard_withGrandmaster_returnsOk() throws Exception {
         when(leaderboardService.getLeaderboard("grandmaster", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 50))
             .thenReturn(new LeaderboardService.LeaderboardPage(
-                List.of(new LeaderboardEntryDto("GM Player", "puuid-gm", "GRANDMASTER", "I", 600, 100, 50, 66.7)), 1));
+                List.of(new LeaderboardEntryDto("GM Player", "puuid-gm", "GRANDMASTER", "I", 600, 100, 50, 66.7, 0)), 1));
 
         mockMvc.perform(get("/api/leaderboard")
                 .param("tier", "grandmaster"))

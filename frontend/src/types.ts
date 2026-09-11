@@ -186,6 +186,7 @@ export type LeaderboardEntry = {
   wins: number;
   losses: number;
   winRate: number;
+  profileIconId?: number;
 };
 
 /** A player result from multi-search lookup. */

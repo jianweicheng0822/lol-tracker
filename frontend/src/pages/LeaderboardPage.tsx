@@ -8,6 +8,7 @@ import { useNavigate } from "react-router-dom";
 import { fetchLeaderboard } from "../api";
 import { COLORS, winRateColor } from "../utils/colors";
 import { TIER_COLORS } from "../utils/lp";
+import { useDdragonVersion, ddragonBase } from "../utils/ddragon";
 import type { LeaderboardEntry, Region } from "../types";
 import { REGIONS } from "../types";
 
@@ -37,6 +38,7 @@ const PAGE_SIZE = 50;
 
 export default function LeaderboardPage() {
   const navigate = useNavigate();
+  const ddragonVersion = useDdragonVersion();
   const [region, setRegion] = useState<Region>("NA");
   const [queue, setQueue] = useState<Queue>("RANKED_SOLO_5x5");
   const [tier, setTier] = useState<Tier>("challenger");
@@ -159,7 +161,10 @@ export default function LeaderboardPage() {
                     <div style={styles.skeleton} />
                   </td>
                   <td style={styles.td}>
-                    <div style={{ ...styles.skeleton, width: "60%" }} />
+                    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                      <div style={{ ...styles.skeletonCircle }} />
+                      <div style={{ ...styles.skeleton, width: "60%" }} />
+                    </div>
                   </td>
                   <td style={{ ...styles.td, textAlign: "center" }}>
                     <div style={{ ...styles.skeleton, width: "50%", margin: "0 auto" }} />
@@ -237,6 +242,19 @@ export default function LeaderboardPage() {
                     </td>
                     <td style={styles.td}>
                       <div style={styles.playerCell}>
+                        {entry.profileIconId ? (
+                          <img
+                            src={`${ddragonBase(ddragonVersion)}/profileicon/${entry.profileIconId}.png`}
+                            alt=""
+                            loading="lazy"
+                            style={styles.profileIcon}
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = "none";
+                            }}
+                          />
+                        ) : (
+                          <div style={styles.profileIconPlaceholder} />
+                        )}
                         <img
                           src={tierIconUrl(entry.tier)}
                           alt={entry.tier}
@@ -441,6 +459,19 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     gap: 10,
   },
+  profileIcon: {
+    width: 32,
+    height: 32,
+    borderRadius: "50%",
+    objectFit: "cover" as const,
+  },
+  profileIconPlaceholder: {
+    width: 32,
+    height: 32,
+    borderRadius: "50%",
+    background: COLORS.cardBorder,
+    flexShrink: 0,
+  },
   tierIcon: {
     width: 24,
     height: 24,
@@ -477,6 +508,15 @@ const styles: Record<string, React.CSSProperties> = {
     height: 14,
     width: "30%",
     borderRadius: 4,
+    background: `linear-gradient(90deg, ${COLORS.cardBorder} 25%, rgba(255,255,255,0.06) 50%, ${COLORS.cardBorder} 75%)`,
+    backgroundSize: "200% 100%",
+    animation: "shimmer 1.5s infinite",
+  },
+  skeletonCircle: {
+    width: 32,
+    height: 32,
+    borderRadius: "50%",
+    flexShrink: 0,
     background: `linear-gradient(90deg, ${COLORS.cardBorder} 25%, rgba(255,255,255,0.06) 50%, ${COLORS.cardBorder} 75%)`,
     backgroundSize: "200% 100%",
     animation: "shimmer 1.5s infinite",

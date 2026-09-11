@@ -9,11 +9,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jw.backend.dto.LeaderboardEntryDto;
 import com.jw.backend.region.RiotRegion;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
@@ -30,6 +32,7 @@ public class LeaderboardService {
 
     private final RiotApiService riotApiService;
     private final ObjectMapper objectMapper;
+    private final LeaderboardPrefetchService prefetchService;
     private final Executor nameResolver = Executors.newFixedThreadPool(8);
 
     private record CachedPage(LeaderboardPage page, long timestamp) {
@@ -38,14 +41,43 @@ public class LeaderboardService {
 
     private final ConcurrentHashMap<String, CachedPage> pageCache = new ConcurrentHashMap<>();
 
-    public LeaderboardService(RiotApiService riotApiService, ObjectMapper objectMapper) {
+    public LeaderboardService(RiotApiService riotApiService, ObjectMapper objectMapper,
+                              @Autowired(required = false) LeaderboardPrefetchService prefetchService) {
         this.riotApiService = riotApiService;
         this.objectMapper = objectMapper;
+        this.prefetchService = prefetchService;
     }
 
     public record LeaderboardPage(List<LeaderboardEntryDto> entries, int totalEntries) {}
 
     public LeaderboardPage getLeaderboard(String tier, String queue, RiotRegion region, int page, int size) {
+        // 1. Try prefetched data first
+        if (prefetchService != null) {
+            Optional<List<LeaderboardPrefetchService.ResolvedEntry>> prefetched =
+                    prefetchService.getCached(tier, queue, region);
+            if (prefetched.isPresent()) {
+                log.debug("Using prefetched leaderboard for {}:{}:{}", tier, queue, region);
+                return paginateFromPrefetched(prefetched.get(), page, size);
+            }
+        }
+
+        // 2. Fallback to on-demand resolution
+        return getLeaderboardOnDemand(tier, queue, region, page, size);
+    }
+
+    private LeaderboardPage paginateFromPrefetched(List<LeaderboardPrefetchService.ResolvedEntry> entries,
+                                                    int page, int size) {
+        int totalEntries = entries.size();
+        int from = Math.min(page * size, totalEntries);
+        int to = Math.min(from + size, totalEntries);
+        List<LeaderboardEntryDto> pageEntries = entries.subList(from, to).stream()
+                .map(e -> new LeaderboardEntryDto(e.summonerName(), e.puuid(), e.tier(), e.rank(),
+                        e.leaguePoints(), e.wins(), e.losses(), e.winRate(), e.profileIconId()))
+                .toList();
+        return new LeaderboardPage(pageEntries, totalEntries);
+    }
+
+    private LeaderboardPage getLeaderboardOnDemand(String tier, String queue, RiotRegion region, int page, int size) {
         String cacheKey = tier + ":" + queue + ":" + region.name() + ":" + page + ":" + size;
         CachedPage cached = pageCache.get(cacheKey);
         if (cached != null && !cached.isExpired()) {
@@ -88,12 +120,12 @@ public class LeaderboardService {
                         String name = resolveName(raw.puuid(), raw.fallbackName(), region);
                         int total = raw.wins() + raw.losses();
                         double winRate = total > 0 ? Math.round((double) raw.wins() / total * 1000.0) / 10.0 : 0.0;
-                        return new LeaderboardEntryDto(name, raw.puuid(), leagueTier, raw.rank(), raw.lp(), raw.wins(), raw.losses(), winRate);
+                        return new LeaderboardEntryDto(name, raw.puuid(), leagueTier, raw.rank(), raw.lp(), raw.wins(), raw.losses(), winRate, 0);
                     }, nameResolver).orTimeout(10, TimeUnit.SECONDS).exceptionally(ex -> {
                         String name = raw.fallbackName().isEmpty() ? "Unknown" : raw.fallbackName();
                         int total = raw.wins() + raw.losses();
                         double winRate = total > 0 ? Math.round((double) raw.wins() / total * 1000.0) / 10.0 : 0.0;
-                        return new LeaderboardEntryDto(name, raw.puuid(), leagueTier, raw.rank(), raw.lp(), raw.wins(), raw.losses(), winRate);
+                        return new LeaderboardEntryDto(name, raw.puuid(), leagueTier, raw.rank(), raw.lp(), raw.wins(), raw.losses(), winRate, 0);
                     }))
                     .toList();
 

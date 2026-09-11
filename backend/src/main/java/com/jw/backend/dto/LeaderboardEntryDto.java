@@ -16,5 +16,6 @@ public record LeaderboardEntryDto(
         int leaguePoints,
         int wins,
         int losses,
-        double winRate
+        double winRate,
+        int profileIconId
 ) {}

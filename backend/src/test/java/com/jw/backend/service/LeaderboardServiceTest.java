@@ -10,6 +10,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -24,7 +25,7 @@ class LeaderboardServiceTest {
 
     @BeforeEach
     void setUp() {
-        leaderboardService = new LeaderboardService(riotApiService, new ObjectMapper());
+        leaderboardService = new LeaderboardService(riotApiService, new ObjectMapper(), null);
     }
 
     @Test
@@ -149,6 +150,52 @@ class LeaderboardServiceTest {
         assertEquals("I", result.entries().get(0).rank());
         assertEquals(0, result.entries().get(0).wins());
         assertEquals(0, result.entries().get(0).losses());
+    }
+
+    @Test
+    void getLeaderboard_usesPrefetchedDataWhenAvailable() {
+        LeaderboardPrefetchService prefetchService = mock(LeaderboardPrefetchService.class);
+        LeaderboardService serviceWithPrefetch = new LeaderboardService(riotApiService, new ObjectMapper(), prefetchService);
+
+        List<LeaderboardPrefetchService.ResolvedEntry> prefetchedEntries = List.of(
+                new LeaderboardPrefetchService.ResolvedEntry("Player1", "p1", "CHALLENGER", "I", 1200, 200, 80, 71.4, 1234),
+                new LeaderboardPrefetchService.ResolvedEntry("Player2", "p2", "CHALLENGER", "I", 800, 150, 100, 60.0, 5678)
+        );
+        when(prefetchService.getCached("challenger", "RANKED_SOLO_5x5", RiotRegion.NA))
+                .thenReturn(Optional.of(prefetchedEntries));
+
+        var result = serviceWithPrefetch.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 50);
+
+        assertEquals(2, result.entries().size());
+        assertEquals("Player1", result.entries().get(0).summonerName());
+        assertEquals(1234, result.entries().get(0).profileIconId());
+        assertEquals(5678, result.entries().get(1).profileIconId());
+        // Should NOT call the Riot API since prefetch was used
+        verifyNoInteractions(riotApiService);
+    }
+
+    @Test
+    void getLeaderboard_fallsBackWhenPrefetchMisses() {
+        LeaderboardPrefetchService prefetchService = mock(LeaderboardPrefetchService.class);
+        LeaderboardService serviceWithPrefetch = new LeaderboardService(riotApiService, new ObjectMapper(), prefetchService);
+
+        when(prefetchService.getCached("challenger", "RANKED_SOLO_5x5", RiotRegion.NA))
+                .thenReturn(Optional.empty());
+
+        String json = """
+            {
+                "tier": "CHALLENGER",
+                "entries": [
+                    {"puuid": "p1", "summonerName": "Player1", "rank": "I", "leaguePoints": 500, "wins": 100, "losses": 50}
+                ]
+            }
+            """;
+        when(riotApiService.getLeagueByTier("challenger", "RANKED_SOLO_5x5", RiotRegion.NA)).thenReturn(json);
+
+        var result = serviceWithPrefetch.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 50);
+
+        assertEquals(1, result.entries().size());
+        assertEquals(0, result.entries().get(0).profileIconId());
     }
 
     @Test

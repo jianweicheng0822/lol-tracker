@@ -14,9 +14,9 @@ vi.mock("../api", () => ({
 }));
 
 const MOCK_ENTRIES = [
-  { summonerName: "Faker", puuid: "puuid-faker", tier: "CHALLENGER", rank: "I", leaguePoints: 1500, wins: 200, losses: 80, winRate: 71.4 },
-  { summonerName: "Zeus", puuid: "puuid-zeus", tier: "CHALLENGER", rank: "I", leaguePoints: 1200, wins: 180, losses: 90, winRate: 66.7 },
-  { summonerName: "Gumayusi", puuid: "puuid-guma", tier: "CHALLENGER", rank: "I", leaguePoints: 1000, wins: 150, losses: 100, winRate: 60.0 },
+  { summonerName: "Faker", puuid: "puuid-faker", tier: "CHALLENGER", rank: "I", leaguePoints: 1500, wins: 200, losses: 80, winRate: 71.4, profileIconId: 4567 },
+  { summonerName: "Zeus", puuid: "puuid-zeus", tier: "CHALLENGER", rank: "I", leaguePoints: 1200, wins: 180, losses: 90, winRate: 66.7, profileIconId: 1234 },
+  { summonerName: "Gumayusi", puuid: "puuid-guma", tier: "CHALLENGER", rank: "I", leaguePoints: 1000, wins: 150, losses: 100, winRate: 60.0, profileIconId: 0 },
 ];
 
 const MOCK_RESPONSE = { entries: MOCK_ENTRIES, totalEntries: 3 };
@@ -186,6 +186,30 @@ describe("LeaderboardPage", () => {
 
     await user.click(screen.getByText("Faker"));
     expect(mockNavigate).toHaveBeenCalledWith("/player/puuid/NA/puuid-faker");
+  });
+
+  it("renders profile icons for entries with profileIconId", async () => {
+    render(<LeaderboardPage />);
+    await waitFor(() => {
+      expect(screen.getByText("Faker")).toBeInTheDocument();
+    });
+
+    const profileIcons = document.querySelectorAll('img[src*="profileicon"]');
+    expect(profileIcons.length).toBe(2); // Faker (4567) and Zeus (1234), but not Gumayusi (0)
+  });
+
+  it("renders placeholder circle for entries without profileIconId", async () => {
+    vi.mocked(api.fetchLeaderboard).mockResolvedValue({
+      entries: [{ summonerName: "NoIcon", puuid: "puuid-noicon", tier: "CHALLENGER", rank: "I", leaguePoints: 500, wins: 50, losses: 50, winRate: 50.0, profileIconId: 0 }],
+      totalEntries: 1,
+    });
+    render(<LeaderboardPage />);
+    await waitFor(() => {
+      expect(screen.getByText("NoIcon")).toBeInTheDocument();
+    });
+
+    const profileIcons = document.querySelectorAll('img[src*="profileicon"]');
+    expect(profileIcons.length).toBe(0);
   });
 
   it("advances to next page when Next is clicked", async () => {

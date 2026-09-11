@@ -1,5 +1,6 @@
 package com.jw.backend.service;
 
+import com.jw.backend.exception.RateLimitException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -30,7 +31,7 @@ public class RiotRateLimiter {
         try {
             boolean acquired = semaphore.tryAcquire(ACQUIRE_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             if (!acquired) {
-                throw new RuntimeException("Riot API rate limit exhausted. Please try again shortly.");
+                throw new RateLimitException("Riot API rate limit exhausted. Please try again shortly.");
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();

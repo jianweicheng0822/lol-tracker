@@ -61,6 +61,12 @@ public class LeaderboardPrefetchService {
         for (RiotRegion region : RiotRegion.values()) {
             for (String tier : TIERS) {
                 for (String queue : QUEUES) {
+                    if (riotRateLimiter.availablePermits() < 40) {
+                        log.info("Prefetch stopping early — rate limit permits low ({} available)",
+                                riotRateLimiter.availablePermits());
+                        log.info("Leaderboard prefetch cycle complete (partial)");
+                        return;
+                    }
                     try {
                         prefetchOne(tier, queue, region);
                     } catch (Exception e) {
@@ -107,8 +113,8 @@ public class LeaderboardPrefetchService {
 
             List<ResolvedEntry> resolved = new ArrayList<>();
             for (int i = 0; i < limit; i++) {
-                // Back off if rate limiter permits are running low (< 30% available)
-                if (riotRateLimiter.availablePermits() < 30) {
+                // Back off if rate limiter permits are running low
+                if (riotRateLimiter.availablePermits() < 50) {
                     log.info("Prefetch pausing for {}:{}:{} at entry {}/{} — rate limit permits low",
                             tier, queue, region, i, limit);
                     break;

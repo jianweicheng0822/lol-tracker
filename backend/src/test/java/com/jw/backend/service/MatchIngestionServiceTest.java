@@ -29,7 +29,7 @@ class MatchIngestionServiceTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        when(riotRateLimiter.availablePermits()).thenReturn(100);
+        lenient().when(riotRateLimiter.availablePermits()).thenReturn(100);
         service = new MatchIngestionService(
             trackedPlayerRepository, riotApiService, matchHistoryService, lpTrackingService, riotRateLimiter);
         // Set batchSize via reflection since @Value won't be injected in unit test

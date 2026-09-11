@@ -93,7 +93,15 @@ public class SummonerController {
     ) {
         try {
             String accountJson = riotApiService.getAccountByPuuid(puuid, region);
-            return enrichAccount(accountJson, region);
+            JsonNode accountNode = objectMapper.readTree(accountJson);
+            String gameName = accountNode.path("gameName").asText("");
+            String tagLine = accountNode.path("tagLine").asText("");
+
+            String summonerJson = riotApiService.getSummonerByPuuid(puuid, region);
+            JsonNode summonerNode = objectMapper.readTree(summonerJson);
+            int profileIconId = summonerNode.path("profileIconId").asInt(0);
+
+            return new SummonerDto(puuid, gameName, tagLine, profileIconId);
         } catch (HttpClientErrorException | HttpServerErrorException e) {
             throw e;
         } catch (Exception e) {

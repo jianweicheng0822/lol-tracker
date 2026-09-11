@@ -11,7 +11,7 @@ vi.mock("../../utils/ddragon", () => ({
   useDdragonVersion: () => "15.1.1",
   ddragonBase: () => "https://ddragon.leagueoflegends.com/cdn/15.1.1/img",
   championIconUrl: (name: string) => `${name}.png`,
-  hideOnError: vi.fn(),
+  championIconOnError: () => vi.fn(),
 }));
 
 import { fetchChampionStats } from "../../api";

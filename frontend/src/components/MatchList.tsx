@@ -12,6 +12,7 @@ import {
   useDdragonVersion,
   ddragonBase,
   championIconUrl,
+  championIconOnError,
   itemIconUrl,
   spellIconUrl,
   keystoneIconUrl,
@@ -20,6 +21,8 @@ import {
   hideOnError,
   formatDuration,
   timeAgo,
+  useSummonerSpells,
+  useKeystoneRunes,
 } from "../utils/ddragon";
 import { ScoreboardTeamTable, ArenaScoreboard } from "./ScoreboardTable";
 import { kdaColor as getKdaColor, COLORS } from "../utils/colors";
@@ -335,6 +338,8 @@ export default function MatchList({ matches, region, puuid, onLoadMore, isLoadin
   const imgBase = ddragonBase(ddVersion);
   const hasArena = matches.some((m) => m.queueId === 1700);
   const augmentIcons = useAugmentIcons(hasArena);
+  const spellMap = useSummonerSpells();
+  const keystoneMap = useKeystoneRunes();
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [aiMatch, setAiMatch] = useState<MatchSummary | null>(null);
 
@@ -403,7 +408,7 @@ export default function MatchList({ matches, region, puuid, onLoadMore, isLoadin
                       width={44}
                       height={44}
                       style={{ borderRadius: "50%", border: `2px solid ${winColor}55`, display: "block" }}
-                      onError={hideOnError}
+                      onError={championIconOnError(m.championName)}
                     />
                     <div
                       style={{
@@ -446,6 +451,7 @@ export default function MatchList({ matches, region, puuid, onLoadMore, isLoadin
                             width={22}
                             height={22}
                             style={{ filter: "saturate(1.4)" }}
+                            onError={hideOnError}
                           />
                         </div>
                         ))}
@@ -454,14 +460,14 @@ export default function MatchList({ matches, region, puuid, onLoadMore, isLoadin
                     <div style={{ display: "flex", gap: 2 }}>
                       <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                         <img
-                          src={spellIconUrl(m.summoner1Id, imgBase)}
+                          src={spellIconUrl(m.summoner1Id, imgBase, spellMap)}
                           width={20}
                           height={20}
                           style={{ borderRadius: 3, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)" }}
                           onError={hideOnError}
                         />
                         <img
-                          src={spellIconUrl(m.summoner2Id, imgBase)}
+                          src={spellIconUrl(m.summoner2Id, imgBase, spellMap)}
                           width={20}
                           height={20}
                           style={{ borderRadius: 3, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)" }}
@@ -471,7 +477,7 @@ export default function MatchList({ matches, region, puuid, onLoadMore, isLoadin
                       <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                         {m.primaryRuneId > 0 && (
                           <img
-                            src={keystoneIconUrl(m.primaryRuneId)}
+                            src={keystoneIconUrl(m.primaryRuneId, keystoneMap)}
                             width={20}
                             height={20}
                             style={{ borderRadius: 3, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)" }}

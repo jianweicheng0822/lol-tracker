@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { MatchSummary } from "../../types";
-import { useDdragonVersion, ddragonBase, championIconUrl, hideOnError } from "../../utils/ddragon";
+import { useDdragonVersion, ddragonBase, championIconUrl, championIconOnError } from "../../utils/ddragon";
 import { COLORS } from "../../utils/colors";
 
 type ChampPerf = {
@@ -126,7 +126,7 @@ function ChampRow({ champ, imgBase }: { champ: ChampPerf; imgBase: string }) {
         width={28}
         height={28}
         style={{ borderRadius: "50%", flexShrink: 0 }}
-        onError={hideOnError}
+        onError={championIconOnError(champ.championName)}
       />
       <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 3 }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>

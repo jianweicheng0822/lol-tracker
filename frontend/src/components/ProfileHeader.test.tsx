@@ -5,6 +5,7 @@ import { makeAccount } from "../test/fixtures";
 
 vi.mock("../utils/ddragon", () => ({
   useDdragonVersion: () => "15.1.1",
+  hideOnError: vi.fn(),
 }));
 
 describe("ProfileHeader", () => {

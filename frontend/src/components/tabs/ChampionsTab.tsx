@@ -8,7 +8,7 @@
  */
 import { useEffect, useRef, useState } from "react";
 import { fetchChampionStats } from "../../api";
-import { useDdragonVersion, ddragonBase, championIconUrl, hideOnError } from "../../utils/ddragon";
+import { useDdragonVersion, ddragonBase, championIconUrl, championIconOnError } from "../../utils/ddragon";
 import { COLORS, winRateColor, kdaColor } from "../../utils/colors";
 import type { ChampionStats } from "../../types";
 
@@ -111,7 +111,7 @@ export default function ChampionsTab({ puuid }: Props) {
                     width={40}
                     height={40}
                     style={{ borderRadius: "50%", flexShrink: 0 }}
-                    onError={hideOnError}
+                    onError={championIconOnError(c.championName)}
                   />
                   <div>
                     <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.textPrimary }}>{c.championName}</div>

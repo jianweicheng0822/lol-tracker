@@ -9,11 +9,14 @@ vi.mock("react-router-dom", () => ({
 
 vi.mock("../utils/ddragon", () => ({
   championIconUrl: (name: string) => `${name}.png`,
+  championIconOnError: () => vi.fn(),
   itemIconUrl: (id: number) => `item_${id}.png`,
   spellIconUrl: (id: number) => `spell_${id}.png`,
   keystoneIconUrl: (id: number) => `keystone_${id}.png`,
   runeStyleIconUrl: (id: number) => `runestyle_${id}.png`,
   hideOnError: vi.fn(),
+  useSummonerSpells: () => ({}),
+  useKeystoneRunes: () => ({}),
 }));
 
 describe("ScoreboardTeamTable", () => {

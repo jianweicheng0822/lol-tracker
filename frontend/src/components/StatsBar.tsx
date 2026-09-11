@@ -1,5 +1,5 @@
 import type { PlayerStats, MatchSummary } from "../types";
-import { useDdragonVersion, ddragonBase, championIconUrl, hideOnError } from "../utils/ddragon";
+import { useDdragonVersion, ddragonBase, championIconUrl, championIconOnError } from "../utils/ddragon";
 import { computeStreak, computeRecentForm, computeMainChampion } from "../utils/playerInsights";
 import { winRateColor, kdaColor, COLORS } from "../utils/colors";
 
@@ -84,7 +84,7 @@ export default function StatsBar({ stats, matches }: StatsBarProps) {
                 width={28}
                 height={28}
                 style={{ borderRadius: "50%", flexShrink: 0 }}
-                onError={hideOnError}
+                onError={championIconOnError(mainChamp.name)}
               />
               <div>
                 <div style={{ fontSize: 13, fontWeight: 700, color: COLORS.textSecondary, lineHeight: 1.2 }}>

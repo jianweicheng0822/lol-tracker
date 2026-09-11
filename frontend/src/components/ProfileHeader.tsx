@@ -1,6 +1,6 @@
 import type { Account } from "../types";
 import type { Streak } from "../utils/playerInsights";
-import { useDdragonVersion } from "../utils/ddragon";
+import { useDdragonVersion, hideOnError } from "../utils/ddragon";
 import { COLORS } from "../utils/colors";
 
 type Props = {
@@ -23,6 +23,7 @@ export default function ProfileHeader({ account, region, isFav, onToggleFavorite
           src={`https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/profileicon/${account.profileIconId}.png`}
           alt="Profile Icon"
           style={{ width: 56, height: 56, borderRadius: "50%", border: `2px solid ${COLORS.cardBorder}` }}
+          onError={hideOnError}
         />
         <div>
           <h2 style={{ margin: 0, fontSize: 28 }}>

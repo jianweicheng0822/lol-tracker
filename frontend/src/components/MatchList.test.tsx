@@ -16,6 +16,7 @@ vi.mock("../utils/ddragon", () => ({
   useDdragonVersion: () => "15.1.1",
   ddragonBase: () => "https://ddragon.leagueoflegends.com/cdn/15.1.1/img",
   championIconUrl: (name: string) => `${name}.png`,
+  championIconOnError: () => vi.fn(),
   itemIconUrl: (id: number) => `item_${id}.png`,
   spellIconUrl: (id: number) => `spell_${id}.png`,
   keystoneIconUrl: (id: number) => `keystone_${id}.png`,
@@ -24,6 +25,8 @@ vi.mock("../utils/ddragon", () => ({
   formatDuration: (s: number) => `${Math.floor(s / 60)}m`,
   timeAgo: () => "5m ago",
   QUEUE_NAMES: { 420: "Ranked Solo", 440: "Ranked Flex", 450: "ARAM", 1700: "Arena" } as Record<number, string>,
+  useSummonerSpells: () => ({}),
+  useKeystoneRunes: () => ({}),
 }));
 
 vi.mock("./ScoreboardTable", () => ({

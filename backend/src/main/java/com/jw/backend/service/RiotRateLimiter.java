@@ -49,6 +49,13 @@ public class RiotRateLimiter {
     }
 
     /**
+     * Return the number of permits currently available.
+     */
+    public int availablePermits() {
+        return semaphore.availablePermits();
+    }
+
+    /**
      * Refill one permit every 1200ms (~50 per minute, staying within Riot's 100/2min limit).
      * Never exceeds MAX_PERMITS.
      */

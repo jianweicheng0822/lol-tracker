@@ -37,6 +37,7 @@ public class MatchIngestionService {
     private final RiotApiService riotApiService;
     private final MatchHistoryService matchHistoryService;
     private final LpTrackingService lpTrackingService;
+    private final RiotRateLimiter riotRateLimiter;
 
     @Value("${ingestion.batch-size:5}")
     private int batchSize;
@@ -44,11 +45,13 @@ public class MatchIngestionService {
     public MatchIngestionService(TrackedPlayerRepository trackedPlayerRepository,
                                  RiotApiService riotApiService,
                                  MatchHistoryService matchHistoryService,
-                                 LpTrackingService lpTrackingService) {
+                                 LpTrackingService lpTrackingService,
+                                 RiotRateLimiter riotRateLimiter) {
         this.trackedPlayerRepository = trackedPlayerRepository;
         this.riotApiService = riotApiService;
         this.matchHistoryService = matchHistoryService;
         this.lpTrackingService = lpTrackingService;
+        this.riotRateLimiter = riotRateLimiter;
     }
 
     @Scheduled(fixedDelay = 10_000)
@@ -61,6 +64,10 @@ public class MatchIngestionService {
         log.info("Ingesting matches for {} player(s)", duePlayers.size());
 
         for (TrackedPlayer player : duePlayers) {
+            if (riotRateLimiter.availablePermits() < 30) {
+                log.info("Ingestion pausing — rate limit permits low ({} available)", riotRateLimiter.availablePermits());
+                break;
+            }
             try {
                 ingestPlayer(player, now);
             } catch (Exception e) {

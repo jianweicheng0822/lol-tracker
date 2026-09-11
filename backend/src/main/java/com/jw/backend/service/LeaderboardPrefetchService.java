@@ -53,6 +53,10 @@ public class LeaderboardPrefetchService {
 
     @Scheduled(fixedDelayString = "${leaderboard.prefetch.interval-ms:900000}", initialDelay = 10_000)
     public void prefetchAll() {
+        if (!isRedisAvailable()) {
+            log.warn("Redis is unavailable, skipping prefetch cycle");
+            return;
+        }
         log.info("Starting leaderboard prefetch cycle");
         for (RiotRegion region : RiotRegion.values()) {
             for (String tier : TIERS) {
@@ -66,6 +70,15 @@ public class LeaderboardPrefetchService {
             }
         }
         log.info("Leaderboard prefetch cycle complete");
+    }
+
+    private boolean isRedisAvailable() {
+        try {
+            String result = redisTemplate.getConnectionFactory().getConnection().ping();
+            return "PONG".equals(result);
+        } catch (Exception e) {
+            return false;
+        }
     }
 
     private void prefetchOne(String tier, String queue, RiotRegion region) {
@@ -94,6 +107,13 @@ public class LeaderboardPrefetchService {
 
             List<ResolvedEntry> resolved = new ArrayList<>();
             for (int i = 0; i < limit; i++) {
+                // Back off if rate limiter permits are running low (< 30% available)
+                if (riotRateLimiter.availablePermits() < 30) {
+                    log.info("Prefetch pausing for {}:{}:{} at entry {}/{} — rate limit permits low",
+                            tier, queue, region, i, limit);
+                    break;
+                }
+
                 RawEntry raw = rawEntries.get(i);
                 String name = resolveName(raw.puuid(), raw.fallbackName(), region);
                 int profileIconId = resolveProfileIcon(raw.puuid(), region);

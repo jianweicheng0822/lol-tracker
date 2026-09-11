@@ -23,13 +23,15 @@ class MatchIngestionServiceTest {
     @Mock private RiotApiService riotApiService;
     @Mock private MatchHistoryService matchHistoryService;
     @Mock private LpTrackingService lpTrackingService;
+    @Mock private RiotRateLimiter riotRateLimiter;
 
     private MatchIngestionService service;
 
     @BeforeEach
     void setUp() throws Exception {
+        when(riotRateLimiter.availablePermits()).thenReturn(100);
         service = new MatchIngestionService(
-            trackedPlayerRepository, riotApiService, matchHistoryService, lpTrackingService);
+            trackedPlayerRepository, riotApiService, matchHistoryService, lpTrackingService, riotRateLimiter);
         // Set batchSize via reflection since @Value won't be injected in unit test
         var field = MatchIngestionService.class.getDeclaredField("batchSize");
         field.setAccessible(true);

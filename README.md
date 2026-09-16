@@ -20,8 +20,6 @@ Full-stack League of Legends analytics dashboard with AI-powered match coaching.
 
 ## Screenshots
 
-<p align="center"><img src="https://img.shields.io/badge/Core-D4A843?style=for-the-badge" /></p>
-
 <table>
   <tr>
     <td align="center"><b>Home</b></td>
@@ -31,11 +29,6 @@ Full-stack League of Legends analytics dashboard with AI-powered match coaching.
     <td><img src="screenshots/home.png" alt="Home" width="480" /></td>
     <td><img src="screenshots/overview.png" alt="Overview" width="480" /></td>
   </tr>
-</table>
-
-<p align="center"><img src="https://img.shields.io/badge/Discovery-D4A843?style=for-the-badge" /></p>
-
-<table>
   <tr>
     <td align="center"><b>Leaderboard</b></td>
     <td align="center"><b>Multi-Search</b></td>
@@ -46,21 +39,16 @@ Full-stack League of Legends analytics dashboard with AI-powered match coaching.
   </tr>
   <tr>
     <td align="center"><b>Match History</b></td>
-    <td></td>
+    <td align="center"><b>Login & PRO Upgrade</b></td>
   </tr>
   <tr>
     <td><img src="screenshots/match-history.png" alt="Match History" width="480" /></td>
-    <td></td>
+    <td>
+      <img src="screenshots/login.png" alt="Login" width="220" />
+      <img src="screenshots/pro-upgrade.png" alt="PRO Upgrade" width="200" />
+    </td>
   </tr>
 </table>
-
-<p align="center"><img src="https://img.shields.io/badge/Account-D4A843?style=for-the-badge" /></p>
-
-<p align="center">
-  <img src="screenshots/login.png" alt="Login" width="300" />
-  &nbsp;&nbsp;&nbsp;&nbsp;
-  <img src="screenshots/pro-upgrade.png" alt="PRO Upgrade" width="260" />
-</p>
 
 ## Features
 

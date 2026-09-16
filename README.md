@@ -20,21 +20,55 @@ Full-stack League of Legends analytics dashboard with AI-powered match coaching.
 
 ## Screenshots
 
-| Home | Overview |
-|------|----------|
-| ![Home](screenshots/home.png) | ![Overview](screenshots/overview.png) |
+### Core
 
-| Performance | Champions |
-|-------------|-----------|
-| ![Performance](screenshots/performance.png) | ![Champions](screenshots/champions.png) |
+<p align="center">
+  <img src="screenshots/home.png" alt="Home" width="100%" />
+</p>
+<p align="center"><b>Home</b> — Search any player by Riot ID with top ranked players preview</p>
 
-| Match History | AI Analysis |
-|---------------|-------------|
-| ![Match History](screenshots/match-history.png) | ![AI Analysis](screenshots/ai-analysis.png) |
+<p align="center">
+  <img src="screenshots/overview.png" alt="Overview" width="100%" />
+</p>
+<p align="center"><b>Overview</b> — Ranked stats, LP history, recent matches, and top champions at a glance</p>
 
-| Leaderboard | Multi-Search |
-|-------------|--------------|
-| ![Leaderboard](screenshots/leaderboard.png) | ![Multi-Search](screenshots/multi-search.png) |
+### Player Analytics
+
+<p align="center">
+  <img src="screenshots/performance.png" alt="Performance" width="100%" />
+</p>
+<p align="center"><b>Performance</b> — LP progression, win rate trends, and KDA analytics</p>
+
+<p align="center">
+  <img src="screenshots/champions.png" alt="Champions" width="100%" />
+</p>
+<p align="center"><b>Champions</b> — Per-champion stats with win rate, KDA, and game breakdown</p>
+
+### Discovery
+
+<p align="center">
+  <img src="screenshots/leaderboard.png" alt="Leaderboard" width="100%" />
+</p>
+<p align="center"><b>Leaderboard</b> — Regional ranked leaderboard for Challenger, Grandmaster, and Master</p>
+
+<p align="center">
+  <img src="screenshots/multi-search.png" alt="Multi-Search" width="100%" />
+</p>
+<p align="center"><b>Multi-Search</b> — Batch player lookup with ranked stats side by side</p>
+
+<p align="center">
+  <img src="screenshots/match-history.png" alt="Match History" width="600" />
+</p>
+<p align="center"><b>Match History</b> — Expandable scoreboard with full 10-player stats</p>
+
+### Account
+
+<p align="center">
+  <img src="screenshots/login.png" alt="Login" width="300" />
+  &nbsp;&nbsp;&nbsp;&nbsp;
+  <img src="screenshots/pro-upgrade.png" alt="PRO Upgrade" width="260" />
+</p>
+<p align="center"><b>Login</b> with Google & Discord OAuth &nbsp;|&nbsp; <b>PRO Upgrade</b> for AI match coaching</p>
 
 ## Features
 

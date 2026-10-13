@@ -163,7 +163,7 @@ describe("OverviewTab", () => {
     const user = userEvent.setup();
     render(<OverviewTab {...defaultProps} />);
     await user.click(screen.getByTestId("lp-sparkline-mobile"));
-    expect(screen.getByTestId("performance-modal")).toBeInTheDocument();
+    expect(await screen.findByTestId("performance-modal")).toBeInTheDocument();
   });
 
   it("closes performance modal", async () => {
@@ -171,7 +171,7 @@ describe("OverviewTab", () => {
     const user = userEvent.setup();
     render(<OverviewTab {...defaultProps} />);
     await user.click(screen.getByTestId("lp-sparkline-mobile"));
-    expect(screen.getByTestId("performance-modal")).toBeInTheDocument();
+    expect(await screen.findByTestId("performance-modal")).toBeInTheDocument();
     await user.click(screen.getByText("Close"));
     expect(screen.queryByTestId("performance-modal")).not.toBeInTheDocument();
   });

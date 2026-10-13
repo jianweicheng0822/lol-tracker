@@ -1,12 +1,14 @@
-import { useState } from "react";
+import { lazy, Suspense, useState } from "react";
 import type { PlayerStats, MatchSummary, RankedEntry, TabId } from "../../types";
 import { useIsMobile } from "../../hooks/useIsMobile";
 import OverviewSidebar from "../sidebar/OverviewSidebar";
 import MatchList from "../MatchList";
 import LpSparkline from "../sidebar/LpSparkline";
-import PerformanceModal from "../PerformanceModal";
 import UpgradeModal from "../UpgradeModal";
 import { COLORS } from "../../utils/colors";
+
+// Lazy-loaded so Recharts (~340 kB) is only downloaded when the modal is opened
+const PerformanceModal = lazy(() => import("../PerformanceModal"));
 
 type Props = {
   stats: PlayerStats | null;
@@ -95,7 +97,9 @@ export default function OverviewTab({
       </div>
 
       {showPerformanceModal && (
-        <PerformanceModal puuid={puuid} onClose={() => setShowPerformanceModal(false)} />
+        <Suspense fallback={null}>
+          <PerformanceModal puuid={puuid} onClose={() => setShowPerformanceModal(false)} />
+        </Suspense>
       )}
 
       {showUpgradeModal && (

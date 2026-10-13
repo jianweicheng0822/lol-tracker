@@ -207,7 +207,9 @@ export function loadKeystoneRunes(version: string): Promise<Record<number, strin
         // Slot 0 contains the keystone runes
         if (tree.slots?.[0]?.runes) {
           for (const rune of tree.slots[0].runes) {
-            map[rune.id] = rune.icon;
+            // DDragon icons include a "perk-images/" prefix that keystoneIconUrl already adds;
+            // strip it so dynamic entries match the KEYSTONE_ICONS format
+            map[rune.id] = rune.icon.replace(/^perk-images\//, "");
           }
         }
       }

@@ -1,7 +1,8 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import {
   ddragonBase,
   keystoneIconUrl,
+  loadKeystoneRunes,
   runeStyleIconUrl,
   championIconUrl,
   itemIconUrl,
@@ -34,6 +35,24 @@ describe("keystoneIconUrl", () => {
 
   it("returns empty string for unknown keystone", () => {
     expect(keystoneIconUrl(9999)).toBe("");
+  });
+
+  it("builds a valid URL from dynamically loaded runesReforged data", async () => {
+    // Shape of the real DDragon response: icon paths include a "perk-images/" prefix
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = vi.fn().mockResolvedValue({
+      json: () => Promise.resolve([
+        { id: 8100, slots: [{ runes: [{ id: 8112, icon: "perk-images/Styles/Domination/Electrocute/Electrocute.png" }] }] },
+      ]),
+    }) as unknown as typeof fetch;
+    try {
+      const dynamicMap = await loadKeystoneRunes("test-dynamic-1");
+      expect(keystoneIconUrl(8112, dynamicMap)).toBe(
+        "https://ddragon.leagueoflegends.com/cdn/img/perk-images/Styles/Domination/Electrocute/Electrocute.png"
+      );
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
   });
 
   it("has entries for all rune trees", () => {

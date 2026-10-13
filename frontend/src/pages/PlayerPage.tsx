@@ -276,7 +276,7 @@ export default function PlayerPage() {
               onToggleFavorite={toggleFavorite}
               onRefresh={handleRefresh}
               streak={computeStreak(matches)}
-              climbStatus={computeClimbStatus(ranked)}
+              climbStatus={computeClimbStatus(matches)}
             />
 
             <LiveGameCard

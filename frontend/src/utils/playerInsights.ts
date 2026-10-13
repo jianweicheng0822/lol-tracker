@@ -3,7 +3,7 @@
  * @description Derived player analytics including win/loss streaks and climb status calculations.
  * @module frontend.utils
  */
-import type { MatchSummary, RankedEntry } from "../types";
+import type { MatchSummary } from "../types";
 
 export type Streak = { type: "win" | "loss"; count: number };
 
@@ -60,18 +60,25 @@ export function computeMainChampion(
   return { name: best.name, games: best.games, winRate: Math.round((best.wins / best.games) * 100) };
 }
 
+const CLIMB_MIN_GAMES = 5;
+const CLIMB_MAX_GAMES = 20;
+const CLIMB_ACTIVE_WINDOW_MS = 30 * 24 * 60 * 60 * 1000;
+
 /**
- * Determine climb status based on ranked win rate.
- * >55% = climbing, <45% = falling, otherwise stable.
+ * Determine climb status from recent Ranked Solo/Duo form (matches ordered most recent first).
+ * Uses up to the last 20 solo games: >55% win rate = climbing, <45% = falling, otherwise stable.
+ * Returns null with fewer than 5 recent solo games, or if the latest one is over 30 days old,
+ * so inactive players aren't labeled by stale season-long results.
  */
 export function computeClimbStatus(
-  ranked: RankedEntry[],
+  matches: MatchSummary[],
+  now: number = Date.now(),
 ): "climbing" | "falling" | "stable" | null {
-  const solo = ranked.find((e) => e.queueType === "RANKED_SOLO_5x5");
-  if (!solo) return null;
-  const total = solo.wins + solo.losses;
-  if (total === 0) return null;
-  const wr = (solo.wins / total) * 100;
+  const solo = matches.filter((m) => m.queueId === 420).slice(0, CLIMB_MAX_GAMES);
+  if (solo.length < CLIMB_MIN_GAMES) return null;
+  if (now - solo[0].gameEndTimestamp > CLIMB_ACTIVE_WINDOW_MS) return null;
+  const wins = solo.filter((m) => m.win).length;
+  const wr = (wins / solo.length) * 100;
   if (wr > 55) return "climbing";
   if (wr < 45) return "falling";
   return "stable";

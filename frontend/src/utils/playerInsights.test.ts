@@ -1,5 +1,5 @@
 import { computeStreak, computeRecentForm, computeMainChampion, computeClimbStatus } from "./playerInsights";
-import { makeMatchSummary, makeRankedEntry } from "../test/fixtures";
+import { makeMatchSummary } from "../test/fixtures";
 
 describe("computeStreak", () => {
   it("returns null for empty matches", () => {
@@ -98,27 +98,47 @@ describe("computeMainChampion", () => {
 });
 
 describe("computeClimbStatus", () => {
-  it("returns null when no ranked entries", () => {
-    expect(computeClimbStatus([])).toBeNull();
+  const NOW = 1_800_000_000_000;
+  const DAY = 24 * 60 * 60 * 1000;
+  /** Builds solo-queue games, most recent first, from a win/loss pattern like "WWLW". */
+  const soloGames = (pattern: string, endedDaysAgo = 1) =>
+    pattern.split("").map((r, i) =>
+      makeMatchSummary({ queueId: 420, win: r === "W", gameEndTimestamp: NOW - (endedDaysAgo + i) * DAY }));
+
+  it("returns null with no matches", () => {
+    expect(computeClimbStatus([], NOW)).toBeNull();
   });
 
-  it("returns null when no solo queue entry", () => {
-    expect(computeClimbStatus([makeRankedEntry({ queueType: "RANKED_FLEX_SR" })])).toBeNull();
+  it("returns null with fewer than 5 recent solo games", () => {
+    expect(computeClimbStatus(soloGames("WWWW"), NOW)).toBeNull();
   });
 
-  it("returns 'climbing' when win rate > 55%", () => {
-    expect(computeClimbStatus([makeRankedEntry({ wins: 60, losses: 40 })])).toBe("climbing");
+  it("returns 'climbing' when recent solo win rate > 55%", () => {
+    expect(computeClimbStatus(soloGames("WWWLW"), NOW)).toBe("climbing");
   });
 
-  it("returns 'falling' when win rate < 45%", () => {
-    expect(computeClimbStatus([makeRankedEntry({ wins: 40, losses: 60 })])).toBe("falling");
+  it("returns 'falling' when recent solo win rate < 45%", () => {
+    expect(computeClimbStatus(soloGames("LLWLL"), NOW)).toBe("falling");
   });
 
-  it("returns 'stable' when win rate is between 45-55%", () => {
-    expect(computeClimbStatus([makeRankedEntry({ wins: 50, losses: 50 })])).toBe("stable");
+  it("returns 'stable' when recent solo win rate is between 45-55%", () => {
+    expect(computeClimbStatus(soloGames("WLWLWL"), NOW)).toBe("stable");
   });
 
-  it("returns null when total games is 0", () => {
-    expect(computeClimbStatus([makeRankedEntry({ wins: 0, losses: 0 })])).toBeNull();
+  it("returns null when the latest solo game is over 30 days old", () => {
+    // A strong record from months ago should not label an inactive player as climbing
+    expect(computeClimbStatus(soloGames("WWWWWW", 145), NOW)).toBeNull();
+  });
+
+  it("ignores non-solo queues", () => {
+    const arenaWins = Array.from({ length: 5 }, () =>
+      makeMatchSummary({ queueId: 1750, win: true, gameEndTimestamp: NOW - DAY }));
+    expect(computeClimbStatus([...arenaWins, ...soloGames("LLLLL")], NOW)).toBe("falling");
+    expect(computeClimbStatus(arenaWins, NOW)).toBeNull();
+  });
+
+  it("only considers the last 20 solo games", () => {
+    // 20 recent losses followed by older wins: only the losses count
+    expect(computeClimbStatus(soloGames("L".repeat(20) + "W".repeat(20)), NOW)).toBe("falling");
   });
 });

@@ -23,9 +23,13 @@ import java.util.Optional;
 public class LeaderboardPrefetchService {
 
     private static final Logger log = LoggerFactory.getLogger(LeaderboardPrefetchService.class);
-    private static final Duration CACHE_TTL = Duration.ofMinutes(20);
+    // Only a name/icon lookup for the read path, so it can outlive a cycle or two
+    private static final Duration CACHE_TTL = Duration.ofMinutes(60);
     private static final String[] TIERS = {"challenger", "grandmaster", "master"};
-    private static final String[] QUEUES = {"RANKED_SOLO_5x5", "RANKED_FLEX_SR"};
+    // Flex leaderboards are resolved on demand only — Solo/Duo is what most people browse
+    static final String QUEUE = "RANKED_SOLO_5x5";
+    // Higher than the on-demand reserve, so people browsing the leaderboard win over the background job
+    static final int PREFETCH_RESERVE_PERMITS = 50;
 
     private final RiotApiService riotApiService;
     private final ObjectMapper objectMapper;
@@ -58,24 +62,25 @@ public class LeaderboardPrefetchService {
             return;
         }
         log.info("Starting leaderboard prefetch cycle");
-        for (RiotRegion region : RiotRegion.values()) {
-            for (String tier : TIERS) {
-                for (String queue : QUEUES) {
-                    if (riotRateLimiter.availablePermits() < 40) {
-                        log.info("Prefetch stopping early — rate limit permits low ({} available)",
-                                riotRateLimiter.availablePermits());
-                        log.info("Leaderboard prefetch cycle complete (partial)");
-                        return;
-                    }
-                    try {
-                        prefetchOne(tier, queue, region);
-                    } catch (Exception e) {
-                        log.warn("Prefetch failed for {}:{}:{}: {}", tier, queue, region, e.getMessage());
-                    }
+        prefetchCycle();
+        log.info("Leaderboard prefetch cycle complete");
+    }
+
+    /**
+     * Refresh every Solo/Duo leaderboard, tier by tier (all regions' Challenger first) so the most
+     * viewed pages fill in first. Names and icons come from 24h caches, so each cycle only spends
+     * rate-limit permits on players that are new to the ladder or whose cache expired.
+     */
+    void prefetchCycle() {
+        for (String tier : TIERS) {
+            for (RiotRegion region : LeaderboardService.LEADERBOARD_REGIONS) {
+                try {
+                    prefetchOne(tier, QUEUE, region);
+                } catch (Exception e) {
+                    log.warn("Prefetch failed for {}:{}:{}: {}", tier, QUEUE, region, e.getMessage());
                 }
             }
         }
-        log.info("Leaderboard prefetch cycle complete");
     }
 
     private boolean isRedisAvailable() {
@@ -87,22 +92,20 @@ public class LeaderboardPrefetchService {
         }
     }
 
-    private void prefetchOne(String tier, String queue, RiotRegion region) {
+    void prefetchOne(String tier, String queue, RiotRegion region) {
         String json = riotApiService.getLeagueByTier(tier, queue, region);
         try {
             JsonNode root = objectMapper.readTree(json);
             String leagueTier = root.path("tier").asText(tier.toUpperCase());
-            JsonNode entries = root.path("entries");
 
             List<RawEntry> rawEntries = new ArrayList<>();
-            for (JsonNode e : entries) {
-                String puuid = e.path("puuid").asText("");
-                String fallbackName = e.path("summonerName").asText("");
-                String rank = e.path("rank").asText("I");
-                int lp = e.path("leaguePoints").asInt(0);
-                int wins = e.path("wins").asInt(0);
-                int losses = e.path("losses").asInt(0);
-                rawEntries.add(new RawEntry(puuid, fallbackName, rank, lp, wins, losses));
+            for (JsonNode e : root.path("entries")) {
+                rawEntries.add(new RawEntry(
+                        e.path("puuid").asText(""),
+                        e.path("rank").asText("I"),
+                        e.path("leaguePoints").asInt(0),
+                        e.path("wins").asInt(0),
+                        e.path("losses").asInt(0)));
             }
 
             rawEntries.sort(Comparator.comparingInt(RawEntry::lp).reversed());
@@ -112,45 +115,50 @@ public class LeaderboardPrefetchService {
                     : rawEntries.size();
 
             List<ResolvedEntry> resolved = new ArrayList<>();
+            int skipped = 0;
             for (int i = 0; i < limit; i++) {
-                // Back off if rate limiter permits are running low
-                if (riotRateLimiter.availablePermits() < 50) {
-                    log.info("Prefetch pausing for {}:{}:{} at entry {}/{} — rate limit permits low",
-                            tier, queue, region, i, limit);
-                    break;
-                }
-
                 RawEntry raw = rawEntries.get(i);
-                String name = resolveName(raw.puuid(), raw.fallbackName(), region);
-                int profileIconId = resolveProfileIcon(raw.puuid(), region);
+                if (raw.puuid().isEmpty()) continue;
+
+                int permitsBefore = riotRateLimiter.availablePermits();
+                String name = resolveName(raw.puuid(), region);
+                if (name == null) {
+                    // Not cached and no rate-limit budget right now; a later cycle will pick it up.
+                    // Keep going — the remaining players may still be served from cache for free.
+                    skipped++;
+                    continue;
+                }
+                Integer iconId = riotApiService.tryGetProfileIconId(raw.puuid(), region, PREFETCH_RESERVE_PERMITS);
                 int total = raw.wins() + raw.losses();
                 double winRate = total > 0 ? Math.round((double) raw.wins() / total * 1000.0) / 10.0 : 0.0;
                 resolved.add(new ResolvedEntry(name, raw.puuid(), leagueTier, raw.rank(),
-                        raw.lp(), raw.wins(), raw.losses(), winRate, profileIconId));
+                        raw.lp(), raw.wins(), raw.losses(), winRate, iconId == null ? 0 : iconId));
 
-                try {
-                    Thread.sleep(100);
-                } catch (InterruptedException ie) {
-                    Thread.currentThread().interrupt();
-                    return;
+                // Only pace real Riot calls (dev keys also allow just 20 requests per second)
+                if (riotRateLimiter.availablePermits() < permitsBefore) {
+                    try {
+                        Thread.sleep(100);
+                    } catch (InterruptedException ie) {
+                        Thread.currentThread().interrupt();
+                        return;
+                    }
                 }
             }
 
             String redisKey = "lb:prefetched:" + region.name() + ":" + tier + ":" + queue;
-            String value = objectMapper.writeValueAsString(resolved);
-            redisTemplate.opsForValue().set(redisKey, value, CACHE_TTL);
-            log.info("Prefetched {} entries for {}:{}:{}", resolved.size(), tier, queue, region);
+            redisTemplate.opsForValue().set(redisKey, objectMapper.writeValueAsString(resolved), CACHE_TTL);
+            log.info("Prefetched {} of {} entries for {}:{}:{} ({} skipped, rate limit)",
+                    resolved.size(), limit, tier, queue, region, skipped);
         } catch (Exception e) {
             log.warn("Failed to prefetch {}:{}:{}: {}", tier, queue, region, e.getMessage());
         }
     }
 
-    private String resolveName(String puuid, String fallbackName, RiotRegion region) {
-        if (puuid.isEmpty()) {
-            return fallbackName.isEmpty() ? "Unknown" : fallbackName;
-        }
+    /** Riot ID from the 24h account cache or a budgeted Riot call; null if it couldn't be resolved. */
+    private String resolveName(String puuid, RiotRegion region) {
         try {
-            String accountJson = riotApiService.getAccountByPuuid(puuid, region);
+            String accountJson = riotApiService.tryGetAccountByPuuid(puuid, region, PREFETCH_RESERVE_PERMITS);
+            if (accountJson == null) return null;
             JsonNode account = objectMapper.readTree(accountJson);
             String gameName = account.path("gameName").asText("");
             String tagLine = account.path("tagLine").asText("");
@@ -160,21 +168,7 @@ public class LeaderboardPrefetchService {
         } catch (Exception e) {
             log.debug("Prefetch: failed to resolve name for puuid {}: {}", puuid, e.getMessage());
         }
-        return fallbackName.isEmpty() ? "Unknown" : fallbackName;
-    }
-
-    private int resolveProfileIcon(String puuid, RiotRegion region) {
-        if (puuid.isEmpty()) {
-            return 0;
-        }
-        try {
-            String summonerJson = riotApiService.getSummonerByPuuid(puuid, region);
-            JsonNode summoner = objectMapper.readTree(summonerJson);
-            return summoner.path("profileIconId").asInt(0);
-        } catch (Exception e) {
-            log.debug("Prefetch: failed to resolve profile icon for puuid {}: {}", puuid, e.getMessage());
-            return 0;
-        }
+        return null;
     }
 
     public Optional<List<ResolvedEntry>> getCached(String tier, String queue, RiotRegion region) {
@@ -192,5 +186,5 @@ public class LeaderboardPrefetchService {
         }
     }
 
-    private record RawEntry(String puuid, String fallbackName, String rank, int lp, int wins, int losses) {}
+    private record RawEntry(String puuid, String rank, int lp, int wins, int losses) {}
 }

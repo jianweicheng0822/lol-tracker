@@ -10,7 +10,9 @@ import { COLORS, winRateColor } from "../utils/colors";
 import { TIER_COLORS } from "../utils/lp";
 import { useDdragonVersion, ddragonBase } from "../utils/ddragon";
 import type { LeaderboardEntry, Region } from "../types";
-import { REGIONS } from "../types";
+
+// Leaderboards cover the three major regions only (must match the backend's LEADERBOARD_REGIONS)
+const LEADERBOARD_REGIONS: Region[] = ["NA", "EUW", "KR"];
 
 const TIER_ICON_BASE =
   "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-mini-crests";
@@ -34,11 +36,16 @@ const QUEUES = [
 ] as const;
 type Queue = (typeof QUEUES)[number]["value"];
 
-const PAGE_SIZE = 50;
+// Smaller pages mean fewer names/icons to resolve on a first visit (Riot rate limit)
+const PAGE_SIZE = 25;
+
+// The standard icon new accounts start with — shown while a player's real icon isn't resolved yet
+const DEFAULT_PROFILE_ICON_ID = 29;
 
 export default function LeaderboardPage() {
   const navigate = useNavigate();
   const ddragonVersion = useDdragonVersion();
+  const profileIconUrl = (id: number) => `${ddragonBase(ddragonVersion)}/profileicon/${id}.png`;
   const [region, setRegion] = useState<Region>("NA");
   const [queue, setQueue] = useState<Queue>("RANKED_SOLO_5x5");
   const [tier, setTier] = useState<Tier>("challenger");
@@ -89,7 +96,7 @@ export default function LeaderboardPage() {
             onChange={(e) => changeRegion(e.target.value as Region)}
             style={styles.select}
           >
-            {REGIONS.map((r) => (
+            {LEADERBOARD_REGIONS.map((r) => (
               <option key={r} value={r}>
                 {r}
               </option>
@@ -242,19 +249,18 @@ export default function LeaderboardPage() {
                     </td>
                     <td style={styles.td}>
                       <div style={styles.playerCell}>
-                        {entry.profileIconId ? (
-                          <img
-                            src={`${ddragonBase(ddragonVersion)}/profileicon/${entry.profileIconId}.png`}
-                            alt=""
-                            loading="lazy"
-                            style={styles.profileIcon}
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = "none";
-                            }}
-                          />
-                        ) : (
-                          <div style={styles.profileIconPlaceholder} />
-                        )}
+                        <img
+                          src={profileIconUrl(entry.profileIconId || DEFAULT_PROFILE_ICON_ID)}
+                          alt=""
+                          loading="lazy"
+                          style={styles.profileIcon}
+                          onError={(e) => {
+                            // Fall back to the default icon (keeps rows aligned); stop if that fails too
+                            const img = e.target as HTMLImageElement;
+                            const fallback = profileIconUrl(DEFAULT_PROFILE_ICON_ID);
+                            if (img.src !== fallback) img.src = fallback;
+                          }}
+                        />
                         <img
                           src={tierIconUrl(entry.tier)}
                           alt={entry.tier}
@@ -464,13 +470,6 @@ const styles: Record<string, React.CSSProperties> = {
     height: 32,
     borderRadius: "50%",
     objectFit: "cover" as const,
-  },
-  profileIconPlaceholder: {
-    width: 32,
-    height: 32,
-    borderRadius: "50%",
-    background: COLORS.cardBorder,
-    flexShrink: 0,
   },
   tierIcon: {
     width: 24,

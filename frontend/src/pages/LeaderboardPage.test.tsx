@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import LeaderboardPage from "./LeaderboardPage";
 import * as api from "../api";
@@ -87,7 +87,7 @@ describe("LeaderboardPage", () => {
 
   it("fetches challenger NA page 0 by default", () => {
     render(<LeaderboardPage />);
-    expect(api.fetchLeaderboard).toHaveBeenCalledWith("NA", "RANKED_SOLO_5x5", "challenger", 0, 50);
+    expect(api.fetchLeaderboard).toHaveBeenCalledWith("NA", "RANKED_SOLO_5x5", "challenger", 0, 25);
   });
 
   it("refetches when tier tab is clicked", async () => {
@@ -98,7 +98,14 @@ describe("LeaderboardPage", () => {
     });
 
     await user.click(screen.getByText("Grandmaster"));
-    expect(api.fetchLeaderboard).toHaveBeenCalledWith("NA", "RANKED_SOLO_5x5", "grandmaster", 0, 50);
+    expect(api.fetchLeaderboard).toHaveBeenCalledWith("NA", "RANKED_SOLO_5x5", "grandmaster", 0, 25);
+  });
+
+  it("offers only the NA, EUW, and KR leaderboards", async () => {
+    render(<LeaderboardPage />);
+    const select = await screen.findByDisplayValue("NA");
+    const options = Array.from((select as HTMLSelectElement).options).map((o) => o.value);
+    expect(options).toEqual(["NA", "EUW", "KR"]);
   });
 
   it("refetches when region is changed", async () => {
@@ -110,7 +117,7 @@ describe("LeaderboardPage", () => {
 
     const select = screen.getByDisplayValue("NA");
     await user.selectOptions(select, "KR");
-    expect(api.fetchLeaderboard).toHaveBeenCalledWith("KR", "RANKED_SOLO_5x5", "challenger", 0, 50);
+    expect(api.fetchLeaderboard).toHaveBeenCalledWith("KR", "RANKED_SOLO_5x5", "challenger", 0, 25);
   });
 
   it("refetches when queue is changed to Flex", async () => {
@@ -122,7 +129,7 @@ describe("LeaderboardPage", () => {
 
     const select = screen.getByDisplayValue("Solo/Duo");
     await user.selectOptions(select, "RANKED_FLEX_SR");
-    expect(api.fetchLeaderboard).toHaveBeenCalledWith("NA", "RANKED_FLEX_SR", "challenger", 0, 50);
+    expect(api.fetchLeaderboard).toHaveBeenCalledWith("NA", "RANKED_FLEX_SR", "challenger", 0, 25);
   });
 
   it("navigates home when back button is clicked", async () => {
@@ -172,7 +179,7 @@ describe("LeaderboardPage", () => {
     await waitFor(() => {
       expect(screen.getByText("Faker")).toBeInTheDocument();
     });
-    expect(screen.getByText("Page 1 of 3")).toBeInTheDocument();
+    expect(screen.getByText("Page 1 of 5")).toBeInTheDocument(); // 120 entries, 25 per page
     expect(screen.getByText(/Prev/)).toBeDisabled();
     expect(screen.getByText(/Next/)).not.toBeDisabled();
   });
@@ -188,17 +195,21 @@ describe("LeaderboardPage", () => {
     expect(mockNavigate).toHaveBeenCalledWith("/player/puuid/NA/puuid-faker");
   });
 
-  it("renders profile icons for entries with profileIconId", async () => {
+  it("renders each player's profile icon, with the default icon when it's missing", async () => {
     render(<LeaderboardPage />);
     await waitFor(() => {
       expect(screen.getByText("Faker")).toBeInTheDocument();
     });
 
-    const profileIcons = document.querySelectorAll('img[src*="profileicon"]');
-    expect(profileIcons.length).toBe(2); // Faker (4567) and Zeus (1234), but not Gumayusi (0)
+    const srcs = Array.from(document.querySelectorAll<HTMLImageElement>('img[src*="profileicon"]')).map((i) => i.src);
+    // Faker (4567) and Zeus (1234) have icons; Gumayusi (0) gets the default icon (29)
+    expect(srcs).toHaveLength(3);
+    expect(srcs.some((s) => s.endsWith("/profileicon/4567.png"))).toBe(true);
+    expect(srcs.some((s) => s.endsWith("/profileicon/1234.png"))).toBe(true);
+    expect(srcs.some((s) => s.endsWith("/profileicon/29.png"))).toBe(true);
   });
 
-  it("renders placeholder circle for entries without profileIconId", async () => {
+  it("shows the default profile icon instead of a blank placeholder when profileIconId is 0", async () => {
     vi.mocked(api.fetchLeaderboard).mockResolvedValue({
       entries: [{ summonerName: "NoIcon", puuid: "puuid-noicon", tier: "CHALLENGER", rank: "I", leaguePoints: 500, wins: 50, losses: 50, winRate: 50.0, profileIconId: 0 }],
       totalEntries: 1,
@@ -208,8 +219,21 @@ describe("LeaderboardPage", () => {
       expect(screen.getByText("NoIcon")).toBeInTheDocument();
     });
 
-    const profileIcons = document.querySelectorAll('img[src*="profileicon"]');
-    expect(profileIcons.length).toBe(0);
+    const icon = document.querySelector<HTMLImageElement>('img[src*="profileicon"]');
+    expect(icon?.src).toMatch(/\/profileicon\/29\.png$/);
+  });
+
+  it("falls back to the default icon when a profile icon fails to load", async () => {
+    render(<LeaderboardPage />);
+    await waitFor(() => {
+      expect(screen.getByText("Faker")).toBeInTheDocument();
+    });
+
+    const fakerIcon = document.querySelector<HTMLImageElement>('img[src$="/profileicon/4567.png"]')!;
+    fireEvent.error(fakerIcon);
+    expect(fakerIcon.src).toMatch(/\/profileicon\/29\.png$/);
+    // Still visible, so the row stays aligned
+    expect(fakerIcon.style.display).not.toBe("none");
   });
 
   it("advances to next page when Next is clicked", async () => {
@@ -221,6 +245,6 @@ describe("LeaderboardPage", () => {
     });
 
     await user.click(screen.getByText(/Next/));
-    expect(api.fetchLeaderboard).toHaveBeenCalledWith("NA", "RANKED_SOLO_5x5", "challenger", 1, 50);
+    expect(api.fetchLeaderboard).toHaveBeenCalledWith("NA", "RANKED_SOLO_5x5", "challenger", 1, 25);
   });
 });

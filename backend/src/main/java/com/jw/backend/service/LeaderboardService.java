@@ -29,6 +29,13 @@ import org.slf4j.LoggerFactory;
 public class LeaderboardService {
 
     private static final Logger log = LoggerFactory.getLogger(LeaderboardService.class);
+
+    /**
+     * Regions that have a leaderboard. Kept to the three major regions so the Riot rate limit
+     * (dev key) can keep their names and icons fully resolved. Player search is unaffected.
+     */
+    public static final List<RiotRegion> LEADERBOARD_REGIONS = List.of(RiotRegion.NA, RiotRegion.EUW, RiotRegion.KR);
+
     private static final long CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
     // Pages with unresolved names are cached briefly so later views pick up newly resolved names
     private static final long INCOMPLETE_CACHE_TTL_MS = 30 * 1000;
@@ -40,7 +47,9 @@ public class LeaderboardService {
     private final RiotApiService riotApiService;
     private final ObjectMapper objectMapper;
     private final LeaderboardPrefetchService prefetchService;
-    private final Executor nameResolver = Executors.newFixedThreadPool(8);
+    // Each uncached row may need two Riot calls (name + icon). Three threads at ~150ms per call keep
+    // bursts near the dev key's 20 requests/second limit.
+    private final Executor nameResolver = Executors.newFixedThreadPool(3);
 
     private record CachedPage(LeaderboardPage page, long timestamp, long ttlMs) {
         boolean isExpired() { return System.currentTimeMillis() - timestamp > ttlMs; }
@@ -123,7 +132,8 @@ public class LeaderboardService {
         }
 
         LeaderboardPage result = new LeaderboardPage(entries, totalEntries);
-        boolean complete = entries.stream().noneMatch(e -> UNKNOWN.equals(e.summonerName()));
+        boolean complete = entries.stream().noneMatch(e ->
+                UNKNOWN.equals(e.summonerName()) || (!e.puuid().isEmpty() && e.profileIconId() == 0));
         pageCache.put(cacheKey, new CachedPage(result, System.currentTimeMillis(),
                 complete ? CACHE_TTL_MS : INCOMPLETE_CACHE_TTL_MS));
         return result;
@@ -149,7 +159,7 @@ public class LeaderboardService {
                 : resolveName(raw, region);
         int icon = pre != null && pre.profileIconId() > 0
                 ? pre.profileIconId()
-                : peekProfileIcon(raw.puuid(), region);
+                : resolveProfileIcon(raw.puuid(), region);
         return buildDto(raw, leagueTier, name, icon);
     }
 
@@ -179,14 +189,11 @@ public class LeaderboardService {
         return fallbackName(raw);
     }
 
-    private int peekProfileIcon(String puuid, RiotRegion region) {
+    /** Icon from the 24h cache, or a budgeted Riot call; 0 (placeholder) if it can't be resolved now. */
+    private int resolveProfileIcon(String puuid, RiotRegion region) {
         if (puuid.isEmpty()) return 0;
-        try {
-            String summonerJson = riotApiService.peekSummonerByPuuid(puuid, region);
-            return summonerJson == null ? 0 : objectMapper.readTree(summonerJson).path("profileIconId").asInt(0);
-        } catch (Exception e) {
-            return 0;
-        }
+        Integer iconId = riotApiService.tryGetProfileIconId(puuid, region, NAME_RESOLUTION_RESERVE_PERMITS);
+        return iconId == null ? 0 : iconId;
     }
 
     private static String fallbackName(RawEntry raw) {

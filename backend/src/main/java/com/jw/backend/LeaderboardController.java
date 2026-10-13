@@ -32,8 +32,12 @@ public class LeaderboardController {
             @RequestParam(defaultValue = "RANKED_SOLO_5x5") String queue,
             @RequestParam(defaultValue = "challenger") String tier,
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "50") int size
+            @RequestParam(defaultValue = "25") int size
     ) {
+        if (!LeaderboardService.LEADERBOARD_REGIONS.contains(region)) {
+            return ResponseEntity.badRequest().body(
+                    java.util.Map.of("message", "Leaderboard is available for NA, EUW, and KR"));
+        }
         String normalizedTier = tier.toLowerCase();
         if (!ALLOWED_TIERS.contains(normalizedTier)) {
             return ResponseEntity.badRequest().body(

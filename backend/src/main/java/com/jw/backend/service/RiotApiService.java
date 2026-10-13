@@ -222,9 +222,67 @@ public class RiotApiService {
         return result;
     }
 
-    /** Cache-only Summoner-v4 lookup — never calls Riot. Returns null on a cache miss. */
-    public String peekSummonerByPuuid(String puuid, RiotRegion region) {
-        return getCached("summoner:" + region.platform() + ":" + puuid);
+    // Profile icons rarely change, so leaderboards cache them far longer than full summoner data
+    private static final long PROFILE_ICON_TTL_MS = 24L * 60 * 60 * 1000;
+
+    /**
+     * Cache-only profile icon lookup — never calls Riot. Checks the 24h icon cache, then any cached
+     * Summoner-v4 response (e.g. from someone viewing that profile). Returns null on a miss.
+     */
+    public Integer peekProfileIconId(String puuid, RiotRegion region) {
+        String iconKey = "profile-icon:" + region.platform() + ":" + puuid;
+        String cachedIcon = getCached(iconKey);
+        if (cachedIcon != null) {
+            try {
+                return Integer.parseInt(cachedIcon);
+            } catch (NumberFormatException e) {
+                return null;
+            }
+        }
+        String summonerJson = getCached("summoner:" + region.platform() + ":" + puuid);
+        if (summonerJson == null) return null;
+        Integer iconId = parseProfileIconId(summonerJson);
+        if (iconId != null) putCached(iconKey, iconId.toString(), PROFILE_ICON_TTL_MS);
+        return iconId;
+    }
+
+    /**
+     * Best-effort profile icon lookup for leaderboards. Uses the caches first; otherwise makes one
+     * Summoner-v4 call only when more than {@code reservePermits} rate-limit permits are free.
+     * Returns null when the call is skipped or fails.
+     */
+    public Integer tryGetProfileIconId(String puuid, RiotRegion region, int reservePermits) {
+        Integer cached = peekProfileIconId(puuid, region);
+        if (cached != null) return cached;
+
+        if (riotRateLimiter.availablePermits() <= reservePermits || !riotRateLimiter.tryAcquire()) {
+            return null;
+        }
+        try {
+            String summonerJson = getClient("https://" + region.platform() + ".api.riotgames.com").get()
+                    .uri("/lol/summoner/v4/summoners/by-puuid/{puuid}", puuid)
+                    .header("X-Riot-Token", apiKey)
+                    .retrieve()
+                    .body(String.class);
+            putCached("summoner:" + region.platform() + ":" + puuid, summonerJson, 30L * 60 * 1000);
+            Integer iconId = parseProfileIconId(summonerJson);
+            if (iconId != null) {
+                putCached("profile-icon:" + region.platform() + ":" + puuid, iconId.toString(), PROFILE_ICON_TTL_MS);
+            }
+            return iconId;
+        } catch (Exception e) {
+            log.debug("Best-effort profile icon lookup failed for puuid {}: {}", puuid, e.getMessage());
+            return null;
+        }
+    }
+
+    private Integer parseProfileIconId(String summonerJson) {
+        try {
+            JsonNode icon = objectMapper.readTree(summonerJson).path("profileIconId");
+            return icon.isInt() ? icon.asInt() : null;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     /** League-v4 ranked entries. 30min TTL — same rationale as summoner data. */

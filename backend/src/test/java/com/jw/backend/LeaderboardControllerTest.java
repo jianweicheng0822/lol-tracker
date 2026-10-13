@@ -36,7 +36,7 @@ class LeaderboardControllerTest {
             new LeaderboardEntryDto("Faker", "puuid-1", "CHALLENGER", "I", 1500, 200, 80, 71.4, 4567),
             new LeaderboardEntryDto("Zeus", "puuid-2", "CHALLENGER", "I", 1200, 180, 90, 66.7, 1234)
         );
-        when(leaderboardService.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.KR, 0, 50))
+        when(leaderboardService.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.KR, 0, 25))
             .thenReturn(new LeaderboardService.LeaderboardPage(entries, 2));
 
         mockMvc.perform(get("/api/leaderboard")
@@ -56,19 +56,19 @@ class LeaderboardControllerTest {
 
     @Test
     void getLeaderboard_withDefaultParams_usesDefaults() throws Exception {
-        when(leaderboardService.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 50))
+        when(leaderboardService.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 25))
             .thenReturn(new LeaderboardService.LeaderboardPage(List.of(), 0));
 
         mockMvc.perform(get("/api/leaderboard"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.entries.length()").value(0));
 
-        verify(leaderboardService).getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 50);
+        verify(leaderboardService).getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 25);
     }
 
     @Test
     void getLeaderboard_withGrandmaster_returnsOk() throws Exception {
-        when(leaderboardService.getLeaderboard("grandmaster", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 50))
+        when(leaderboardService.getLeaderboard("grandmaster", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 25))
             .thenReturn(new LeaderboardService.LeaderboardPage(
                 List.of(new LeaderboardEntryDto("GM Player", "puuid-gm", "GRANDMASTER", "I", 600, 100, 50, 66.7, 0)), 1));
 
@@ -80,7 +80,7 @@ class LeaderboardControllerTest {
 
     @Test
     void getLeaderboard_withMaster_returnsOk() throws Exception {
-        when(leaderboardService.getLeaderboard("master", "RANKED_SOLO_5x5", RiotRegion.EUW, 0, 50))
+        when(leaderboardService.getLeaderboard("master", "RANKED_SOLO_5x5", RiotRegion.EUW, 0, 25))
             .thenReturn(new LeaderboardService.LeaderboardPage(List.of(), 0));
 
         mockMvc.perform(get("/api/leaderboard")
@@ -106,28 +106,37 @@ class LeaderboardControllerTest {
     }
 
     @Test
+    void getLeaderboard_withRegionOutsideLeaderboardRegions_returnsBadRequest() throws Exception {
+        mockMvc.perform(get("/api/leaderboard")
+                .param("region", "JP"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.message").value("Leaderboard is available for NA, EUW, and KR"));
+        verifyNoInteractions(leaderboardService);
+    }
+
+    @Test
     void getLeaderboard_tierIsCaseInsensitive() throws Exception {
-        when(leaderboardService.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 50))
+        when(leaderboardService.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 25))
             .thenReturn(new LeaderboardService.LeaderboardPage(List.of(), 0));
 
         mockMvc.perform(get("/api/leaderboard")
                 .param("tier", "CHALLENGER"))
             .andExpect(status().isOk());
 
-        verify(leaderboardService).getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 50);
+        verify(leaderboardService).getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 25);
     }
 
     @Test
     void getLeaderboard_withPageAndSize_passesParams() throws Exception {
-        when(leaderboardService.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 2, 25))
+        when(leaderboardService.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 2, 10))
             .thenReturn(new LeaderboardService.LeaderboardPage(List.of(), 100));
 
         mockMvc.perform(get("/api/leaderboard")
                 .param("page", "2")
-                .param("size", "25"))
+                .param("size", "10"))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.totalEntries").value(100));
 
-        verify(leaderboardService).getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 2, 25);
+        verify(leaderboardService).getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 2, 10);
     }
 }

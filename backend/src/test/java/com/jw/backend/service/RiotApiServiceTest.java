@@ -536,13 +536,41 @@ class RiotApiServiceTest {
     }
 
     @Test
-    void peekSummonerByPuuid_readsCacheOnly() {
+    void peekProfileIconId_readsIconCache() {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
-        String key = "summoner:" + RiotRegion.NA.platform() + ":p1";
-        when(valueOperations.get(key)).thenReturn("{\"profileIconId\":7}");
+        when(valueOperations.get("profile-icon:" + RiotRegion.NA.platform() + ":p1")).thenReturn("7");
         int permitsBefore = riotRateLimiter.availablePermits();
 
-        assertEquals("{\"profileIconId\":7}", riotApiService.peekSummonerByPuuid("p1", RiotRegion.NA));
+        assertEquals(7, riotApiService.peekProfileIconId("p1", RiotRegion.NA));
         assertEquals(permitsBefore, riotRateLimiter.availablePermits());
+    }
+
+    @Test
+    void peekProfileIconId_fallsBackToCachedSummonerAndCachesIconFor24h() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        String iconKey = "profile-icon:" + RiotRegion.NA.platform() + ":p1";
+        when(valueOperations.get(iconKey)).thenReturn(null);
+        when(valueOperations.get("summoner:" + RiotRegion.NA.platform() + ":p1")).thenReturn("{\"profileIconId\":42}");
+
+        assertEquals(42, riotApiService.peekProfileIconId("p1", RiotRegion.NA));
+        verify(valueOperations).set(iconKey, "42", Duration.ofHours(24));
+    }
+
+    @Test
+    void peekProfileIconId_cacheMiss_returnsNull() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+
+        assertNull(riotApiService.peekProfileIconId("p1", RiotRegion.NA));
+    }
+
+    @Test
+    void tryGetProfileIconId_belowReserve_skipsRiotCall() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        while (riotRateLimiter.availablePermits() > 50) {
+            riotRateLimiter.tryAcquire();
+        }
+
+        assertNull(riotApiService.tryGetProfileIconId("p1", RiotRegion.NA, 50));
+        assertEquals(50, riotRateLimiter.availablePermits());
     }
 }

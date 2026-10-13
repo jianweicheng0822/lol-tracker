@@ -229,14 +229,36 @@ class LeaderboardServiceTest {
     }
 
     @Test
-    void getLeaderboard_usesCachedProfileIconWhenNotPrefetched() {
+    void getLeaderboard_resolvesProfileIconsOnDemandWhenNotPrefetched() {
+        int reserve = LeaderboardService.NAME_RESOLUTION_RESERVE_PERMITS;
         when(riotApiService.getLeagueByTier("challenger", "RANKED_SOLO_5x5", RiotRegion.NA)).thenReturn(THREE_PLAYER_LEAGUE);
-        when(riotApiService.peekSummonerByPuuid("p1", RiotRegion.NA)).thenReturn("{\"profileIconId\": 4321}");
+        when(riotApiService.tryGetProfileIconId("p1", RiotRegion.NA, reserve)).thenReturn(4321);
+        // No budget for p2's icon right now: placeholder (0) instead of failing the row
+        when(riotApiService.tryGetProfileIconId("p2", RiotRegion.NA, reserve)).thenReturn(null);
 
         var result = leaderboardService.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 50);
 
         assertEquals(4321, result.entries().get(0).profileIconId());
         assertEquals(0, result.entries().get(1).profileIconId());
+    }
+
+    @Test
+    void getLeaderboard_prefetchedEntryWithoutIcon_resolvesIconOnDemand() {
+        LeaderboardPrefetchService prefetchService = mock(LeaderboardPrefetchService.class);
+        LeaderboardService serviceWithPrefetch = new LeaderboardService(riotApiService, new ObjectMapper(), prefetchService);
+        when(prefetchService.getCached("challenger", "RANKED_SOLO_5x5", RiotRegion.NA))
+                .thenReturn(Optional.of(List.of(
+                        new LeaderboardPrefetchService.ResolvedEntry("Player1#NA1", "p1", "CHALLENGER", "I", 1200, 200, 80, 71.4, 0))));
+        when(riotApiService.getLeagueByTier("challenger", "RANKED_SOLO_5x5", RiotRegion.NA)).thenReturn(THREE_PLAYER_LEAGUE);
+        when(riotApiService.tryGetProfileIconId("p1", RiotRegion.NA, LeaderboardService.NAME_RESOLUTION_RESERVE_PERMITS))
+                .thenReturn(777);
+
+        var result = serviceWithPrefetch.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 50);
+
+        assertEquals("Player1#NA1", result.entries().get(0).summonerName());
+        assertEquals(777, result.entries().get(0).profileIconId());
+        // The name was prefetched, so only the icon needed a lookup
+        verify(riotApiService, never()).tryGetAccountByPuuid(eq("p1"), any(), anyInt());
     }
 
     @Test

@@ -174,7 +174,7 @@ Create a `backend/.env` file (or set env vars). The backend uses [spring-dotenv]
 |----------|----------|---------|-------------|
 | `RIOT_API_KEY` | Yes | — | Riot Games API key |
 | `OPENAI_API_KEY` | Yes | — | OpenAI API key for AI analysis |
-| `JWT_SECRET` | Yes | dev default | Secret for signing JWTs (min 32 chars) |
+| `JWT_SECRET` | Yes | — | Secret for signing JWTs (min 32 chars; startup fails if missing or shorter) |
 | `REDIS_HOST` | No | `localhost` | Redis host (used for Riot API response caching) |
 | `REDIS_PASSWORD` | No | `changeme` | Redis password (must match the Redis server) |
 | `DB_HOST` | No | `localhost` | PostgreSQL host |
@@ -182,10 +182,15 @@ Create a `backend/.env` file (or set env vars). The backend uses [spring-dotenv]
 | `DB_NAME` | No | `lol_tracker` | PostgreSQL database name |
 | `DB_USER` | No | `postgres` | PostgreSQL username |
 | `DB_PASSWORD` | No | `postgres` | PostgreSQL password |
-| `CORS_ORIGIN` | No | `http://localhost:5173` | Allowed CORS origin |
+| `CORS_ORIGIN` | No | `http://localhost:5173` | Allowed CORS origin (single origin; must match where the frontend is served) |
+| `APP_BASE_URL` | No | `http://localhost:5173` | Public frontend URL used for Stripe Checkout redirects |
 | `STRIPE_SECRET_KEY` | No | — | Stripe secret key (required for PRO subscriptions) |
 | `STRIPE_WEBHOOK_SECRET` | No | — | Stripe webhook signing secret |
 | `STRIPE_PRICE_ID` | No | — | Stripe Price ID for the PRO plan |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | No | — | Google OAuth credentials (required for Google sign-in) |
+| `DISCORD_CLIENT_ID` / `DISCORD_CLIENT_SECRET` | No | — | Discord OAuth credentials (required for Discord sign-in) |
+
+> **Windows tip:** variables set globally in your OS environment (e.g. a leftover `DB_PORT` or `DB_PASSWORD` from another project) override both these defaults and `docker compose`'s `${VAR:-default}` fallbacks. If you see `Connection to localhost:<port> refused` or `password authentication failed`, check for conflicting system/user environment variables.
 
 ### Running Locally
 
@@ -263,7 +268,7 @@ cd backend
 
 | Suite | Count | Database | Docker required |
 |-------|-------|----------|-----------------|
-| Unit tests | 230 | None (mocked) | No |
+| Unit tests | 278 | None (mocked) | No |
 | Integration tests | 12 | PostgreSQL (Testcontainers) | Yes |
 
 Unit tests use `@WebMvcTest` with MockMvc and mocked service layers — no database is involved. Integration tests use Testcontainers to spin up a real PostgreSQL container and run Flyway migrations, validating the full stack end-to-end.
@@ -285,11 +290,11 @@ npm run test:coverage
 
 | Suite | Count | Description |
 |-------|-------|-------------|
-| Utility tests | 54 | `playerInsights`, `trends`, `lp` conversion |
-| Component tests | 172 | MatchList, ScoreboardTable, ProfileHeader, RankSummary, OverviewTab, ChampionsTab, etc. |
+| Utility tests | 63 | `playerInsights`, `trends`, `lp` conversion |
+| Component tests | 184 | MatchList, ScoreboardTable, ProfileHeader, RankSummary, OverviewTab, ChampionsTab, etc. |
 | Hook tests | 9 | `useIsMobile`, `useTabNavigation` |
 | API module tests | 41 | Token management, login/register, error parsing |
-| Page tests | 53 | HomePage, MatchDetailPage, LeaderboardPage, MultiSearchPage rendering and state |
+| Page tests | 59 | HomePage, MatchDetailPage, LeaderboardPage, MultiSearchPage rendering and state |
 
 Frontend tests use Vitest with jsdom and React Testing Library. Components are tested for rendering, user interaction, form validation, and navigation. API tests mock `fetch` and `localStorage` to verify request construction and token handling.
 
@@ -305,6 +310,8 @@ PostgreSQL with Flyway-managed migrations:
 | `V4__add_user_id_to_favorites.sql` | Links `favorite_players` to `app_users` with foreign key |
 | `V5__add_stripe_fields.sql` | Adds Stripe customer ID, subscription ID, and status to `app_users` |
 | `V6__add_composite_match_index.sql` | Adds composite index on `match_records` for query performance |
+| `V7__add_search_history.sql` | Adds `search_history` table for per-user recent searches |
+| `V8__add_oauth_accounts.sql` | Adds `email` to `app_users` and `oauth_accounts` table for Google/Discord login |
 
 Schema is validated at startup (`ddl-auto=validate`) — Flyway is the single source of truth for DDL.
 

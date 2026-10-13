@@ -59,3 +59,8 @@ resume.pdf
 resume.aux
 resume.log
 resume.out
+
+# =====================================================
+# Claude Code (personal settings)
+# =====================================================
+.claude/settings.local.json

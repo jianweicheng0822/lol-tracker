@@ -6,8 +6,9 @@
  */
 
 /**
- * Base URL for API requests. In development Vite proxies to localhost:8080;
- * in production the React build is served by Spring Boot on the same origin.
+ * Base URL for API requests. In development the browser calls the backend on
+ * localhost:8080 directly (cross-origin, so the backend's CORS_ORIGIN must allow
+ * the Vite origin); in production the React build is served by Spring Boot on the same origin.
  */
 const BASE = import.meta.env.DEV ? "http://localhost:8080" : "";
 

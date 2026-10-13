@@ -12,6 +12,7 @@ import LeaderboardPage from "./pages/LeaderboardPage";
 import MultiSearchPage from "./pages/MultiSearchPage";
 import LiveMatchPage from "./pages/LiveMatchPage";
 import OAuthCallbackPage from "./pages/OAuthCallbackPage";
+import NotFoundPage from "./pages/NotFoundPage";
 
 export default function App() {
   return (
@@ -26,6 +27,7 @@ export default function App() {
       <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
       <Route path="/checkout/cancel" element={<CheckoutCancelPage />} />
       <Route path="/oauth-callback" element={<OAuthCallbackPage />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

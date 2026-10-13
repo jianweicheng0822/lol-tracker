@@ -85,6 +85,11 @@ public class RiotApiService {
         return result;
     }
 
+    /** Cache-only account lookup by PUUID — never calls Riot. Returns null on a cache miss. */
+    public String peekAccountByPuuid(String puuid, RiotRegion region) {
+        return getCached("account-puuid:" + region.routing() + ":" + puuid);
+    }
+
     /**
      * Best-effort variant of {@link #getAccountByPuuid} for leaderboard names. Returns the cached
      * account if present; otherwise calls Riot only while more than {@code reservePermits} rate-limit

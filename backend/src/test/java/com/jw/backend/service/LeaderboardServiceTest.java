@@ -311,4 +311,76 @@ class LeaderboardServiceTest {
         assertEquals(1, page1.entries().size());
         assertEquals(300, page1.entries().get(0).leaguePoints());
     }
+
+    // -- Two-pass resolution: caches first, then best-effort Riot lookups --
+
+    private void cacheAccount(String puuid, String gameName) {
+        when(riotApiService.peekAccountByPuuid(puuid, RiotRegion.NA))
+                .thenReturn("{\"gameName\":\"" + gameName + "\",\"tagLine\":\"NA1\"}");
+    }
+
+    @Test
+    void getLeaderboard_cachedNamesAndIcons_needNoRiotCalls() {
+        when(riotApiService.getLeagueByTier("challenger", "RANKED_SOLO_5x5", RiotRegion.NA)).thenReturn(THREE_PLAYER_LEAGUE);
+        for (String p : List.of("p1", "p2", "p3")) {
+            cacheAccount(p, "Name-" + p);
+            when(riotApiService.peekProfileIconId(p, RiotRegion.NA)).thenReturn(100);
+        }
+
+        var result = leaderboardService.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 50);
+
+        assertEquals(List.of("Name-p1#NA1", "Name-p2#NA1", "Name-p3#NA1"),
+                result.entries().stream().map(LeaderboardEntryDto::summonerName).toList());
+        verify(riotApiService, never()).tryGetAccountByPuuid(anyString(), any(), anyInt(), anyLong());
+        verify(riotApiService, never()).tryGetProfileIconId(anyString(), any(), anyInt(), anyLong());
+    }
+
+    @Test
+    void getLeaderboard_onlyRowsMissingDataHitRiot() {
+        when(riotApiService.getLeagueByTier("challenger", "RANKED_SOLO_5x5", RiotRegion.NA)).thenReturn(THREE_PLAYER_LEAGUE);
+        cacheAccount("p1", "One");
+        when(riotApiService.peekProfileIconId("p1", RiotRegion.NA)).thenReturn(1);
+
+        leaderboardService.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 50);
+
+        verify(riotApiService, never()).tryGetAccountByPuuid(eq("p1"), any(), anyInt(), anyLong());
+        verify(riotApiService, never()).tryGetProfileIconId(eq("p1"), any(), anyInt(), anyLong());
+        // Page views never wait for rate-limit budget
+        verify(riotApiService).tryGetAccountByPuuid("p2", RiotRegion.NA,
+                LeaderboardService.NAME_RESOLUTION_RESERVE_PERMITS, 0);
+    }
+
+    @Test
+    void getLeaderboard_slowLookup_keepsCachedNameAndReturnsOnTime() {
+        leaderboardService.setLookupTimeoutMs(200);
+        when(riotApiService.getLeagueByTier("challenger", "RANKED_SOLO_5x5", RiotRegion.NA)).thenReturn(THREE_PLAYER_LEAGUE);
+        cacheAccount("p1", "Cached");
+        // p1's icon isn't cached and the Riot call hangs well past the deadline
+        lenient().when(riotApiService.tryGetProfileIconId(eq("p1"), any(), anyInt(), anyLong())).thenAnswer(inv -> {
+            Thread.sleep(3_000);
+            return 42;
+        });
+
+        long start = System.currentTimeMillis();
+        var result = leaderboardService.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 50);
+        long elapsed = System.currentTimeMillis() - start;
+
+        assertTrue(elapsed < 2_000, "page view should not wait for the slow lookup, took " + elapsed + "ms");
+        assertEquals("Cached#NA1", result.entries().get(0).summonerName(), "cached name must survive a timeout");
+        assertEquals(0, result.entries().get(0).profileIconId());
+    }
+
+    @Test
+    void getLeaderboard_lookupsPastTheDeadline_skipRiot() {
+        leaderboardService.setLookupTimeoutMs(0);
+        when(riotApiService.getLeagueByTier("challenger", "RANKED_SOLO_5x5", RiotRegion.NA)).thenReturn(THREE_PLAYER_LEAGUE);
+        cacheAccount("p1", "Cached");
+
+        var result = leaderboardService.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 50);
+
+        assertEquals("Cached#NA1", result.entries().get(0).summonerName());
+        assertEquals("Unknown", result.entries().get(1).summonerName());
+        verify(riotApiService, never()).tryGetAccountByPuuid(anyString(), any(), anyInt(), anyLong());
+        verify(riotApiService, never()).tryGetProfileIconId(anyString(), any(), anyInt(), anyLong());
+    }
 }

@@ -41,10 +41,8 @@ public class LeaderboardService {
     private static final long INCOMPLETE_CACHE_TTL_MS = 30 * 1000;
     // Rate-limit permits left untouched for interactive lookups (player search) while resolving names
     static final int NAME_RESOLUTION_RESERVE_PERMITS = 30;
-    // Never wait for rate-limit budget on a page view: lookups share a small, unbounded-queue pool,
-    // so waiting rows pile up behind each other and every page hits the timeout
+    // Never wait for rate-limit budget on a page view: a lookup either goes out now or is left for later
     static final long NAME_RESOLUTION_MAX_WAIT_MS = 0;
-    private static final long NAME_RESOLUTION_TIMEOUT_MS = 4000;
     private static final String UNKNOWN = "Unknown";
 
     private final RiotApiService riotApiService;
@@ -52,6 +50,8 @@ public class LeaderboardService {
     private final LeaderboardPrefetchService prefetchService;
     // The rate limiter enforces Riot's per-second limit; a few threads are enough to resolve a page
     private final Executor nameResolver = Executors.newFixedThreadPool(3);
+    // How long a page view may spend on Riot lookups for rows the caches couldn't fill
+    private long lookupTimeoutMs = 3000;
 
     private record CachedPage(LeaderboardPage page, long timestamp, long ttlMs) {
         boolean isExpired() { return System.currentTimeMillis() - timestamp > ttlMs; }
@@ -66,6 +66,11 @@ public class LeaderboardService {
         this.prefetchService = prefetchService;
     }
 
+    // Visible for testing
+    void setLookupTimeoutMs(long lookupTimeoutMs) {
+        this.lookupTimeoutMs = lookupTimeoutMs;
+    }
+
     public record LeaderboardPage(List<LeaderboardEntryDto> entries, int totalEntries) {}
 
     /**
@@ -73,10 +78,15 @@ public class LeaderboardService {
      *
      * <p>The League-v4 tier endpoint returns every player in the tier in a single (Redis-cached)
      * call, so it is the source of truth for ordering, LP, and the total count. Riot no longer
-     * includes player names there, so names and profile icons are resolved only for the requested
-     * page: from the background prefetch when available, otherwise from the account cache or a
-     * best-effort Riot call that leaves headroom in the rate limiter. Partial prefetch results can
-     * therefore never truncate or empty the leaderboard.</p>
+     * includes player names there, so names and profile icons are filled in for the requested page
+     * in two passes:</p>
+     * <ol>
+     *   <li>From the prefetch and the 24h caches. Instant and free, so anything already known is
+     *       always shown.</li>
+     *   <li>For rows still missing something, best-effort Riot calls within a fixed time budget.
+     *       They never wait for rate-limit budget, and lookups that miss the deadline are dropped,
+     *       so a busy moment can't pile up work behind later page views.</li>
+     * </ol>
      */
     public LeaderboardPage getLeaderboard(String tier, String queue, RiotRegion region, int page, int size) {
         String cacheKey = tier + ":" + queue + ":" + region.name() + ":" + page + ":" + size;
@@ -114,24 +124,36 @@ public class LeaderboardService {
         int to = Math.min(from + size, totalEntries);
         List<RawEntry> pageEntries = rawEntries.subList(from, to);
 
+        // Pass 1: prefetch + caches only
         Map<String, LeaderboardPrefetchService.ResolvedEntry> prefetched = prefetchedByPuuid(tier, queue, region);
-        List<CompletableFuture<LeaderboardEntryDto>> futures = pageEntries.stream()
-                .map(raw -> CompletableFuture.supplyAsync(
-                        () -> toDto(raw, leagueTier, region, prefetched), nameResolver))
-                .toList();
+        List<Row> rows = new ArrayList<>(pageEntries.size());
+        for (RawEntry raw : pageEntries) {
+            rows.add(fromCaches(raw, region, prefetched));
+        }
 
-        long deadline = System.currentTimeMillis() + NAME_RESOLUTION_TIMEOUT_MS;
-        List<LeaderboardEntryDto> entries = new ArrayList<>(pageEntries.size());
-        for (int i = 0; i < futures.size(); i++) {
-            long remaining = Math.max(0, deadline - System.currentTimeMillis());
-            try {
-                entries.add(futures.get(i).get(remaining, TimeUnit.MILLISECONDS));
-            } catch (Exception e) {
-                // Timed out or failed: show the row without a resolved name rather than dropping it
-                RawEntry raw = pageEntries.get(i);
-                entries.add(buildDto(raw, leagueTier, fallbackName(raw), 0));
+        // Pass 2: best-effort Riot lookups for rows still missing a name or icon
+        long deadline = System.currentTimeMillis() + lookupTimeoutMs;
+        Map<Integer, CompletableFuture<Row>> lookups = new HashMap<>();
+        for (int i = 0; i < rows.size(); i++) {
+            Row row = rows.get(i);
+            if (!row.isComplete() && !row.raw().puuid().isEmpty()) {
+                lookups.put(i, CompletableFuture.supplyAsync(() -> fillFromRiot(row, region, deadline), nameResolver));
             }
         }
+        for (Map.Entry<Integer, CompletableFuture<Row>> lookup : lookups.entrySet()) {
+            long remaining = Math.max(0, deadline - System.currentTimeMillis());
+            try {
+                rows.set(lookup.getKey(), lookup.getValue().get(remaining, TimeUnit.MILLISECONDS));
+            } catch (Exception e) {
+                // Missed the deadline or failed: keep what the caches gave us
+                lookup.getValue().cancel(false);
+            }
+        }
+
+        List<LeaderboardEntryDto> entries = rows.stream()
+                .map(row -> buildDto(row.raw(), leagueTier,
+                        row.name() != null ? row.name() : fallbackName(row.raw()), row.icon()))
+                .toList();
 
         LeaderboardPage result = new LeaderboardPage(entries, totalEntries);
         boolean complete = entries.stream().noneMatch(e ->
@@ -153,16 +175,57 @@ public class LeaderboardService {
         return byPuuid;
     }
 
-    private LeaderboardEntryDto toDto(RawEntry raw, String leagueTier, RiotRegion region,
-                                      Map<String, LeaderboardPrefetchService.ResolvedEntry> prefetched) {
+    /** Name and icon from the prefetch or the caches. Never calls Riot. */
+    private Row fromCaches(RawEntry raw, RiotRegion region,
+                           Map<String, LeaderboardPrefetchService.ResolvedEntry> prefetched) {
+        if (raw.puuid().isEmpty()) return new Row(raw, null, 0);
         LeaderboardPrefetchService.ResolvedEntry pre = prefetched.get(raw.puuid());
-        String name = pre != null && !UNKNOWN.equals(pre.summonerName())
-                ? pre.summonerName()
-                : resolveName(raw, region);
-        int icon = pre != null && pre.profileIconId() > 0
-                ? pre.profileIconId()
-                : resolveProfileIcon(raw.puuid(), region);
-        return buildDto(raw, leagueTier, name, icon);
+
+        String name = pre != null && !UNKNOWN.equals(pre.summonerName()) ? pre.summonerName() : null;
+        if (name == null) {
+            name = parseRiotId(riotApiService.peekAccountByPuuid(raw.puuid(), region));
+        }
+        int icon = pre != null ? pre.profileIconId() : 0;
+        if (icon <= 0) {
+            Integer cachedIcon = riotApiService.peekProfileIconId(raw.puuid(), region);
+            icon = cachedIcon == null ? 0 : cachedIcon;
+        }
+        return new Row(raw, name, icon);
+    }
+
+    /** Fill whatever the caches couldn't, with immediate (non-waiting) Riot calls before the deadline. */
+    private Row fillFromRiot(Row row, RiotRegion region, long deadline) {
+        String puuid = row.raw().puuid();
+        String name = row.name();
+        int icon = row.icon();
+        try {
+            if (name == null && System.currentTimeMillis() < deadline) {
+                name = parseRiotId(riotApiService.tryGetAccountByPuuid(
+                        puuid, region, NAME_RESOLUTION_RESERVE_PERMITS, NAME_RESOLUTION_MAX_WAIT_MS));
+            }
+            if (icon <= 0 && System.currentTimeMillis() < deadline) {
+                Integer iconId = riotApiService.tryGetProfileIconId(
+                        puuid, region, NAME_RESOLUTION_RESERVE_PERMITS, NAME_RESOLUTION_MAX_WAIT_MS);
+                icon = iconId == null ? 0 : iconId;
+            }
+        } catch (Exception e) {
+            log.debug("Leaderboard lookup failed for puuid {}: {}", puuid, e.getMessage());
+        }
+        return new Row(row.raw(), name, icon);
+    }
+
+    /** "gameName#tagLine" from an Account-v1 response, or null if it's missing or unreadable. */
+    private String parseRiotId(String accountJson) {
+        if (accountJson == null) return null;
+        try {
+            JsonNode account = objectMapper.readTree(accountJson);
+            String gameName = account.path("gameName").asText("");
+            String tagLine = account.path("tagLine").asText("");
+            if (gameName.isEmpty()) return null;
+            return tagLine.isEmpty() ? gameName : gameName + "#" + tagLine;
+        } catch (Exception e) {
+            return null;
+        }
     }
 
     private LeaderboardEntryDto buildDto(RawEntry raw, String leagueTier, String name, int profileIconId) {
@@ -172,36 +235,14 @@ public class LeaderboardService {
                 raw.wins(), raw.losses(), winRate, profileIconId);
     }
 
-    private String resolveName(RawEntry raw, RiotRegion region) {
-        if (raw.puuid().isEmpty()) return fallbackName(raw);
-        try {
-            String accountJson = riotApiService.tryGetAccountByPuuid(
-                    raw.puuid(), region, NAME_RESOLUTION_RESERVE_PERMITS, NAME_RESOLUTION_MAX_WAIT_MS);
-            if (accountJson != null) {
-                JsonNode account = objectMapper.readTree(accountJson);
-                String gameName = account.path("gameName").asText("");
-                String tagLine = account.path("tagLine").asText("");
-                if (!gameName.isEmpty()) {
-                    return tagLine.isEmpty() ? gameName : gameName + "#" + tagLine;
-                }
-            }
-        } catch (Exception e) {
-            log.debug("Failed to resolve name for puuid {}: {}", raw.puuid(), e.getMessage());
-        }
-        return fallbackName(raw);
-    }
-
-    /** Icon from the 24h cache, or a budgeted Riot call; 0 (placeholder) if it can't be resolved now. */
-    private int resolveProfileIcon(String puuid, RiotRegion region) {
-        if (puuid.isEmpty()) return 0;
-        Integer iconId = riotApiService.tryGetProfileIconId(
-                puuid, region, NAME_RESOLUTION_RESERVE_PERMITS, NAME_RESOLUTION_MAX_WAIT_MS);
-        return iconId == null ? 0 : iconId;
-    }
-
     private static String fallbackName(RawEntry raw) {
         return raw.fallbackName().isEmpty() ? UNKNOWN : raw.fallbackName();
     }
 
     private record RawEntry(String puuid, String fallbackName, String rank, int lp, int wins, int losses) {}
+
+    /** A page row while its name (null = unknown) and icon (0 = unknown) are being filled in. */
+    private record Row(RawEntry raw, String name, int icon) {
+        boolean isComplete() { return name != null && icon > 0; }
+    }
 }

@@ -523,6 +523,17 @@ class RiotApiServiceTest {
     }
 
     @Test
+    void peekAccountByPuuid_readsCacheOnly() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get("account-puuid:" + RiotRegion.NA.routing() + ":p1")).thenReturn("{\"gameName\":\"Cached\"}");
+        int permitsBefore = riotRateLimiter.availablePermits();
+
+        assertEquals("{\"gameName\":\"Cached\"}", riotApiService.peekAccountByPuuid("p1", RiotRegion.NA));
+        assertNull(riotApiService.peekAccountByPuuid("p2", RiotRegion.NA));
+        assertEquals(permitsBefore, riotRateLimiter.availablePermits());
+    }
+
+    @Test
     void tryGetAccountByPuuid_belowReserve_skipsRiotCall() {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         // Drain the limiter down to the reserve

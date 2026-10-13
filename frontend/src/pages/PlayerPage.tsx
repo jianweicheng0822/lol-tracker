@@ -6,7 +6,7 @@
  * Fetch account, matches, stats, ranked, and favorite status in parallel on mount.
  * Support tabbed navigation via URL search params (?tab=overview).
  */
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import SearchBar from "../components/SearchBar";
 import AuthModal from "../components/AuthModal";
@@ -16,7 +16,7 @@ import TabBar from "../components/TabBar";
 import OverviewTab from "../components/tabs/OverviewTab";
 import ChampionsTab from "../components/tabs/ChampionsTab";
 import { useTabNavigation } from "../hooks/useTabNavigation";
-import { fetchAccount, fetchAccountByPuuid, fetchMatchSummaries, fetchStats, fetchRanked, checkIsFavorite, addFavorite, removeFavorite, fetchTier, fetchLiveGame, getAuthToken, setAuthToken, addSearchHistory } from "../api";
+import { fetchAccount, fetchAccountByPuuid, fetchMatchSummaries, fetchStats, fetchRanked, checkIsFavorite, addFavorite, removeFavorite, fetchTier, fetchLiveGame, getAuthToken, setAuthToken, addSearchHistory, AuthRequiredError } from "../api";
 import { addLocalEntry } from "../utils/searchHistory";
 import type { Region, Account, MatchSummary, PlayerStats, RankedEntry, LiveGame } from "../types";
 import LiveGameCard from "../components/LiveGameCard";
@@ -43,6 +43,7 @@ export default function PlayerPage() {
   const [isCheckingLive, setIsCheckingLive] = useState(false);
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const favoriteAfterLogin = useRef(false);
 
   const [status, setStatus] = useState<"loading" | "error" | "done">("loading");
   const [errorMsg, setErrorMsg] = useState("");
@@ -89,7 +90,7 @@ export default function PlayerPage() {
       const [matchData, rankedData, favStatus, liveGameData] = await Promise.all([
         fetchMatchSummaries(acc.puuid, region, matchCount),
         fetchRanked(acc.puuid, region).catch((e) => { console.error("Ranked fetch failed:", e); return []; }),
-        checkIsFavorite(acc.puuid),
+        getAuthToken() ? checkIsFavorite(acc.puuid) : Promise.resolve(false),
         fetchLiveGame(acc.puuid, region).catch(() => null),
       ]);
 
@@ -154,19 +155,55 @@ export default function PlayerPage() {
     }
   };
 
+  /** Opens the login modal and remembers to favorite this player once the user logs in. */
+  const promptLoginToFavorite = () => {
+    favoriteAfterLogin.current = true;
+    setToastMsg("Log in to save favorites");
+    setShowAuthModal(true);
+  };
+
   /** Toggles the player's favorite status via the backend API. */
   const toggleFavorite = async () => {
     if (!account || !region) return;
+    if (!getAuthToken()) {
+      promptLoginToFavorite();
+      return;
+    }
     try {
       if (isFav) {
         await removeFavorite(account.puuid);
         setIsFav(false);
+        setToastMsg("Removed from favorites");
       } else {
         await addFavorite(account.puuid, account.gameName, account.tagLine, region);
         setIsFav(true);
+        setToastMsg("Added to favorites");
       }
     } catch (e) {
+      if (e instanceof AuthRequiredError) {
+        // Token expired: clear it so the UI reflects the logged-out state
+        setAuthToken(null);
+        setTier(0);
+        promptLoginToFavorite();
+        return;
+      }
       console.error("Failed to toggle favorite:", e);
+      setToastMsg(isFav ? "Couldn't remove favorite. Please try again." : "Couldn't add favorite. Please try again.");
+    }
+  };
+
+  /** Completes a favorite the user tried to add before logging in. */
+  const completePendingFavorite = async () => {
+    if (!account || !region) return;
+    try {
+      if (!(await checkIsFavorite(account.puuid))) {
+        await addFavorite(account.puuid, account.gameName, account.tagLine, region);
+      }
+      setIsFav(true);
+      setToastMsg("Added to favorites");
+    } catch (e) {
+      console.error("Failed to add favorite after login:", e);
+      setToastMsg("Couldn't add favorite. Please try again.");
     }
   };
 
@@ -203,11 +240,18 @@ export default function PlayerPage() {
       {showAuthModal && (
         <AuthModal
           onSuccess={async () => {
+            // Read the flag synchronously: AuthModal calls onClose right after onSuccess without awaiting
+            const pendingFavorite = favoriteAfterLogin.current;
+            favoriteAfterLogin.current = false;
             const d = await fetchTier().catch(() => ({ tier: 0 }));
             setTier(d.tier);
             setToastMsg("Logged in successfully");
+            if (pendingFavorite) await completePendingFavorite();
           }}
-          onClose={() => setShowAuthModal(false)}
+          onClose={() => {
+            setShowAuthModal(false);
+            favoriteAfterLogin.current = false;
+          }}
         />
       )}
 

@@ -234,6 +234,14 @@ export async function fetchFavorites() {
   return res.json();
 }
 
+/** Thrown when an endpoint needs a logged-in user (missing or expired token). */
+export class AuthRequiredError extends Error {
+  constructor(message = "Authentication required") {
+    super(message);
+    this.name = "AuthRequiredError";
+  }
+}
+
 /**
  * Check whether a player is in the current user's favorites list.
  *
@@ -262,6 +270,7 @@ export async function addFavorite(puuid: string, gameName: string, tagLine: stri
     headers: { "Content-Type": "application/json", ...authHeaders() },
     body: JSON.stringify({ puuid, gameName, tagLine, region }),
   }));
+  if (res.status === 401) throw new AuthRequiredError(await readErrorMessage(res));
   if (!res.ok) throw new Error(await readErrorMessage(res));
   return res.json();
 }
@@ -273,6 +282,7 @@ export async function addFavorite(puuid: string, gameName: string, tagLine: stri
  */
 export async function removeFavorite(puuid: string) {
   const res = await fetchWithTimeout(`${BASE}/api/favorites/${puuid}`, fetchOpts({ method: "DELETE" }));
+  if (res.status === 401) throw new AuthRequiredError(await readErrorMessage(res));
   if (!res.ok) throw new Error(await readErrorMessage(res));
 }
 

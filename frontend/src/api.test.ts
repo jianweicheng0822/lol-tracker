@@ -4,7 +4,7 @@ import {
   fetchAccount, fetchAccountByPuuid, fetchMatchSummaries, fetchStats,
   fetchRanked, fetchMatchDetail, fetchFavorites, checkIsFavorite,
   addFavorite, removeFavorite, fetchChampionStats, fetchMatchTrends,
-  fetchLpHistory, fetchTier, fetchLeaderboard,
+  fetchLpHistory, fetchTier, fetchLeaderboard, AuthRequiredError,
 } from "./api";
 
 // Mock localStorage
@@ -149,6 +149,14 @@ describe("readErrorMessage", () => {
 
 function mockOk(data: unknown) {
   mockFetch.mockResolvedValue({ ok: true, json: () => Promise.resolve(data) });
+}
+
+function mockUnauthorized() {
+  mockFetch.mockResolvedValue({
+    ok: false, status: 401, statusText: "Unauthorized",
+    headers: new Headers({ "content-type": "application/json" }),
+    json: () => Promise.resolve({ message: "Authentication required" }),
+  });
 }
 
 function mockFail(message: string) {
@@ -317,6 +325,13 @@ describe("addFavorite", () => {
     mockFail("Limit reached");
     await expect(addFavorite("p1", "Faker", "KR1", "KR")).rejects.toThrow("Limit reached");
   });
+
+  it("throws AuthRequiredError on 401", async () => {
+    mockUnauthorized();
+    const err = await addFavorite("p1", "Faker", "KR1", "KR").catch((e) => e);
+    expect(err).toBeInstanceOf(AuthRequiredError);
+    expect(err.message).toBe("Authentication required");
+  });
 });
 
 describe("removeFavorite", () => {
@@ -334,6 +349,11 @@ describe("removeFavorite", () => {
   it("throws on failure", async () => {
     mockFail("Error");
     await expect(removeFavorite("p1")).rejects.toThrow("Error");
+  });
+
+  it("throws AuthRequiredError on 401", async () => {
+    mockUnauthorized();
+    await expect(removeFavorite("p1")).rejects.toBeInstanceOf(AuthRequiredError);
   });
 });
 

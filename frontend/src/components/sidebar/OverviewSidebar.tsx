@@ -5,6 +5,10 @@ import RankSummary from "./RankSummary";
 import LpSparkline from "./LpSparkline";
 import RecentStatsPreview from "./RecentStatsPreview";
 import TopChampionsPreview from "./TopChampionsPreview";
+import { isRankedQueue } from "../../utils/ddragon";
+
+/** Matches the count PlayerPage passes to /api/stats. */
+const RECENT_MATCH_COUNT = 20;
 
 type Props = {
   stats: PlayerStats | null;
@@ -19,6 +23,10 @@ export default function OverviewSidebar({ stats, matches, ranked, puuid, onOpenP
   const isMobile = useIsMobile();
   const [statsOpen, setStatsOpen] = useState(false);
   const [champsOpen, setChampsOpen] = useState(false);
+  // Same games as the backend stats (ranked games among the 20 most recent), so every sidebar
+  // number describes one sample and doesn't shift when more matches are loaded
+  const recentRanked = matches.slice(0, RECENT_MATCH_COUNT).filter((m) => isRankedQueue(m.queueId));
+  const scopeLabel = `Last ${recentRanked.length} ranked ${recentRanked.length === 1 ? "game" : "games"}`;
 
   return (
     <div style={isMobile ? undefined : { position: "sticky", top: 20 }}>
@@ -28,16 +36,16 @@ export default function OverviewSidebar({ stats, matches, ranked, puuid, onOpenP
       {isMobile ? (
         <>
           <Accordion label={`Recent ${stats?.totalGames ?? 20} Ranked ${stats?.totalGames === 1 ? "Game" : "Games"}`} open={statsOpen} onToggle={() => setStatsOpen(!statsOpen)}>
-            {stats && <RecentStatsPreview stats={stats} matches={matches} />}
+            {stats && <RecentStatsPreview stats={stats} matches={recentRanked} />}
           </Accordion>
           <Accordion label="Top Champions" open={champsOpen} onToggle={() => setChampsOpen(!champsOpen)}>
-            <TopChampionsPreview matches={matches} onViewAll={onViewChampions} />
+            <TopChampionsPreview matches={recentRanked} onViewAll={onViewChampions} scopeLabel={scopeLabel} />
           </Accordion>
         </>
       ) : (
         <>
-          {stats && <RecentStatsPreview stats={stats} matches={matches} />}
-          <TopChampionsPreview matches={matches} onViewAll={onViewChampions} />
+          {stats && <RecentStatsPreview stats={stats} matches={recentRanked} />}
+          <TopChampionsPreview matches={recentRanked} onViewAll={onViewChampions} scopeLabel={scopeLabel} />
         </>
       )}
     </div>

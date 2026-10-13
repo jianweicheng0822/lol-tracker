@@ -34,9 +34,11 @@ function aggregateChampions(matches: MatchSummary[]): ChampPerf[] {
 type Props = {
   matches: MatchSummary[];
   onViewAll: () => void;
+  /** Describes which games the stats cover, e.g. "Last 12 ranked games". */
+  scopeLabel?: string;
 };
 
-export default function TopChampionsPreview({ matches, onViewAll }: Props) {
+export default function TopChampionsPreview({ matches, onViewAll, scopeLabel }: Props) {
   const ddVersion = useDdragonVersion();
   const imgBase = ddragonBase(ddVersion);
   const champs = aggregateChampions(matches);
@@ -46,6 +48,7 @@ export default function TopChampionsPreview({ matches, onViewAll }: Props) {
   return (
     <div style={styles.card}>
       <div style={styles.title}>Top Champions</div>
+      {scopeLabel && <div style={styles.scope}>{scopeLabel}</div>}
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         {champs.map((c) => (
           <ChampRow key={c.championName} champ={c} imgBase={imgBase} />
@@ -161,6 +164,12 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 14,
     fontWeight: 700,
     color: COLORS.textPrimary,
+    marginBottom: 8,
+  },
+  scope: {
+    fontSize: 11,
+    color: COLORS.textTertiary,
+    marginTop: -6,
     marginBottom: 8,
   },
   viewAll: {

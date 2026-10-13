@@ -11,6 +11,7 @@ import com.jw.backend.region.RiotRegion;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Set;
 
 /**
  * Reduce live Match-v5 data into the overview tab's aggregate statistics.
@@ -32,20 +33,26 @@ public class StatsService {
         this.riotApiService = riotApiService;
     }
 
+    /** Ranked Solo/Duo and Ranked Flex — the only queues counted in overview stats. */
+    private static final Set<Integer> RANKED_QUEUE_IDS = Set.of(420, 440);
+
     /**
-     * Calculate aggregate statistics from a player's recent matches.
+     * Calculate aggregate statistics from the ranked games among a player's recent matches.
      *
-     * <p>Returns zeroed stats if no matches are available. KDA calculation uses
-     * the convention that perfect KDA (0 deaths) reports the raw sum of kills
-     * and assists rather than infinity.</p>
+     * <p>Only Ranked Solo/Duo and Ranked Flex games count, so modes like Arena or ARAM don't
+     * skew win rate and KDA; {@code totalGames} may therefore be lower than {@code count}.
+     * Returns zeroed stats if there are no ranked games. KDA calculation uses the convention
+     * that perfect KDA (0 deaths) reports the raw sum of kills and assists rather than infinity.</p>
      *
      * @param puuid  the player's unique identifier
      * @param region the Riot routing region
-     * @param count  number of recent matches to include
+     * @param count  number of recent matches (all queues) to consider
      * @return aggregated statistics including win rate, KDA, and per-game averages
      */
     public PlayerStatsDto calculateStats(String puuid, RiotRegion region, int count) {
-        List<MatchSummaryDto> matches = riotApiService.getRecentMatchSummaries(puuid, region, count);
+        List<MatchSummaryDto> matches = riotApiService.getRecentMatchSummaries(puuid, region, count).stream()
+                .filter(m -> RANKED_QUEUE_IDS.contains(m.queueId()))
+                .toList();
 
         if (matches.isEmpty()) {
             return new PlayerStatsDto(0, 0, 0, 0.0, 0.0, 0.0, 0.0, 0.0);

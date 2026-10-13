@@ -14,14 +14,16 @@ vi.mock("./LpSparkline", () => ({
 }));
 
 vi.mock("./RecentStatsPreview", () => ({
-  default: () => (
-    <div data-testid="recent-stats">RecentStatsPreview</div>
+  default: ({ matches }: { matches: unknown[] }) => (
+    <div data-testid="recent-stats" data-count={matches.length}>RecentStatsPreview</div>
   ),
 }));
 
 vi.mock("./TopChampionsPreview", () => ({
-  default: ({ onViewAll }: { onViewAll: () => void }) => (
-    <div data-testid="top-champs" onClick={onViewAll}>TopChampionsPreview</div>
+  default: ({ matches, onViewAll, scopeLabel }: { matches: unknown[]; onViewAll: () => void; scopeLabel?: string }) => (
+    <div data-testid="top-champs" data-count={matches.length} onClick={onViewAll}>
+      TopChampionsPreview {scopeLabel}
+    </div>
   ),
 }));
 
@@ -40,6 +42,23 @@ describe("OverviewSidebar", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.mocked(useIsMobile).mockReturnValue(false);
+  });
+
+  it("uses only ranked games among the 20 most recent for stats and top champions", () => {
+    const matches = [
+      makeMatchSummary({ queueId: 1750 }), // Arena — excluded
+      makeMatchSummary({ queueId: 420 }),
+      makeMatchSummary({ queueId: 450 }),  // ARAM — excluded
+      makeMatchSummary({ queueId: 440 }),
+      ...Array.from({ length: 16 }, () => makeMatchSummary({ queueId: 420 })),
+      // Loaded via "Load more" — beyond the 20 the backend stats cover
+      ...Array.from({ length: 5 }, () => makeMatchSummary({ queueId: 420 })),
+    ];
+    render(<OverviewSidebar {...defaultProps} matches={matches} />);
+
+    expect(screen.getByTestId("top-champs")).toHaveAttribute("data-count", "18");
+    expect(screen.getByTestId("recent-stats")).toHaveAttribute("data-count", "18");
+    expect(screen.getByTestId("top-champs")).toHaveTextContent("Last 18 ranked games");
   });
 
   it("renders all sections on desktop", () => {

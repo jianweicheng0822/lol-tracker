@@ -37,9 +37,32 @@ class StatsServiceTest {
     }
 
     private MatchSummaryDto match(int kills, int deaths, int assists, boolean win) {
+        return match(kills, deaths, assists, win, 420);
+    }
+
+    private MatchSummaryDto match(int kills, int deaths, int assists, boolean win, int queueId) {
         return new MatchSummaryDto("NA1_1", "Ahri", kills, deaths, assists, win, 1800L, 1700000000000L,
-                18, 4, 14, new int[7], 150, 30, 420, 30, List.of(), List.of(),
+                18, 4, 14, new int[7], 150, 30, queueId, 30, List.of(), List.of(),
                 8005, 8200, new int[4], 0, 15000, 12000, "MIDDLE");
+    }
+
+    /** Verify that only Ranked Solo/Duo and Flex games are counted (Arena, ARAM, etc. are excluded). */
+    @Test
+    void calculateStats_countsOnlyRankedQueues() {
+        List<MatchSummaryDto> matches = List.of(
+            match(10, 2, 8, true, 420),   // Ranked Solo/Duo
+            match(5, 5, 3, false, 440),   // Ranked Flex
+            match(20, 0, 5, true, 1750),  // Arena
+            match(15, 1, 30, true, 450)   // ARAM
+        );
+        when(riotApiService.getRecentMatchSummaries("puuid", RiotRegion.NA, 20)).thenReturn(matches);
+
+        PlayerStatsDto result = statsService.calculateStats("puuid", RiotRegion.NA, 20);
+
+        assertEquals(2, result.totalGames());
+        assertEquals(1, result.wins());
+        assertEquals(50.0, result.winRate());
+        assertEquals(7.5, result.averageKills());
     }
 
     /** Verify that stats are calculated correctly for multiple matches. */

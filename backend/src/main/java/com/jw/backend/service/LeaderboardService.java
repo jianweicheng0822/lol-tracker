@@ -41,8 +41,9 @@ public class LeaderboardService {
     private static final long INCOMPLETE_CACHE_TTL_MS = 30 * 1000;
     // Rate-limit permits left untouched for interactive lookups (player search) while resolving names
     static final int NAME_RESOLUTION_RESERVE_PERMITS = 30;
-    // Someone is waiting on the page, so only ride out the per-second limit, not the 2-minute one
-    static final long NAME_RESOLUTION_MAX_WAIT_MS = 1_000;
+    // Never wait for rate-limit budget on a page view: lookups share a small, unbounded-queue pool,
+    // so waiting rows pile up behind each other and every page hits the timeout
+    static final long NAME_RESOLUTION_MAX_WAIT_MS = 0;
     private static final long NAME_RESOLUTION_TIMEOUT_MS = 4000;
     private static final String UNKNOWN = "Unknown";
 

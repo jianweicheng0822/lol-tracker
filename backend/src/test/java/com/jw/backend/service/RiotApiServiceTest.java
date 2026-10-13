@@ -34,7 +34,8 @@ class RiotApiServiceTest {
 
     @BeforeEach
     void setUp() {
-        riotRateLimiter = new RiotRateLimiter();
+        // Fake clock: draining the limiter below moves time forward instead of really waiting
+        riotRateLimiter = new RiotRateLimiter(new FakeRateLimiterTime());
         riotApiService = new RiotApiService("fake-api-key", new ObjectMapper(), redisTemplate, riotRateLimiter);
     }
 
@@ -515,7 +516,7 @@ class RiotApiServiceTest {
         when(valueOperations.get(key)).thenReturn("{\"gameName\":\"Cached\"}");
         int permitsBefore = riotRateLimiter.availablePermits();
 
-        String result = riotApiService.tryGetAccountByPuuid("p1", RiotRegion.NA, 30);
+        String result = riotApiService.tryGetAccountByPuuid("p1", RiotRegion.NA, 30, 0);
 
         assertEquals("{\"gameName\":\"Cached\"}", result);
         assertEquals(permitsBefore, riotRateLimiter.availablePermits());
@@ -526,10 +527,10 @@ class RiotApiServiceTest {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         // Drain the limiter down to the reserve
         while (riotRateLimiter.availablePermits() > 30) {
-            riotRateLimiter.tryAcquire();
+            riotRateLimiter.tryAcquire(0, 2_000);
         }
 
-        String result = riotApiService.tryGetAccountByPuuid("p1", RiotRegion.NA, 30);
+        String result = riotApiService.tryGetAccountByPuuid("p1", RiotRegion.NA, 30, 0);
 
         assertNull(result);
         assertEquals(30, riotRateLimiter.availablePermits());
@@ -567,10 +568,10 @@ class RiotApiServiceTest {
     void tryGetProfileIconId_belowReserve_skipsRiotCall() {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         while (riotRateLimiter.availablePermits() > 50) {
-            riotRateLimiter.tryAcquire();
+            riotRateLimiter.tryAcquire(0, 2_000);
         }
 
-        assertNull(riotApiService.tryGetProfileIconId("p1", RiotRegion.NA, 50));
+        assertNull(riotApiService.tryGetProfileIconId("p1", RiotRegion.NA, 50, 0));
         assertEquals(50, riotRateLimiter.availablePermits());
     }
 }

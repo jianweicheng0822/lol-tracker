@@ -30,23 +30,22 @@ public class LeaderboardPrefetchService {
     static final String QUEUE = "RANKED_SOLO_5x5";
     // Higher than the on-demand reserve, so people browsing the leaderboard win over the background job
     static final int PREFETCH_RESERVE_PERMITS = 50;
+    // Background job, so it can wait for budget to free up instead of skipping players
+    static final long PREFETCH_MAX_WAIT_MS = 60_000;
 
     private final RiotApiService riotApiService;
     private final ObjectMapper objectMapper;
     private final StringRedisTemplate redisTemplate;
-    private final RiotRateLimiter riotRateLimiter;
 
     @Value("${leaderboard.prefetch.max-master-entries:500}")
     private int maxMasterEntries;
 
     public LeaderboardPrefetchService(RiotApiService riotApiService,
                                        ObjectMapper objectMapper,
-                                       StringRedisTemplate redisTemplate,
-                                       RiotRateLimiter riotRateLimiter) {
+                                       StringRedisTemplate redisTemplate) {
         this.riotApiService = riotApiService;
         this.objectMapper = objectMapper;
         this.redisTemplate = redisTemplate;
-        this.riotRateLimiter = riotRateLimiter;
     }
 
     public record ResolvedEntry(
@@ -120,29 +119,20 @@ public class LeaderboardPrefetchService {
                 RawEntry raw = rawEntries.get(i);
                 if (raw.puuid().isEmpty()) continue;
 
-                int permitsBefore = riotRateLimiter.availablePermits();
+                // The rate limiter paces these calls (both Riot limits) and keeps our reserve free
                 String name = resolveName(raw.puuid(), region);
                 if (name == null) {
-                    // Not cached and no rate-limit budget right now; a later cycle will pick it up.
+                    // No budget within the wait (or the lookup failed); a later cycle will pick it up.
                     // Keep going — the remaining players may still be served from cache for free.
                     skipped++;
                     continue;
                 }
-                Integer iconId = riotApiService.tryGetProfileIconId(raw.puuid(), region, PREFETCH_RESERVE_PERMITS);
+                Integer iconId = riotApiService.tryGetProfileIconId(
+                        raw.puuid(), region, PREFETCH_RESERVE_PERMITS, PREFETCH_MAX_WAIT_MS);
                 int total = raw.wins() + raw.losses();
                 double winRate = total > 0 ? Math.round((double) raw.wins() / total * 1000.0) / 10.0 : 0.0;
                 resolved.add(new ResolvedEntry(name, raw.puuid(), leagueTier, raw.rank(),
                         raw.lp(), raw.wins(), raw.losses(), winRate, iconId == null ? 0 : iconId));
-
-                // Only pace real Riot calls (dev keys also allow just 20 requests per second)
-                if (riotRateLimiter.availablePermits() < permitsBefore) {
-                    try {
-                        Thread.sleep(100);
-                    } catch (InterruptedException ie) {
-                        Thread.currentThread().interrupt();
-                        return;
-                    }
-                }
             }
 
             String redisKey = "lb:prefetched:" + region.name() + ":" + tier + ":" + queue;
@@ -157,7 +147,8 @@ public class LeaderboardPrefetchService {
     /** Riot ID from the 24h account cache or a budgeted Riot call; null if it couldn't be resolved. */
     private String resolveName(String puuid, RiotRegion region) {
         try {
-            String accountJson = riotApiService.tryGetAccountByPuuid(puuid, region, PREFETCH_RESERVE_PERMITS);
+            String accountJson = riotApiService.tryGetAccountByPuuid(
+                    puuid, region, PREFETCH_RESERVE_PERMITS, PREFETCH_MAX_WAIT_MS);
             if (accountJson == null) return null;
             JsonNode account = objectMapper.readTree(accountJson);
             String gameName = account.path("gameName").asText("");

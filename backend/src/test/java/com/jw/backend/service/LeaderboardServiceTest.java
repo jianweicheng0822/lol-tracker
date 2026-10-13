@@ -186,7 +186,7 @@ class LeaderboardServiceTest {
         // LP comes from the live league data, not the (older) prefetched snapshot
         assertEquals(1200, result.entries().get(0).leaguePoints());
         // Every name was prefetched, so no per-player Riot lookups are needed
-        verify(riotApiService, never()).tryGetAccountByPuuid(anyString(), any(), anyInt());
+        verify(riotApiService, never()).tryGetAccountByPuuid(anyString(), any(), anyInt(), anyLong());
     }
 
     @Test
@@ -199,7 +199,7 @@ class LeaderboardServiceTest {
                 .thenReturn(Optional.of(List.of(
                         new LeaderboardPrefetchService.ResolvedEntry("Player1#NA1", "p1", "CHALLENGER", "I", 1200, 200, 80, 71.4, 1234))));
         when(riotApiService.getLeagueByTier("challenger", "RANKED_SOLO_5x5", RiotRegion.NA)).thenReturn(THREE_PLAYER_LEAGUE);
-        when(riotApiService.tryGetAccountByPuuid("p2", RiotRegion.NA, LeaderboardService.NAME_RESOLUTION_RESERVE_PERMITS))
+        when(riotApiService.tryGetAccountByPuuid("p2", RiotRegion.NA, LeaderboardService.NAME_RESOLUTION_RESERVE_PERMITS, LeaderboardService.NAME_RESOLUTION_MAX_WAIT_MS))
                 .thenReturn("{\"gameName\":\"Player2\",\"tagLine\":\"EUW\"}");
 
         var result = serviceWithPrefetch.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 50);
@@ -232,9 +232,9 @@ class LeaderboardServiceTest {
     void getLeaderboard_resolvesProfileIconsOnDemandWhenNotPrefetched() {
         int reserve = LeaderboardService.NAME_RESOLUTION_RESERVE_PERMITS;
         when(riotApiService.getLeagueByTier("challenger", "RANKED_SOLO_5x5", RiotRegion.NA)).thenReturn(THREE_PLAYER_LEAGUE);
-        when(riotApiService.tryGetProfileIconId("p1", RiotRegion.NA, reserve)).thenReturn(4321);
+        when(riotApiService.tryGetProfileIconId("p1", RiotRegion.NA, reserve, LeaderboardService.NAME_RESOLUTION_MAX_WAIT_MS)).thenReturn(4321);
         // No budget for p2's icon right now: placeholder (0) instead of failing the row
-        when(riotApiService.tryGetProfileIconId("p2", RiotRegion.NA, reserve)).thenReturn(null);
+        when(riotApiService.tryGetProfileIconId("p2", RiotRegion.NA, reserve, LeaderboardService.NAME_RESOLUTION_MAX_WAIT_MS)).thenReturn(null);
 
         var result = leaderboardService.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 50);
 
@@ -250,7 +250,7 @@ class LeaderboardServiceTest {
                 .thenReturn(Optional.of(List.of(
                         new LeaderboardPrefetchService.ResolvedEntry("Player1#NA1", "p1", "CHALLENGER", "I", 1200, 200, 80, 71.4, 0))));
         when(riotApiService.getLeagueByTier("challenger", "RANKED_SOLO_5x5", RiotRegion.NA)).thenReturn(THREE_PLAYER_LEAGUE);
-        when(riotApiService.tryGetProfileIconId("p1", RiotRegion.NA, LeaderboardService.NAME_RESOLUTION_RESERVE_PERMITS))
+        when(riotApiService.tryGetProfileIconId("p1", RiotRegion.NA, LeaderboardService.NAME_RESOLUTION_RESERVE_PERMITS, LeaderboardService.NAME_RESOLUTION_MAX_WAIT_MS))
                 .thenReturn(777);
 
         var result = serviceWithPrefetch.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 50);
@@ -258,7 +258,7 @@ class LeaderboardServiceTest {
         assertEquals("Player1#NA1", result.entries().get(0).summonerName());
         assertEquals(777, result.entries().get(0).profileIconId());
         // The name was prefetched, so only the icon needed a lookup
-        verify(riotApiService, never()).tryGetAccountByPuuid(eq("p1"), any(), anyInt());
+        verify(riotApiService, never()).tryGetAccountByPuuid(eq("p1"), any(), anyInt(), anyLong());
     }
 
     @Test

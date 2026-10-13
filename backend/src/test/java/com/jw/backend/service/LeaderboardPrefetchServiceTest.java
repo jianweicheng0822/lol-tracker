@@ -32,15 +32,12 @@ class LeaderboardPrefetchServiceTest {
     @Mock
     private ValueOperations<String, String> valueOps;
 
-    @Mock
-    private RiotRateLimiter riotRateLimiter;
-
     private final ObjectMapper objectMapper = new ObjectMapper();
     private LeaderboardPrefetchService prefetchService;
 
     @BeforeEach
     void setUp() {
-        prefetchService = new LeaderboardPrefetchService(riotApiService, objectMapper, redisTemplate, riotRateLimiter);
+        prefetchService = new LeaderboardPrefetchService(riotApiService, objectMapper, redisTemplate);
     }
 
     @Test
@@ -119,12 +116,13 @@ class LeaderboardPrefetchServiceTest {
         when(riotApiService.getLeagueByTier("challenger", "RANKED_SOLO_5x5", RiotRegion.NA))
                 .thenReturn(league("CHALLENGER", "p1", "p2", "p3"));
         int reserve = LeaderboardPrefetchService.PREFETCH_RESERVE_PERMITS;
-        when(riotApiService.tryGetAccountByPuuid("p1", RiotRegion.NA, reserve)).thenReturn("{\"gameName\":\"One\",\"tagLine\":\"NA1\"}");
+        long wait = LeaderboardPrefetchService.PREFETCH_MAX_WAIT_MS;
+        when(riotApiService.tryGetAccountByPuuid("p1", RiotRegion.NA, reserve, wait)).thenReturn("{\"gameName\":\"One\",\"tagLine\":\"NA1\"}");
         // p2 isn't cached and there's no budget — it should be skipped, not stop the loop
-        when(riotApiService.tryGetAccountByPuuid("p2", RiotRegion.NA, reserve)).thenReturn(null);
-        when(riotApiService.tryGetAccountByPuuid("p3", RiotRegion.NA, reserve)).thenReturn("{\"gameName\":\"Three\",\"tagLine\":\"NA1\"}");
-        when(riotApiService.tryGetProfileIconId("p1", RiotRegion.NA, reserve)).thenReturn(11);
-        when(riotApiService.tryGetProfileIconId("p3", RiotRegion.NA, reserve)).thenReturn(null);
+        when(riotApiService.tryGetAccountByPuuid("p2", RiotRegion.NA, reserve, wait)).thenReturn(null);
+        when(riotApiService.tryGetAccountByPuuid("p3", RiotRegion.NA, reserve, wait)).thenReturn("{\"gameName\":\"Three\",\"tagLine\":\"NA1\"}");
+        when(riotApiService.tryGetProfileIconId("p1", RiotRegion.NA, reserve, wait)).thenReturn(11);
+        when(riotApiService.tryGetProfileIconId("p3", RiotRegion.NA, reserve, wait)).thenReturn(null);
 
         prefetchService.prefetchOne("challenger", "RANKED_SOLO_5x5", RiotRegion.NA);
 
@@ -135,7 +133,7 @@ class LeaderboardPrefetchServiceTest {
         assertEquals("One#NA1", saved.get(0).summonerName());
         assertEquals(11, saved.get(0).profileIconId());
         assertEquals(0, saved.get(1).profileIconId());
-        verify(riotApiService, never()).tryGetProfileIconId(eq("p2"), any(), anyInt());
+        verify(riotApiService, never()).tryGetProfileIconId(eq("p2"), any(), anyInt(), anyLong());
     }
 
     @Test
@@ -147,7 +145,7 @@ class LeaderboardPrefetchServiceTest {
 
         prefetchService.prefetchOne("master", "RANKED_SOLO_5x5", RiotRegion.KR);
 
-        verify(riotApiService, times(2)).tryGetAccountByPuuid(anyString(), eq(RiotRegion.KR), anyInt());
-        verify(riotApiService, never()).tryGetAccountByPuuid(eq("p3"), any(), anyInt());
+        verify(riotApiService, times(2)).tryGetAccountByPuuid(anyString(), eq(RiotRegion.KR), anyInt(), anyLong());
+        verify(riotApiService, never()).tryGetAccountByPuuid(eq("p3"), any(), anyInt(), anyLong());
     }
 }

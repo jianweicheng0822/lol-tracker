@@ -86,17 +86,17 @@ public class RiotApiService {
     }
 
     /**
-     * Best-effort, non-blocking variant of {@link #getAccountByPuuid} for background enrichment
-     * (e.g. leaderboard names). Returns the cached account if present; otherwise calls Riot only
-     * when more than {@code reservePermits} rate-limit permits are free, so interactive lookups
-     * keep headroom. Returns null when the call is skipped or fails.
+     * Best-effort variant of {@link #getAccountByPuuid} for leaderboard names. Returns the cached
+     * account if present; otherwise calls Riot only while more than {@code reservePermits} rate-limit
+     * permits are left, waiting up to {@code maxWaitMs} for that, so interactive lookups keep headroom.
+     * Returns null when the call is skipped or fails.
      */
-    public String tryGetAccountByPuuid(String puuid, RiotRegion region, int reservePermits) {
+    public String tryGetAccountByPuuid(String puuid, RiotRegion region, int reservePermits, long maxWaitMs) {
         String cacheKey = "account-puuid:" + region.routing() + ":" + puuid;
         String cached = getCached(cacheKey);
         if (cached != null) return cached;
 
-        if (riotRateLimiter.availablePermits() <= reservePermits || !riotRateLimiter.tryAcquire()) {
+        if (!riotRateLimiter.tryAcquire(reservePermits, maxWaitMs)) {
             return null;
         }
         try {
@@ -248,14 +248,14 @@ public class RiotApiService {
 
     /**
      * Best-effort profile icon lookup for leaderboards. Uses the caches first; otherwise makes one
-     * Summoner-v4 call only when more than {@code reservePermits} rate-limit permits are free.
-     * Returns null when the call is skipped or fails.
+     * Summoner-v4 call only while more than {@code reservePermits} rate-limit permits are left,
+     * waiting up to {@code maxWaitMs} for that. Returns null when the call is skipped or fails.
      */
-    public Integer tryGetProfileIconId(String puuid, RiotRegion region, int reservePermits) {
+    public Integer tryGetProfileIconId(String puuid, RiotRegion region, int reservePermits, long maxWaitMs) {
         Integer cached = peekProfileIconId(puuid, region);
         if (cached != null) return cached;
 
-        if (riotRateLimiter.availablePermits() <= reservePermits || !riotRateLimiter.tryAcquire()) {
+        if (!riotRateLimiter.tryAcquire(reservePermits, maxWaitMs)) {
             return null;
         }
         try {

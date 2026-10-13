@@ -41,14 +41,15 @@ public class LeaderboardService {
     private static final long INCOMPLETE_CACHE_TTL_MS = 30 * 1000;
     // Rate-limit permits left untouched for interactive lookups (player search) while resolving names
     static final int NAME_RESOLUTION_RESERVE_PERMITS = 30;
+    // Someone is waiting on the page, so only ride out the per-second limit, not the 2-minute one
+    static final long NAME_RESOLUTION_MAX_WAIT_MS = 1_000;
     private static final long NAME_RESOLUTION_TIMEOUT_MS = 4000;
     private static final String UNKNOWN = "Unknown";
 
     private final RiotApiService riotApiService;
     private final ObjectMapper objectMapper;
     private final LeaderboardPrefetchService prefetchService;
-    // Each uncached row may need two Riot calls (name + icon). Three threads at ~150ms per call keep
-    // bursts near the dev key's 20 requests/second limit.
+    // The rate limiter enforces Riot's per-second limit; a few threads are enough to resolve a page
     private final Executor nameResolver = Executors.newFixedThreadPool(3);
 
     private record CachedPage(LeaderboardPage page, long timestamp, long ttlMs) {
@@ -174,7 +175,7 @@ public class LeaderboardService {
         if (raw.puuid().isEmpty()) return fallbackName(raw);
         try {
             String accountJson = riotApiService.tryGetAccountByPuuid(
-                    raw.puuid(), region, NAME_RESOLUTION_RESERVE_PERMITS);
+                    raw.puuid(), region, NAME_RESOLUTION_RESERVE_PERMITS, NAME_RESOLUTION_MAX_WAIT_MS);
             if (accountJson != null) {
                 JsonNode account = objectMapper.readTree(accountJson);
                 String gameName = account.path("gameName").asText("");
@@ -192,7 +193,8 @@ public class LeaderboardService {
     /** Icon from the 24h cache, or a budgeted Riot call; 0 (placeholder) if it can't be resolved now. */
     private int resolveProfileIcon(String puuid, RiotRegion region) {
         if (puuid.isEmpty()) return 0;
-        Integer iconId = riotApiService.tryGetProfileIconId(puuid, region, NAME_RESOLUTION_RESERVE_PERMITS);
+        Integer iconId = riotApiService.tryGetProfileIconId(
+                puuid, region, NAME_RESOLUTION_RESERVE_PERMITS, NAME_RESOLUTION_MAX_WAIT_MS);
         return iconId == null ? 0 : iconId;
     }
 

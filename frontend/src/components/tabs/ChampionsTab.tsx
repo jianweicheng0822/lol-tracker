@@ -28,6 +28,18 @@ const QUEUE_OPTIONS = [
 ] as const;
 
 /**
+ * Spell out which games the grid covers, e.g. "Last 20 Ranked Solo games · 18 games across 6 champions".
+ * The count applies after the queue filter, so this also explains why counts differ between filters.
+ */
+function describeScope(count: number | undefined, queueId: number | undefined, champions: ChampionStats[]): string {
+  const queueText = queueId === undefined ? "" : `${QUEUE_OPTIONS.find((o) => o.value === queueId)?.label} `;
+  const modes = queueId === undefined ? " (all modes)" : "";
+  const base = count ? `Last ${count} ${queueText}games${modes}` : `All tracked ${queueText}games${modes}`;
+  const totalGames = champions.reduce((sum, c) => sum + c.games, 0);
+  return `${base} · ${totalGames} ${totalGames === 1 ? "game" : "games"} across ${champions.length} ${champions.length === 1 ? "champion" : "champions"}`;
+}
+
+/**
  * Render the Champions tab content with a 2-column grid of champion stat cards.
  * Fetch data on mount and display loading/empty states as needed.
  *
@@ -96,6 +108,10 @@ export default function ChampionsTab({ puuid }: Props) {
           ))}
         </div>
       </div>
+
+      {champions.length > 0 && (
+        <div style={styles.scope}>{describeScope(countFilter, queueFilter, champions)}</div>
+      )}
 
       {champions.length === 0 ? (
         <div style={{ textAlign: "center", padding: 40, opacity: 0.5 }}>No champion data available yet.</div>
@@ -203,6 +219,12 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: 16,
     flexWrap: "wrap",
     gap: 8,
+  },
+  scope: {
+    fontSize: 12,
+    color: COLORS.textTertiary,
+    marginTop: -8,
+    marginBottom: 12,
   },
   pillGroup: {
     display: "flex",

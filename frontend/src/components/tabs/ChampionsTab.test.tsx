@@ -98,6 +98,19 @@ describe("ChampionsTab", () => {
     });
   });
 
+  it("describes which games the stats cover", async () => {
+    vi.mocked(fetchChampionStats).mockResolvedValue([
+      makeChampionStats({ championName: "Ahri", games: 9 }),
+      makeChampionStats({ championName: "Zed", games: 2 }),
+    ]);
+    render(<ChampionsTab puuid="test" />);
+    expect(await screen.findByText("All tracked games (all modes) · 11 games across 2 champions")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByText("20"));
+    await userEvent.click(await screen.findByText("Ranked Solo"));
+    expect(await screen.findByText("Last 20 Ranked Solo games · 11 games across 2 champions")).toBeInTheDocument();
+  });
+
   it("re-fetches when queue filter is changed", async () => {
     vi.mocked(fetchChampionStats).mockResolvedValue([]);
     render(<ChampionsTab puuid="test" />);

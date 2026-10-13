@@ -42,7 +42,6 @@ public abstract class BaseIntegrationSupport {
         registry.add("spring.flyway.enabled", () -> true);
         registry.add("spring.jpa.hibernate.ddl-auto", () -> "validate");
         registry.add("ingestion.enabled", () -> false);
-        registry.add("subscription.upgrade-enabled", () -> true);
     }
 
     @MockitoBean

@@ -15,6 +15,8 @@ import java.lang.reflect.Method;
 import java.time.Duration;
 import java.util.List;
 
+import com.jw.backend.region.RiotRegion;
+
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
@@ -503,5 +505,44 @@ class RiotApiServiceTest {
     @Test
     void getRecentMatchIds_withoutStart_delegatesToOverload() {
         assertNotNull(riotApiService);
+    }
+
+    // -- Best-effort lookups used by the leaderboard --
+    @Test
+    void tryGetAccountByPuuid_cacheHit_returnsCachedWithoutUsingPermit() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        String key = "account-puuid:" + RiotRegion.NA.routing() + ":p1";
+        when(valueOperations.get(key)).thenReturn("{\"gameName\":\"Cached\"}");
+        int permitsBefore = riotRateLimiter.availablePermits();
+
+        String result = riotApiService.tryGetAccountByPuuid("p1", RiotRegion.NA, 30);
+
+        assertEquals("{\"gameName\":\"Cached\"}", result);
+        assertEquals(permitsBefore, riotRateLimiter.availablePermits());
+    }
+
+    @Test
+    void tryGetAccountByPuuid_belowReserve_skipsRiotCall() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        // Drain the limiter down to the reserve
+        while (riotRateLimiter.availablePermits() > 30) {
+            riotRateLimiter.tryAcquire();
+        }
+
+        String result = riotApiService.tryGetAccountByPuuid("p1", RiotRegion.NA, 30);
+
+        assertNull(result);
+        assertEquals(30, riotRateLimiter.availablePermits());
+    }
+
+    @Test
+    void peekSummonerByPuuid_readsCacheOnly() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        String key = "summoner:" + RiotRegion.NA.platform() + ":p1";
+        when(valueOperations.get(key)).thenReturn("{\"profileIconId\":7}");
+        int permitsBefore = riotRateLimiter.availablePermits();
+
+        assertEquals("{\"profileIconId\":7}", riotApiService.peekSummonerByPuuid("p1", RiotRegion.NA));
+        assertEquals(permitsBefore, riotRateLimiter.availablePermits());
     }
 }

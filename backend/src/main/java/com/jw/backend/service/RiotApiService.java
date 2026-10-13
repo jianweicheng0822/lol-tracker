@@ -85,6 +85,34 @@ public class RiotApiService {
         return result;
     }
 
+    /**
+     * Best-effort, non-blocking variant of {@link #getAccountByPuuid} for background enrichment
+     * (e.g. leaderboard names). Returns the cached account if present; otherwise calls Riot only
+     * when more than {@code reservePermits} rate-limit permits are free, so interactive lookups
+     * keep headroom. Returns null when the call is skipped or fails.
+     */
+    public String tryGetAccountByPuuid(String puuid, RiotRegion region, int reservePermits) {
+        String cacheKey = "account-puuid:" + region.routing() + ":" + puuid;
+        String cached = getCached(cacheKey);
+        if (cached != null) return cached;
+
+        if (riotRateLimiter.availablePermits() <= reservePermits || !riotRateLimiter.tryAcquire()) {
+            return null;
+        }
+        try {
+            String result = getClient("https://" + region.routing() + ".api.riotgames.com").get()
+                    .uri("/riot/account/v1/accounts/by-puuid/{puuid}", puuid)
+                    .header("X-Riot-Token", apiKey)
+                    .retrieve()
+                    .body(String.class);
+            putCached(cacheKey, result, 24L * 60 * 60 * 1000);
+            return result;
+        } catch (Exception e) {
+            log.debug("Best-effort account lookup failed for puuid {}: {}", puuid, e.getMessage());
+            return null;
+        }
+    }
+
     /** Account-v1 lookup. 24h TTL — PUUIDs and Riot IDs are effectively permanent. */
     public String getAccountByRiotId(String gameName, String tagLine, RiotRegion region) {
         long ttlMs = 24L * 60 * 60 * 1000;
@@ -192,6 +220,11 @@ public class RiotApiService {
 
         putCached(cacheKey, result, ttlMs);
         return result;
+    }
+
+    /** Cache-only Summoner-v4 lookup — never calls Riot. Returns null on a cache miss. */
+    public String peekSummonerByPuuid(String puuid, RiotRegion region) {
+        return getCached("summoner:" + region.platform() + ":" + puuid);
     }
 
     /** League-v4 ranked entries. 30min TTL — same rationale as summoner data. */

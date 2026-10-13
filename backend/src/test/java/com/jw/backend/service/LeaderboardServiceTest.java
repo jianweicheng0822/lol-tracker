@@ -152,26 +152,91 @@ class LeaderboardServiceTest {
         assertEquals(0, result.entries().get(0).losses());
     }
 
+    private static final String THREE_PLAYER_LEAGUE = """
+        {
+            "tier": "CHALLENGER",
+            "entries": [
+                {"puuid": "p1", "rank": "I", "leaguePoints": 1200, "wins": 200, "losses": 80},
+                {"puuid": "p2", "rank": "I", "leaguePoints": 800, "wins": 150, "losses": 100},
+                {"puuid": "p3", "rank": "I", "leaguePoints": 500, "wins": 100, "losses": 100}
+            ]
+        }
+        """;
+
     @Test
-    void getLeaderboard_usesPrefetchedDataWhenAvailable() {
+    void getLeaderboard_usesPrefetchedNamesAndIcons() {
         LeaderboardPrefetchService prefetchService = mock(LeaderboardPrefetchService.class);
         LeaderboardService serviceWithPrefetch = new LeaderboardService(riotApiService, new ObjectMapper(), prefetchService);
 
         List<LeaderboardPrefetchService.ResolvedEntry> prefetchedEntries = List.of(
-                new LeaderboardPrefetchService.ResolvedEntry("Player1", "p1", "CHALLENGER", "I", 1200, 200, 80, 71.4, 1234),
-                new LeaderboardPrefetchService.ResolvedEntry("Player2", "p2", "CHALLENGER", "I", 800, 150, 100, 60.0, 5678)
+                new LeaderboardPrefetchService.ResolvedEntry("Player1#NA1", "p1", "CHALLENGER", "I", 1100, 190, 80, 70.4, 1234),
+                new LeaderboardPrefetchService.ResolvedEntry("Player2#NA1", "p2", "CHALLENGER", "I", 800, 150, 100, 60.0, 5678),
+                new LeaderboardPrefetchService.ResolvedEntry("Player3#NA1", "p3", "CHALLENGER", "I", 500, 100, 100, 50.0, 9012)
         );
         when(prefetchService.getCached("challenger", "RANKED_SOLO_5x5", RiotRegion.NA))
                 .thenReturn(Optional.of(prefetchedEntries));
+        when(riotApiService.getLeagueByTier("challenger", "RANKED_SOLO_5x5", RiotRegion.NA)).thenReturn(THREE_PLAYER_LEAGUE);
 
         var result = serviceWithPrefetch.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 50);
 
-        assertEquals(2, result.entries().size());
-        assertEquals("Player1", result.entries().get(0).summonerName());
+        assertEquals(3, result.entries().size());
+        assertEquals("Player1#NA1", result.entries().get(0).summonerName());
         assertEquals(1234, result.entries().get(0).profileIconId());
         assertEquals(5678, result.entries().get(1).profileIconId());
-        // Should NOT call the Riot API since prefetch was used
-        verifyNoInteractions(riotApiService);
+        // LP comes from the live league data, not the (older) prefetched snapshot
+        assertEquals(1200, result.entries().get(0).leaguePoints());
+        // Every name was prefetched, so no per-player Riot lookups are needed
+        verify(riotApiService, never()).tryGetAccountByPuuid(anyString(), any(), anyInt());
+    }
+
+    @Test
+    void getLeaderboard_partialPrefetch_doesNotTruncateLeaderboard() {
+        LeaderboardPrefetchService prefetchService = mock(LeaderboardPrefetchService.class);
+        LeaderboardService serviceWithPrefetch = new LeaderboardService(riotApiService, new ObjectMapper(), prefetchService);
+
+        // Prefetch was cut short by the rate limiter after resolving only the first player
+        when(prefetchService.getCached("challenger", "RANKED_SOLO_5x5", RiotRegion.NA))
+                .thenReturn(Optional.of(List.of(
+                        new LeaderboardPrefetchService.ResolvedEntry("Player1#NA1", "p1", "CHALLENGER", "I", 1200, 200, 80, 71.4, 1234))));
+        when(riotApiService.getLeagueByTier("challenger", "RANKED_SOLO_5x5", RiotRegion.NA)).thenReturn(THREE_PLAYER_LEAGUE);
+        when(riotApiService.tryGetAccountByPuuid("p2", RiotRegion.NA, LeaderboardService.NAME_RESOLUTION_RESERVE_PERMITS))
+                .thenReturn("{\"gameName\":\"Player2\",\"tagLine\":\"EUW\"}");
+
+        var result = serviceWithPrefetch.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 50);
+
+        assertEquals(3, result.totalEntries());
+        assertEquals(3, result.entries().size());
+        assertEquals("Player1#NA1", result.entries().get(0).summonerName());
+        assertEquals("Player2#EUW", result.entries().get(1).summonerName());
+        // Not cached and no rate-limit budget: row is still shown, just without a name
+        assertEquals("Unknown", result.entries().get(2).summonerName());
+        assertEquals(500, result.entries().get(2).leaguePoints());
+    }
+
+    @Test
+    void getLeaderboard_emptyPrefetch_doesNotEmptyLeaderboard() {
+        LeaderboardPrefetchService prefetchService = mock(LeaderboardPrefetchService.class);
+        LeaderboardService serviceWithPrefetch = new LeaderboardService(riotApiService, new ObjectMapper(), prefetchService);
+
+        when(prefetchService.getCached("challenger", "RANKED_SOLO_5x5", RiotRegion.NA))
+                .thenReturn(Optional.of(List.of()));
+        when(riotApiService.getLeagueByTier("challenger", "RANKED_SOLO_5x5", RiotRegion.NA)).thenReturn(THREE_PLAYER_LEAGUE);
+
+        var result = serviceWithPrefetch.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 50);
+
+        assertEquals(3, result.totalEntries());
+        assertEquals(3, result.entries().size());
+    }
+
+    @Test
+    void getLeaderboard_usesCachedProfileIconWhenNotPrefetched() {
+        when(riotApiService.getLeagueByTier("challenger", "RANKED_SOLO_5x5", RiotRegion.NA)).thenReturn(THREE_PLAYER_LEAGUE);
+        when(riotApiService.peekSummonerByPuuid("p1", RiotRegion.NA)).thenReturn("{\"profileIconId\": 4321}");
+
+        var result = leaderboardService.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 50);
+
+        assertEquals(4321, result.entries().get(0).profileIconId());
+        assertEquals(0, result.entries().get(1).profileIconId());
     }
 
     @Test

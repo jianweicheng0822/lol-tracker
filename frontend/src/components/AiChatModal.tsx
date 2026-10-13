@@ -10,6 +10,7 @@ import type { MatchSummary } from "../types";
 import { analyzeMatchStream } from "../api";
 import type { AiMatchData, AiChatMessage } from "../api";
 import { COLORS } from "../utils/colors";
+import { isArenaQueue } from "../utils/ddragon";
 
 type Props = {
   match: MatchSummary;
@@ -23,7 +24,7 @@ type Props = {
  * @returns Structured match data suitable for the AI analysis endpoint.
  */
 function buildMatchData(m: MatchSummary): AiMatchData {
-  const isArena = m.queueId === 1700;
+  const isArena = isArenaQueue(m.queueId);
   return {
     champion: m.championName,
     role: "",
@@ -70,7 +71,7 @@ export default function AiChatModal({ match, onClose }: Props) {
     return () => window.removeEventListener("keydown", handler);
   }, [onClose]);
 
-  const isArena = match.queueId === 1700;
+  const isArena = isArenaQueue(match.queueId);
   const isWin = isArena ? match.placement >= 1 && match.placement <= 4 : match.win;
   const kda = match.deaths === 0
     ? "Perfect"

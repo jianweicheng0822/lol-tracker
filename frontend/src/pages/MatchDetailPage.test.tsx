@@ -17,7 +17,8 @@ vi.mock("../api", () => ({
 vi.mock("../utils/ddragon", () => ({
   useDdragonVersion: () => "15.1.1",
   ddragonBase: () => "https://ddragon.leagueoflegends.com/cdn/15.1.1/img",
-  QUEUE_NAMES: { 420: "Ranked Solo", 1700: "Arena" } as Record<number, string>,
+  queueLabel: (id: number) => ({ 420: "Ranked Solo", 1700: "Arena", 1750: "Arena" } as Record<number, string>)[id] ?? "Other",
+  isArenaQueue: (id: number) => id === 1700 || id === 1750,
   formatDuration: (s: number) => `${Math.floor(s / 60)}m`,
   timeAgo: () => "5m ago",
 }));

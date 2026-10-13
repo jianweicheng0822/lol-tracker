@@ -24,7 +24,8 @@ vi.mock("../utils/ddragon", () => ({
   hideOnError: vi.fn(),
   formatDuration: (s: number) => `${Math.floor(s / 60)}m`,
   timeAgo: () => "5m ago",
-  QUEUE_NAMES: { 420: "Ranked Solo", 440: "Ranked Flex", 450: "ARAM", 1700: "Arena" } as Record<number, string>,
+  queueLabel: (id: number) => ({ 420: "Ranked Solo", 440: "Ranked Flex", 450: "ARAM", 1700: "Arena", 1750: "Arena" } as Record<number, string>)[id] ?? "Other",
+  isArenaQueue: (id: number) => id === 1700 || id === 1750,
   useSummonerSpells: () => ({}),
   useKeystoneRunes: () => ({}),
 }));
@@ -168,6 +169,25 @@ describe("MatchList", () => {
     });
     render(<MatchList matches={[match]} region="NA" puuid="test" />);
     expect(screen.getByText("Victory")).toBeInTheDocument();
+  });
+
+  it("treats the current Arena queue (1750) as Arena", () => {
+    const match = makeMatchSummary({
+      queueId: 1750,
+      win: false,
+      placement: 1,
+      augments: [1, 2, 3, 4],
+    });
+    render(<MatchList matches={[match]} region="NA" puuid="test" />);
+    expect(screen.getByText("Victory")).toBeInTheDocument();
+    expect(screen.getByText("Arena")).toBeInTheDocument();
+  });
+
+  it("labels unknown queues as Other instead of Normal", () => {
+    const match = makeMatchSummary({ queueId: 9999 });
+    render(<MatchList matches={[match]} region="NA" puuid="test" />);
+    expect(screen.getByText("Other")).toBeInTheDocument();
+    expect(screen.queryByText("Normal")).not.toBeInTheDocument();
   });
 
   it("treats Arena placement 5-8 as loss", () => {

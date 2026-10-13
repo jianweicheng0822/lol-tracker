@@ -14,7 +14,8 @@ import type { MatchDetail } from "../types";
 import {
   useDdragonVersion,
   ddragonBase,
-  QUEUE_NAMES,
+  queueLabel,
+  isArenaQueue,
   formatDuration,
   timeAgo,
 } from "../utils/ddragon";
@@ -58,7 +59,7 @@ export default function MatchDetailPage() {
 
   const myParticipant = match?.participants.find((p) => p.puuid === puuid);
   const myWin = myParticipant?.win;
-  const queueName = match ? (QUEUE_NAMES[match.queueId] || "Normal") : "";
+  const queueName = match ? queueLabel(match.queueId) : "";
 
   return (
     <div style={styles.page}>
@@ -100,7 +101,7 @@ export default function MatchDetailPage() {
             </div>
 
             {/* Scoreboard */}
-            {match.queueId === 1700 ? (
+            {isArenaQueue(match.queueId) ? (
               <ArenaScoreboard
                 participants={match.participants}
                 imgBase={imgBase}

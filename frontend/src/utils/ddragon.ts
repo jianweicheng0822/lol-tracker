@@ -234,11 +234,30 @@ export function useKeystoneRunes(): Record<number, string> {
 
 // --- Queue ID → display name mappings ---
 export const QUEUE_NAMES: Record<number, string> = {
+  0: "Custom",
+  400: "Normal Draft",
   420: "Ranked Solo/Duo",
+  430: "Normal Blind",
   440: "Ranked Flex",
   450: "ARAM",
+  480: "Swiftplay",
+  490: "Quickplay",
+  900: "ARURF",
   1700: "Arena",
+  1750: "Arena",
+  1900: "URF",
 };
+
+/** Display name for a queue; unknown queues show "Other" rather than being mislabeled. */
+export const queueLabel = (queueId: number) => QUEUE_NAMES[queueId] ?? "Other";
+
+// Riot has moved Arena between queue IDs (1700 originally, 1750 currently)
+const ARENA_QUEUE_IDS = new Set([1700, 1750]);
+export const isArenaQueue = (queueId: number) => ARENA_QUEUE_IDS.has(queueId);
+
+/** Ranked Solo/Duo and Ranked Flex. */
+export const RANKED_QUEUE_IDS = new Set([420, 440]);
+export const isRankedQueue = (queueId: number) => RANKED_QUEUE_IDS.has(queueId);
 
 export const hideOnError = (e: React.SyntheticEvent<HTMLImageElement>) => {
   (e.target as HTMLImageElement).style.display = "none";

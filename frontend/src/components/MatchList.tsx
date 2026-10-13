@@ -17,7 +17,8 @@ import {
   spellIconUrl,
   keystoneIconUrl,
   runeStyleIconUrl,
-  QUEUE_NAMES,
+  queueLabel,
+  isArenaQueue,
   hideOnError,
   formatDuration,
   timeAgo,
@@ -291,7 +292,7 @@ function InlineScoreboard({
     );
   }
 
-  const isArena = match.queueId === 1700;
+  const isArena = isArenaQueue(match.queueId);
 
   if (isArena) {
     return (
@@ -336,7 +337,7 @@ function InlineScoreboard({
 export default function MatchList({ matches, region, puuid, onLoadMore, isLoadingMore, hasMore, tier = 0, onShowUpgrade }: MatchListProps) {
   const ddVersion = useDdragonVersion();
   const imgBase = ddragonBase(ddVersion);
-  const hasArena = matches.some((m) => m.queueId === 1700);
+  const hasArena = matches.some((m) => isArenaQueue(m.queueId));
   const augmentIcons = useAugmentIcons(hasArena);
   const spellMap = useSummonerSpells();
   const keystoneMap = useKeystoneRunes();
@@ -374,7 +375,7 @@ export default function MatchList({ matches, region, puuid, onLoadMore, isLoadin
             m.kills, m.deaths, m.assists, killParticipation, m.win,
           );
 
-          const isArena = m.queueId === 1700;
+          const isArena = isArenaQueue(m.queueId);
           const isWin = isArena ? (m.placement >= 1 && m.placement <= 4) : m.win;
 
           const winColor = isWin ? "#D4A017" : "#E84057";
@@ -385,7 +386,7 @@ export default function MatchList({ matches, region, puuid, onLoadMore, isLoadin
             : "linear-gradient(135deg, rgba(232,64,87,0.12) 0%, rgba(232,64,87,0.04) 100%)";
 
           const queueName =
-            QUEUE_NAMES[m.queueId] || "Normal";
+            queueLabel(m.queueId);
 
           const isExpanded = expandedId === m.matchId;
 
@@ -429,7 +430,7 @@ export default function MatchList({ matches, region, puuid, onLoadMore, isLoadin
                     </div>
                   </div>
 
-                  {m.queueId === 1700 ? (
+                  {isArenaQueue(m.queueId) ? (
                     <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 22px)", gap: 2 }}>
                       {m.augments
                         .filter((a) => a > 0)

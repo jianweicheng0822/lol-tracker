@@ -12,6 +12,9 @@ import {
   RUNE_STYLE_ICONS,
   SUMMONER_SPELLS,
   QUEUE_NAMES,
+  queueLabel,
+  isArenaQueue,
+  isRankedQueue,
 } from "./ddragon";
 
 describe("ddragonBase", () => {
@@ -106,6 +109,31 @@ describe("QUEUE_NAMES", () => {
     expect(QUEUE_NAMES[440]).toBe("Ranked Flex");
     expect(QUEUE_NAMES[450]).toBe("ARAM");
     expect(QUEUE_NAMES[1700]).toBe("Arena");
+    expect(QUEUE_NAMES[1750]).toBe("Arena");
+  });
+});
+
+describe("queueLabel", () => {
+  it("returns the mapped name, or Other for unknown queues", () => {
+    expect(queueLabel(420)).toBe("Ranked Solo/Duo");
+    expect(queueLabel(9999)).toBe("Other");
+  });
+});
+
+describe("isArenaQueue", () => {
+  it("recognizes both the original and current Arena queue IDs", () => {
+    expect(isArenaQueue(1700)).toBe(true);
+    expect(isArenaQueue(1750)).toBe(true);
+    expect(isArenaQueue(420)).toBe(false);
+  });
+});
+
+describe("isRankedQueue", () => {
+  it("is true only for Ranked Solo/Duo and Ranked Flex", () => {
+    expect(isRankedQueue(420)).toBe(true);
+    expect(isRankedQueue(440)).toBe(true);
+    expect(isRankedQueue(450)).toBe(false);
+    expect(isRankedQueue(1750)).toBe(false);
   });
 });
 

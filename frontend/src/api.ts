@@ -121,6 +121,14 @@ export async function readErrorMessage(res: Response): Promise<string> {
   }
 }
 
+/** Thrown when the requested player doesn't exist in that region (HTTP 404). */
+export class PlayerNotFoundError extends Error {
+  constructor(message = "Player not found") {
+    super(message);
+    this.name = "PlayerNotFoundError";
+  }
+}
+
 /**
  * Fetch a summoner account by Riot ID (game name + tag) and region.
  *
@@ -128,12 +136,14 @@ export async function readErrorMessage(res: Response): Promise<string> {
  * @param tag - The tag portion of the Riot ID (e.g., "NA1").
  * @param region - The Riot API region code (e.g., "NA", "EUW").
  * @returns The resolved account object including PUUID and profile icon.
+ * @throws PlayerNotFoundError if no such Riot ID exists in that region.
  */
 export async function fetchAccount(gameName: string, tag: string, region: string) {
   const res = await fetchWithTimeout(
     `${BASE}/api/summoner?gameName=${encodeURIComponent(gameName)}&tag=${encodeURIComponent(tag)}&region=${region}`,
     fetchOpts()
   );
+  if (res.status === 404) throw new PlayerNotFoundError(await readErrorMessage(res));
   if (!res.ok) throw new Error(await readErrorMessage(res));
   return res.json();
 }
@@ -150,6 +160,7 @@ export async function fetchAccountByPuuid(puuid: string, region: string) {
     `${BASE}/api/summoner/by-puuid?puuid=${encodeURIComponent(puuid)}&region=${region}`,
     fetchOpts()
   );
+  if (res.status === 404) throw new PlayerNotFoundError(await readErrorMessage(res));
   if (!res.ok) throw new Error(await readErrorMessage(res));
   return res.json();
 }

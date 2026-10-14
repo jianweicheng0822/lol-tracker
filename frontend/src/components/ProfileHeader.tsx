@@ -1,7 +1,9 @@
+import { useEffect, useState } from "react";
 import type { Account } from "../types";
 import type { Streak } from "../utils/playerInsights";
 import { useDdragonVersion, hideOnError } from "../utils/ddragon";
 import { COLORS } from "../utils/colors";
+import { formatUpdatedAgo } from "../utils/time";
 
 type Props = {
   account: Account;
@@ -9,12 +11,24 @@ type Props = {
   isFav: boolean;
   onToggleFavorite: () => void;
   onRefresh: () => void;
+  isRefreshing?: boolean;
+  /** When the data on screen was last loaded (ms since epoch). */
+  lastUpdated?: number | null;
   streak?: Streak | null;
   climbStatus?: "climbing" | "falling" | "stable" | null;
 };
 
-export default function ProfileHeader({ account, region, isFav, onToggleFavorite, onRefresh, streak, climbStatus }: Props) {
+export default function ProfileHeader({
+  account, region, isFav, onToggleFavorite, onRefresh, isRefreshing = false, lastUpdated, streak, climbStatus,
+}: Props) {
   const ddVersion = useDdragonVersion();
+  // Tick every 30s so the "Updated ... ago" label stays current. Right after a refresh `now` may be a
+  // little older than lastUpdated; that still reads as "just now".
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 30_000);
+    return () => clearInterval(id);
+  }, []);
 
   return (
     <div style={styles.header}>
@@ -53,9 +67,20 @@ export default function ProfileHeader({ account, region, isFav, onToggleFavorite
           </div>
         </div>
       </div>
-      <div style={{ display: "flex", gap: 8 }}>
-        <button style={styles.refreshBtn} onClick={onRefresh} title="Refresh data">
-          {"\u21BB"}
+      <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+        {(isRefreshing || lastUpdated) && (
+          <span style={styles.updatedLabel} aria-live="polite">
+            {isRefreshing ? "Refreshing\u2026" : formatUpdatedAgo(lastUpdated!, now)}
+          </span>
+        )}
+        <button
+          style={{ ...styles.refreshBtn, ...(isRefreshing ? styles.refreshBtnBusy : {}) }}
+          onClick={onRefresh}
+          disabled={isRefreshing}
+          title={isRefreshing ? "Refreshing\u2026" : "Refresh data"}
+          aria-label="Refresh data"
+        >
+          <span style={isRefreshing ? styles.spinning : undefined}>{"\u21BB"}</span>
         </button>
         <button style={isFav ? styles.favBtnActive : styles.favBtn} onClick={onToggleFavorite}>
           {isFav ? "\u2605 Favorited" : "\u2606 Favorite"}
@@ -104,6 +129,19 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 16,
     fontWeight: 600,
     lineHeight: 1,
+  },
+  refreshBtnBusy: {
+    cursor: "default",
+    opacity: 0.7,
+  },
+  spinning: {
+    display: "inline-block",
+    animation: "spin 0.8s linear infinite",
+  },
+  updatedLabel: {
+    fontSize: 12,
+    color: COLORS.textDim,
+    whiteSpace: "nowrap",
   },
   climbBadge: {
     fontSize: 12,

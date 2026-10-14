@@ -12,7 +12,11 @@ import { useDdragonVersion, ddragonBase, championIconUrl, championIconOnError } 
 import { COLORS, winRateColor, kdaColor } from "../../utils/colors";
 import type { ChampionStats } from "../../types";
 
-type Props = { puuid: string };
+type Props = {
+  puuid: string;
+  /** Changes when the player page is refreshed, so stats refetch with the current filters kept. */
+  refreshToken?: number;
+};
 
 const COUNT_OPTIONS = [
   { label: "20", value: 20 },
@@ -46,7 +50,7 @@ function describeScope(count: number | undefined, queueId: number | undefined, c
  * @param props - The player's PUUID for fetching champion-specific stats.
  * @returns The champions tab grid element.
  */
-export default function ChampionsTab({ puuid }: Props) {
+export default function ChampionsTab({ puuid, refreshToken = 0 }: Props) {
   const [champions, setChampions] = useState<ChampionStats[]>([]);
   const [loading, setLoading] = useState(true);
   const [countFilter, setCountFilter] = useState<number | undefined>(undefined);
@@ -69,7 +73,7 @@ export default function ChampionsTab({ puuid }: Props) {
           setLoading(false);
         }
       });
-  }, [puuid, countFilter, queueFilter]);
+  }, [puuid, countFilter, queueFilter, refreshToken]);
 
   if (loading) return <div style={{ textAlign: "center", padding: 40, opacity: 0.5 }}>Loading champion stats...</div>;
 

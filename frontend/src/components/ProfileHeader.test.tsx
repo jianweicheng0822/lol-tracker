@@ -1,6 +1,7 @@
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ProfileHeader from "./ProfileHeader";
+import { formatUpdatedAgo } from "../utils/time";
 import { makeAccount } from "../test/fixtures";
 
 vi.mock("../utils/ddragon", () => ({
@@ -91,5 +92,37 @@ describe("ProfileHeader", () => {
     render(<ProfileHeader {...defaultProps} climbStatus="stable" />);
     expect(screen.queryByText(/Climbing/)).not.toBeInTheDocument();
     expect(screen.queryByText(/Falling/)).not.toBeInTheDocument();
+  });
+
+  it("shows when the data was last updated", () => {
+    render(<ProfileHeader {...defaultProps} lastUpdated={Date.now()} />);
+    expect(screen.getByText("Updated just now")).toBeInTheDocument();
+  });
+
+  it("spins and disables the refresh button while refreshing", async () => {
+    const user = userEvent.setup();
+    render(<ProfileHeader {...defaultProps} lastUpdated={Date.now()} isRefreshing />);
+
+    expect(screen.getByText("Refreshing…")).toBeInTheDocument();
+    const button = screen.getByRole("button", { name: "Refresh data" });
+    expect(button).toBeDisabled();
+    await user.click(button);
+    expect(defaultProps.onRefresh).not.toHaveBeenCalled();
+  });
+});
+
+describe("formatUpdatedAgo", () => {
+  const now = 1_800_000_000_000;
+
+  it("says just now for under a minute", () => {
+    expect(formatUpdatedAgo(now - 30_000, now)).toBe("Updated just now");
+  });
+
+  it("counts minutes under an hour", () => {
+    expect(formatUpdatedAgo(now - 5 * 60_000, now)).toBe("Updated 5 min ago");
+  });
+
+  it("switches to hours after an hour", () => {
+    expect(formatUpdatedAgo(now - 125 * 60_000, now)).toBe("Updated 2 h ago");
   });
 });

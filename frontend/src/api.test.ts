@@ -4,7 +4,7 @@ import {
   fetchAccount, fetchAccountByPuuid, fetchMatchSummaries, fetchStats,
   fetchRanked, fetchMatchDetail, fetchFavorites, checkIsFavorite,
   addFavorite, removeFavorite, fetchChampionStats, fetchMatchTrends,
-  fetchLpHistory, fetchTier, fetchLeaderboard, AuthRequiredError,
+  fetchLpHistory, fetchTier, fetchLeaderboard, AuthRequiredError, PlayerNotFoundError,
 } from "./api";
 
 // Mock localStorage
@@ -184,6 +184,23 @@ describe("fetchAccount", () => {
     mockFail("Not found");
     await expect(fetchAccount("x", "y", "NA")).rejects.toThrow("Not found");
   });
+
+  it("throws PlayerNotFoundError on 404", async () => {
+    mockFail("Riot account not found.");
+    await expect(fetchAccount("x", "y", "NA")).rejects.toBeInstanceOf(PlayerNotFoundError);
+  });
+
+  it("throws a plain error (not PlayerNotFoundError) for other failures", async () => {
+    mockFetch.mockResolvedValue({
+      ok: false, status: 500, statusText: "Server Error",
+      headers: new Headers({ "content-type": "application/json" }),
+      json: () => Promise.resolve({ message: "Boom" }),
+    });
+    const err = await fetchAccount("x", "y", "NA").catch((e) => e);
+    expect(err).toBeInstanceOf(Error);
+    expect(err).not.toBeInstanceOf(PlayerNotFoundError);
+    expect(err.message).toBe("Boom");
+  });
 });
 
 describe("fetchAccountByPuuid", () => {
@@ -201,6 +218,11 @@ describe("fetchAccountByPuuid", () => {
   it("throws on failure", async () => {
     mockFail("Not found");
     await expect(fetchAccountByPuuid("p1", "NA")).rejects.toThrow("Not found");
+  });
+
+  it("throws PlayerNotFoundError on 404", async () => {
+    mockFail("Riot account not found.");
+    await expect(fetchAccountByPuuid("p1", "NA")).rejects.toBeInstanceOf(PlayerNotFoundError);
   });
 });
 

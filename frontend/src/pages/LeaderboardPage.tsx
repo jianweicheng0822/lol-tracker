@@ -4,7 +4,7 @@
  * @module frontend.pages
  */
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchLeaderboard } from "../api";
 import { COLORS, winRateColor } from "../utils/colors";
 import { TIER_COLORS } from "../utils/lp";
@@ -42,40 +42,92 @@ const PAGE_SIZE = 25;
 // The standard icon new accounts start with — shown while a player's real icon isn't resolved yet
 const DEFAULT_PROFILE_ICON_ID = 29;
 
+type LeaderboardView = { region: Region; queue: Queue; tier: Tier; page: number };
+
+const DEFAULT_VIEW: LeaderboardView = { region: "NA", queue: "RANKED_SOLO_5x5", tier: "challenger", page: 0 };
+
+/** Read the view from the URL; anything missing or invalid falls back to the default. */
+function viewFromParams(params: URLSearchParams): LeaderboardView {
+  const region = params.get("region") as Region;
+  const queue = params.get("queue") as Queue;
+  const tier = params.get("tier") as Tier;
+  const page = Number(params.get("page")); // 1-based in the URL
+  return {
+    region: LEADERBOARD_REGIONS.includes(region) ? region : DEFAULT_VIEW.region,
+    queue: QUEUES.some((q) => q.value === queue) ? queue : DEFAULT_VIEW.queue,
+    tier: TIERS.includes(tier) ? tier : DEFAULT_VIEW.tier,
+    page: Number.isInteger(page) && page >= 1 ? page - 1 : DEFAULT_VIEW.page,
+  };
+}
+
+/** Only non-default values go in the URL, so the plain leaderboard stays at /leaderboard. */
+function paramsFromView(view: LeaderboardView): Record<string, string> {
+  const params: Record<string, string> = {};
+  if (view.region !== DEFAULT_VIEW.region) params.region = view.region;
+  if (view.queue !== DEFAULT_VIEW.queue) params.queue = view.queue;
+  if (view.tier !== DEFAULT_VIEW.tier) params.tier = view.tier;
+  if (view.page !== DEFAULT_VIEW.page) params.page = String(view.page + 1);
+  return params;
+}
+
+type LoadedPage = { key: string; entries: LeaderboardEntry[]; totalEntries: number; error?: string };
+
 export default function LeaderboardPage() {
   const navigate = useNavigate();
   const ddragonVersion = useDdragonVersion();
   const profileIconUrl = (id: number) => `${ddragonBase(ddragonVersion)}/profileicon/${id}.png`;
-  const [region, setRegion] = useState<Region>("NA");
-  const [queue, setQueue] = useState<Queue>("RANKED_SOLO_5x5");
-  const [tier, setTier] = useState<Tier>("challenger");
-  const [entries, setEntries] = useState<LeaderboardEntry[]>([]);
-  const [totalEntries, setTotalEntries] = useState(0);
-  const [page, setPage] = useState(0);
-  const [status, setStatus] = useState<"loading" | "error" | "done">("loading");
-  const [errorMsg, setErrorMsg] = useState("");
 
-  // Track which request key is active so stale responses are discarded
-  const [fetchKey, setFetchKey] = useState(0);
+  // The URL is the source of truth for what's shown, so links can be shared and refresh/Back keep it
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { region, queue, tier, page } = viewFromParams(searchParams);
+  const viewKey = `${region}|${queue}|${tier}|${page}`;
 
-  // Reset to page 0 and loading when filters change
-  function changeRegion(r: Region) { setRegion(r); setPage(0); setStatus("loading"); setErrorMsg(""); setFetchKey((k) => k + 1); }
-  function changeQueue(q: Queue) { setQueue(q); setPage(0); setStatus("loading"); setErrorMsg(""); setFetchKey((k) => k + 1); }
-  function changeTier(t: Tier) { setTier(t); setPage(0); setStatus("loading"); setErrorMsg(""); setFetchKey((k) => k + 1); }
-  function changePage(p: number) { setPage(p); setStatus("loading"); setFetchKey((k) => k + 1); }
+  const [loaded, setLoaded] = useState<LoadedPage | null>(null);
+  // Loading whenever the data on hand isn't for the current view
+  const status: "loading" | "error" | "done" =
+    !loaded || loaded.key !== viewKey ? "loading" : loaded.error ? "error" : "done";
+  const entries = status === "done" ? loaded!.entries : [];
+  const errorMsg = loaded?.error ?? "";
+  // Keep the last known total while the next page loads, so pagination doesn't jump around
+  const totalEntries = loaded?.totalEntries ?? 0;
+
+  // Replace rather than push, so Back doesn't step through every filter change
+  const showView = (next: Partial<LeaderboardView>) =>
+    setSearchParams(paramsFromView({ region, queue, tier, page, ...next }), { replace: true });
+  // Changing a filter starts again from the first page
+  const changeRegion = (r: Region) => showView({ region: r, page: 0 });
+  const changeQueue = (q: Queue) => showView({ queue: q, page: 0 });
+  const changeTier = (t: Tier) => showView({ tier: t, page: 0 });
+  const changePage = (p: number) => showView({ page: p });
 
   const totalPages = Math.max(1, Math.ceil(totalEntries / PAGE_SIZE));
+
+  // Retry re-runs the fetch for the same view: mark what we have as stale (shows loading) and refetch
+  const [retryCount, setRetryCount] = useState(0);
+  const retry = () => {
+    setLoaded((prev) => (prev ? { ...prev, key: "" } : prev));
+    setRetryCount((c) => c + 1);
+  };
 
   useEffect(() => {
     let active = true;
     fetchLeaderboard(region, queue, tier, page, PAGE_SIZE).then(
       (data: { entries: LeaderboardEntry[]; totalEntries: number }) => {
-        if (active) { setEntries(data.entries); setTotalEntries(data.totalEntries); setStatus("done"); }
+        if (active) setLoaded({ key: viewKey, entries: data.entries, totalEntries: data.totalEntries });
       },
-      (e: unknown) => { if (active) { setStatus("error"); setErrorMsg(e instanceof Error ? e.message : "Something went wrong."); } },
+      (e: unknown) => {
+        if (active) {
+          setLoaded((prev) => ({
+            key: viewKey,
+            entries: [],
+            totalEntries: prev?.totalEntries ?? 0,
+            error: e instanceof Error ? e.message : "Something went wrong.",
+          }));
+        }
+      },
     );
     return () => { active = false; };
-  }, [fetchKey]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [region, queue, tier, page, viewKey, retryCount]);
 
   const tierColor = TIER_COLORS[tier.toUpperCase()] || COLORS.textPrimary;
 
@@ -193,7 +245,7 @@ export default function LeaderboardPage() {
           <div><strong>Error:</strong> {errorMsg}</div>
           <button
             style={styles.retryBtn}
-            onClick={() => { setStatus("loading"); setFetchKey((k) => k + 1); }}
+            onClick={retry}
           >
             Retry
           </button>

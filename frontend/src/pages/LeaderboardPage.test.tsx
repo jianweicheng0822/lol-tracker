@@ -1,13 +1,29 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, waitFor, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import LeaderboardPage from "./LeaderboardPage";
 import * as api from "../api";
 
 const mockNavigate = vi.fn();
-vi.mock("react-router-dom", () => ({
-  useNavigate: () => mockNavigate,
-}));
+vi.mock("react-router-dom", async () => {
+  const actual = await vi.importActual<typeof import("react-router-dom")>("react-router-dom");
+  return { ...actual, useNavigate: () => mockNavigate };
+});
+
+/** Shows the current query string so tests can check what the page wrote to the URL. */
+function LocationProbe() {
+  return <div data-testid="location">{useLocation().search}</div>;
+}
+
+function renderPage(url = "/leaderboard") {
+  return render(
+    <MemoryRouter initialEntries={[url]}>
+      <LeaderboardPage />
+      <LocationProbe />
+    </MemoryRouter>,
+  );
+}
 
 vi.mock("../api", () => ({
   fetchLeaderboard: vi.fn(),
@@ -29,21 +45,21 @@ describe("LeaderboardPage", () => {
 
   it("shows loading state initially", () => {
     vi.mocked(api.fetchLeaderboard).mockReturnValue(new Promise(() => {}));
-    const { container } = render(<LeaderboardPage />);
+    const { container } = renderPage();
     const skeletons = container.querySelectorAll("div[style*='animation']");
     expect(skeletons.length).toBeGreaterThan(0);
   });
 
   it("shows error state on fetch failure", async () => {
     vi.mocked(api.fetchLeaderboard).mockRejectedValue(new Error("Network error"));
-    render(<LeaderboardPage />);
+    renderPage();
     await waitFor(() => {
       expect(screen.getByText(/Network error/)).toBeInTheDocument();
     });
   });
 
   it("renders leaderboard entries after loading", async () => {
-    render(<LeaderboardPage />);
+    renderPage();
     await waitFor(() => {
       expect(screen.getByText("Faker")).toBeInTheDocument();
     });
@@ -52,7 +68,7 @@ describe("LeaderboardPage", () => {
   });
 
   it("displays LP values", async () => {
-    render(<LeaderboardPage />);
+    renderPage();
     await waitFor(() => {
       expect(screen.getByText("1,500 LP")).toBeInTheDocument();
     });
@@ -61,7 +77,7 @@ describe("LeaderboardPage", () => {
   });
 
   it("displays win rate values", async () => {
-    render(<LeaderboardPage />);
+    renderPage();
     await waitFor(() => {
       expect(screen.getByText("71.4%")).toBeInTheDocument();
     });
@@ -70,14 +86,14 @@ describe("LeaderboardPage", () => {
   });
 
   it("displays win/loss records", async () => {
-    render(<LeaderboardPage />);
+    renderPage();
     await waitFor(() => {
       expect(screen.getByText("200W 80L")).toBeInTheDocument();
     });
   });
 
   it("displays rank numbers", async () => {
-    render(<LeaderboardPage />);
+    renderPage();
     await waitFor(() => {
       expect(screen.getByText("1")).toBeInTheDocument();
       expect(screen.getByText("2")).toBeInTheDocument();
@@ -86,13 +102,13 @@ describe("LeaderboardPage", () => {
   });
 
   it("fetches challenger NA page 0 by default", () => {
-    render(<LeaderboardPage />);
+    renderPage();
     expect(api.fetchLeaderboard).toHaveBeenCalledWith("NA", "RANKED_SOLO_5x5", "challenger", 0, 25);
   });
 
   it("refetches when tier tab is clicked", async () => {
     const user = userEvent.setup();
-    render(<LeaderboardPage />);
+    renderPage();
     await waitFor(() => {
       expect(screen.getByText("Faker")).toBeInTheDocument();
     });
@@ -102,7 +118,7 @@ describe("LeaderboardPage", () => {
   });
 
   it("offers only the NA, EUW, and KR leaderboards", async () => {
-    render(<LeaderboardPage />);
+    renderPage();
     const select = await screen.findByDisplayValue("NA");
     const options = Array.from((select as HTMLSelectElement).options).map((o) => o.value);
     expect(options).toEqual(["NA", "EUW", "KR"]);
@@ -110,7 +126,7 @@ describe("LeaderboardPage", () => {
 
   it("refetches when region is changed", async () => {
     const user = userEvent.setup();
-    render(<LeaderboardPage />);
+    renderPage();
     await waitFor(() => {
       expect(screen.getByText("Faker")).toBeInTheDocument();
     });
@@ -122,7 +138,7 @@ describe("LeaderboardPage", () => {
 
   it("refetches when queue is changed to Flex", async () => {
     const user = userEvent.setup();
-    render(<LeaderboardPage />);
+    renderPage();
     await waitFor(() => {
       expect(screen.getByText("Faker")).toBeInTheDocument();
     });
@@ -134,27 +150,27 @@ describe("LeaderboardPage", () => {
 
   it("navigates home when back button is clicked", async () => {
     const user = userEvent.setup();
-    render(<LeaderboardPage />);
+    renderPage();
     await user.click(screen.getByText(/Home/));
     expect(mockNavigate).toHaveBeenCalledWith("/");
   });
 
   it("renders the page title", () => {
     vi.mocked(api.fetchLeaderboard).mockReturnValue(new Promise(() => {}));
-    render(<LeaderboardPage />);
+    renderPage();
     expect(screen.getByText("Leaderboard")).toBeInTheDocument();
   });
 
   it("renders all three tier tabs", () => {
     vi.mocked(api.fetchLeaderboard).mockReturnValue(new Promise(() => {}));
-    render(<LeaderboardPage />);
+    renderPage();
     expect(screen.getByText("Challenger")).toBeInTheDocument();
     expect(screen.getByText("Grandmaster")).toBeInTheDocument();
     expect(screen.getByText("Master")).toBeInTheDocument();
   });
 
   it("renders table headers", async () => {
-    render(<LeaderboardPage />);
+    renderPage();
     await waitFor(() => {
       expect(screen.getByText("Faker")).toBeInTheDocument();
     });
@@ -167,7 +183,7 @@ describe("LeaderboardPage", () => {
 
   it("shows no entries message for empty result", async () => {
     vi.mocked(api.fetchLeaderboard).mockResolvedValue({ entries: [], totalEntries: 0 });
-    render(<LeaderboardPage />);
+    renderPage();
     await waitFor(() => {
       expect(screen.getByText("No entries found.")).toBeInTheDocument();
     });
@@ -175,7 +191,7 @@ describe("LeaderboardPage", () => {
 
   it("shows pagination when multiple pages exist", async () => {
     vi.mocked(api.fetchLeaderboard).mockResolvedValue({ entries: MOCK_ENTRIES, totalEntries: 120 });
-    render(<LeaderboardPage />);
+    renderPage();
     await waitFor(() => {
       expect(screen.getByText("Faker")).toBeInTheDocument();
     });
@@ -186,7 +202,7 @@ describe("LeaderboardPage", () => {
 
   it("navigates to player page when row is clicked", async () => {
     const user = userEvent.setup();
-    render(<LeaderboardPage />);
+    renderPage();
     await waitFor(() => {
       expect(screen.getByText("Faker")).toBeInTheDocument();
     });
@@ -196,7 +212,7 @@ describe("LeaderboardPage", () => {
   });
 
   it("renders each player's profile icon, with the default icon when it's missing", async () => {
-    render(<LeaderboardPage />);
+    renderPage();
     await waitFor(() => {
       expect(screen.getByText("Faker")).toBeInTheDocument();
     });
@@ -214,7 +230,7 @@ describe("LeaderboardPage", () => {
       entries: [{ summonerName: "NoIcon", puuid: "puuid-noicon", tier: "CHALLENGER", rank: "I", leaguePoints: 500, wins: 50, losses: 50, winRate: 50.0, profileIconId: 0 }],
       totalEntries: 1,
     });
-    render(<LeaderboardPage />);
+    renderPage();
     await waitFor(() => {
       expect(screen.getByText("NoIcon")).toBeInTheDocument();
     });
@@ -224,7 +240,7 @@ describe("LeaderboardPage", () => {
   });
 
   it("falls back to the default icon when a profile icon fails to load", async () => {
-    render(<LeaderboardPage />);
+    renderPage();
     await waitFor(() => {
       expect(screen.getByText("Faker")).toBeInTheDocument();
     });
@@ -239,12 +255,79 @@ describe("LeaderboardPage", () => {
   it("advances to next page when Next is clicked", async () => {
     vi.mocked(api.fetchLeaderboard).mockResolvedValue({ entries: MOCK_ENTRIES, totalEntries: 120 });
     const user = userEvent.setup();
-    render(<LeaderboardPage />);
+    renderPage();
     await waitFor(() => {
       expect(screen.getByText("Faker")).toBeInTheDocument();
     });
 
     await user.click(screen.getByText(/Next/));
     expect(api.fetchLeaderboard).toHaveBeenCalledWith("NA", "RANKED_SOLO_5x5", "challenger", 1, 25);
+  });
+
+  it("retries the same view after an error", async () => {
+    vi.mocked(api.fetchLeaderboard).mockRejectedValueOnce(new Error("Server unavailable"));
+    const user = userEvent.setup();
+    renderPage("/leaderboard?region=KR&tier=grandmaster");
+    expect(await screen.findByText(/Server unavailable/)).toBeInTheDocument();
+
+    await user.click(screen.getByText("Retry"));
+
+    await waitFor(() => expect(screen.getByText("Faker")).toBeInTheDocument());
+    expect(api.fetchLeaderboard).toHaveBeenCalledTimes(2);
+    expect(api.fetchLeaderboard).toHaveBeenLastCalledWith("KR", "RANKED_SOLO_5x5", "grandmaster", 0, 25);
+  });
+
+  // --- View kept in the URL, so links can be shared and refresh/Back keep it ---
+
+  const currentParams = () => new URLSearchParams(screen.getByTestId("location").textContent ?? "");
+
+  it("keeps the default view at a plain /leaderboard URL", async () => {
+    renderPage();
+    await waitFor(() => expect(screen.getByText("Faker")).toBeInTheDocument());
+    expect(screen.getByTestId("location")).toHaveTextContent(/^$/);
+  });
+
+  it("writes filter and page changes to the URL", async () => {
+    vi.mocked(api.fetchLeaderboard).mockResolvedValue({ entries: MOCK_ENTRIES, totalEntries: 120 });
+    const user = userEvent.setup();
+    renderPage();
+    await waitFor(() => expect(screen.getByText("Faker")).toBeInTheDocument());
+
+    await user.selectOptions(screen.getByDisplayValue("NA"), "KR");
+    await user.click(screen.getByText("Grandmaster"));
+    await waitFor(() => expect(screen.getByText("Faker")).toBeInTheDocument());
+    await user.click(screen.getByText(/Next/));
+
+    const params = currentParams();
+    expect(params.get("region")).toBe("KR");
+    expect(params.get("tier")).toBe("grandmaster");
+    expect(params.get("page")).toBe("2"); // 1-based in the URL
+    expect(params.get("queue")).toBeNull(); // still the default
+  });
+
+  it("opens the view described by the URL", async () => {
+    vi.mocked(api.fetchLeaderboard).mockResolvedValue({ entries: MOCK_ENTRIES, totalEntries: 120 });
+    renderPage("/leaderboard?region=EUW&queue=RANKED_FLEX_SR&tier=master&page=3");
+
+    expect(api.fetchLeaderboard).toHaveBeenCalledWith("EUW", "RANKED_FLEX_SR", "master", 2, 25);
+    expect(screen.getByDisplayValue("EUW")).toBeInTheDocument();
+    expect(await screen.findByText("Page 3 of 5")).toBeInTheDocument();
+  });
+
+  it("falls back to defaults for invalid values in the URL", () => {
+    renderPage("/leaderboard?region=JP&queue=ARAM&tier=iron&page=abc");
+    expect(api.fetchLeaderboard).toHaveBeenCalledWith("NA", "RANKED_SOLO_5x5", "challenger", 0, 25);
+  });
+
+  it("goes back to page 1 when a filter changes", async () => {
+    vi.mocked(api.fetchLeaderboard).mockResolvedValue({ entries: MOCK_ENTRIES, totalEntries: 120 });
+    const user = userEvent.setup();
+    renderPage("/leaderboard?page=3");
+    await waitFor(() => expect(screen.getByText("Faker")).toBeInTheDocument());
+
+    await user.click(screen.getByText("Master"));
+
+    expect(currentParams().get("page")).toBeNull();
+    expect(api.fetchLeaderboard).toHaveBeenLastCalledWith("NA", "RANKED_SOLO_5x5", "master", 0, 25);
   });
 });

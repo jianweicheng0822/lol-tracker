@@ -92,12 +92,10 @@ public class SummonerController {
             @RequestParam RiotRegion region
     ) {
         try {
+            // Same enrichment as the name-based lookup: real profile icon (this also refreshes the
+            // leaderboard icon cache), LP snapshot, and background match tracking
             String accountJson = riotApiService.getAccountByPuuid(puuid, region);
-            JsonNode accountNode = objectMapper.readTree(accountJson);
-            String gameName = accountNode.path("gameName").asText("");
-            String tagLine = accountNode.path("tagLine").asText("");
-
-            return new SummonerDto(puuid, gameName, tagLine, 0);
+            return enrichAccount(accountJson, region);
         } catch (HttpClientErrorException | HttpServerErrorException e) {
             throw e;
         } catch (Exception e) {

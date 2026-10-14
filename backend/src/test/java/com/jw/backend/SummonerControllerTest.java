@@ -120,4 +120,56 @@ class SummonerControllerTest {
         verify(riotApiService, times(1))
             .getSummonerByPuuid("test-puuid", RiotRegion.KR);
     }
+
+    /**
+     * Verify that the PUUID lookup (used when opening a profile from the leaderboard, home page or
+     * favorites) returns the real profile icon instead of 0.
+     */
+    @Test
+    void getSummonerByPuuid_returnsRealProfileIcon() throws Exception {
+        when(riotApiService.getAccountByPuuid("abc123", RiotRegion.NA))
+            .thenReturn("{\"puuid\":\"abc123\",\"gameName\":\"Doublelift\",\"tagLine\":\"NA1\"}");
+        when(riotApiService.getSummonerByPuuid("abc123", RiotRegion.NA))
+            .thenReturn("{\"profileIconId\":5367}");
+
+        mockMvc.perform(
+                get("/api/summoner/by-puuid")
+                    .param("puuid", "abc123")
+                    .param("region", "NA")
+            )
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.puuid").value("abc123"))
+            .andExpect(jsonPath("$.gameName").value("Doublelift"))
+            .andExpect(jsonPath("$.tagLine").value("NA1"))
+            .andExpect(jsonPath("$.profileIconId").value(5367));
+    }
+
+    /** Verify that the PUUID lookup records an LP snapshot and tracks the player, like the name lookup. */
+    @Test
+    void getSummonerByPuuid_capturesLpSnapshotAndTracksPlayer() throws Exception {
+        when(riotApiService.getAccountByPuuid("abc123", RiotRegion.NA))
+            .thenReturn("{\"puuid\":\"abc123\",\"gameName\":\"Doublelift\",\"tagLine\":\"NA1\"}");
+        when(riotApiService.getSummonerByPuuid("abc123", RiotRegion.NA))
+            .thenReturn("{\"profileIconId\":5367}");
+
+        mockMvc.perform(
+                get("/api/summoner/by-puuid")
+                    .param("puuid", "abc123")
+                    .param("region", "NA")
+            )
+            .andExpect(status().isOk());
+
+        verify(lpTrackingService).captureSnapshot("abc123", RiotRegion.NA);
+        verify(playerTrackingService).trackPlayer("abc123", "NA", "Doublelift", "NA1");
+    }
+
+    /** Verify that a missing PUUID returns HTTP 400. */
+    @Test
+    void getSummonerByPuuid_missingPuuid_returnsBadRequest() throws Exception {
+        mockMvc.perform(
+                get("/api/summoner/by-puuid")
+                    .param("region", "NA")
+            )
+            .andExpect(status().isBadRequest());
+    }
 }

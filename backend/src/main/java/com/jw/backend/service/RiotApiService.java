@@ -64,9 +64,9 @@ public class RiotApiService {
                 RestClient.builder().baseUrl(url).build());
     }
 
-    /** Account-v1 reverse lookup by PUUID. 24h TTL — same rationale as by-riot-id. */
+    /** Account-v1 reverse lookup by PUUID. ~24h TTL (randomized, see accountByPuuidTtlMs). */
     public String getAccountByPuuid(String puuid, RiotRegion region) {
-        long ttlMs = 24L * 60 * 60 * 1000;
+        long ttlMs = accountByPuuidTtlMs();
 
         String baseUrl = "https://" + region.routing() + ".api.riotgames.com";
         String cacheKey = "account-puuid:" + region.routing() + ":" + puuid;
@@ -110,7 +110,7 @@ public class RiotApiService {
                     .header("X-Riot-Token", apiKey)
                     .retrieve()
                     .body(String.class);
-            putCached(cacheKey, result, 24L * 60 * 60 * 1000);
+            putCached(cacheKey, result, accountByPuuidTtlMs());
             return result;
         } catch (Exception e) {
             log.debug("Best-effort account lookup failed for puuid {}: {}", puuid, e.getMessage());
@@ -136,6 +136,7 @@ public class RiotApiService {
                 .body(String.class);
 
         putCached(cacheKey, result, ttlMs);
+        refreshAccountByPuuidCache(result, region);
         return result;
     }
 
@@ -224,14 +225,60 @@ public class RiotApiService {
                 .body(String.class);
 
         putCached(cacheKey, result, ttlMs);
+        refreshProfileIconCache(puuid, result, region);
         return result;
     }
 
-    // Profile icons rarely change, so leaderboards cache them far longer than full summoner data
-    private static final long PROFILE_ICON_TTL_MS = 24L * 60 * 60 * 1000;
+    // Leaderboard caches. Icons change more often than Riot IDs, so they expire sooner. Each entry gets
+    // a random spread so the thousands filled in one prefetch run don't all expire (and refetch) at once.
+    private static final long PROFILE_ICON_TTL_MS = 12L * 60 * 60 * 1000;
+    private static final long PROFILE_ICON_TTL_SPREAD_MS = 2L * 60 * 60 * 1000;
+    private static final long ACCOUNT_BY_PUUID_TTL_MS = 24L * 60 * 60 * 1000;
+    private static final long ACCOUNT_BY_PUUID_TTL_SPREAD_MS = 4L * 60 * 60 * 1000;
+
+    /** 12h ± 2h. */
+    static long profileIconTtlMs() {
+        return randomizedTtl(PROFILE_ICON_TTL_MS, PROFILE_ICON_TTL_SPREAD_MS);
+    }
+
+    /** 24h ± 4h. */
+    static long accountByPuuidTtlMs() {
+        return randomizedTtl(ACCOUNT_BY_PUUID_TTL_MS, ACCOUNT_BY_PUUID_TTL_SPREAD_MS);
+    }
+
+    private static long randomizedTtl(long baseMs, long spreadMs) {
+        return baseMs - spreadMs + ThreadLocalRandom.current().nextLong(2 * spreadMs + 1);
+    }
 
     /**
-     * Cache-only profile icon lookup — never calls Riot. Checks the 24h icon cache, then any cached
+     * Point the PUUID → Riot ID cache at a fresh Account-v1 response. Called when someone looks a
+     * player up by Riot ID, so a renamed player shows their new name on leaderboards right away
+     * instead of after the cached entry expires. Costs no extra Riot calls.
+     */
+    void refreshAccountByPuuidCache(String accountJson, RiotRegion region) {
+        try {
+            String puuid = objectMapper.readTree(accountJson).path("puuid").asText("");
+            if (!puuid.isEmpty()) {
+                putCached("account-puuid:" + region.routing() + ":" + puuid, accountJson, accountByPuuidTtlMs());
+            }
+        } catch (Exception e) {
+            log.debug("Couldn't refresh account cache from Riot ID lookup: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * Store the icon from a fresh Summoner-v4 response in the leaderboard icon cache. Called when
+     * someone opens a profile, so an icon change shows on leaderboards right away. No extra Riot calls.
+     */
+    void refreshProfileIconCache(String puuid, String summonerJson, RiotRegion region) {
+        Integer iconId = parseProfileIconId(summonerJson);
+        if (iconId != null) {
+            putCached("profile-icon:" + region.platform() + ":" + puuid, iconId.toString(), profileIconTtlMs());
+        }
+    }
+
+    /**
+     * Cache-only profile icon lookup — never calls Riot. Checks the icon cache (~12h), then any cached
      * Summoner-v4 response (e.g. from someone viewing that profile). Returns null on a miss.
      */
     public Integer peekProfileIconId(String puuid, RiotRegion region) {
@@ -247,7 +294,7 @@ public class RiotApiService {
         String summonerJson = getCached("summoner:" + region.platform() + ":" + puuid);
         if (summonerJson == null) return null;
         Integer iconId = parseProfileIconId(summonerJson);
-        if (iconId != null) putCached(iconKey, iconId.toString(), PROFILE_ICON_TTL_MS);
+        if (iconId != null) putCached(iconKey, iconId.toString(), profileIconTtlMs());
         return iconId;
     }
 
@@ -272,7 +319,7 @@ public class RiotApiService {
             putCached("summoner:" + region.platform() + ":" + puuid, summonerJson, 30L * 60 * 1000);
             Integer iconId = parseProfileIconId(summonerJson);
             if (iconId != null) {
-                putCached("profile-icon:" + region.platform() + ":" + puuid, iconId.toString(), PROFILE_ICON_TTL_MS);
+                putCached("profile-icon:" + region.platform() + ":" + puuid, iconId.toString(), profileIconTtlMs());
             }
             return iconId;
         } catch (Exception e) {

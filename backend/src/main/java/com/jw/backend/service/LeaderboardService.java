@@ -175,21 +175,23 @@ public class LeaderboardService {
         return byPuuid;
     }
 
-    /** Name and icon from the prefetch or the caches. Never calls Riot. */
+    /**
+     * Name and icon from the caches, falling back to the prefetch snapshot. Never calls Riot.
+     * The caches come first because profile views and Riot ID searches refresh them, so they can be
+     * newer than the snapshot (e.g. right after a rename or icon change).
+     */
     private Row fromCaches(RawEntry raw, RiotRegion region,
                            Map<String, LeaderboardPrefetchService.ResolvedEntry> prefetched) {
         if (raw.puuid().isEmpty()) return new Row(raw, null, 0);
         LeaderboardPrefetchService.ResolvedEntry pre = prefetched.get(raw.puuid());
 
-        String name = pre != null && !UNKNOWN.equals(pre.summonerName()) ? pre.summonerName() : null;
-        if (name == null) {
-            name = parseRiotId(riotApiService.peekAccountByPuuid(raw.puuid(), region));
+        String name = parseRiotId(riotApiService.peekAccountByPuuid(raw.puuid(), region));
+        if (name == null && pre != null && !UNKNOWN.equals(pre.summonerName())) {
+            name = pre.summonerName();
         }
-        int icon = pre != null ? pre.profileIconId() : 0;
-        if (icon <= 0) {
-            Integer cachedIcon = riotApiService.peekProfileIconId(raw.puuid(), region);
-            icon = cachedIcon == null ? 0 : cachedIcon;
-        }
+        Integer cachedIcon = riotApiService.peekProfileIconId(raw.puuid(), region);
+        int icon = cachedIcon != null && cachedIcon > 0 ? cachedIcon
+                : pre != null ? pre.profileIconId() : 0;
         return new Row(raw, name, icon);
     }
 

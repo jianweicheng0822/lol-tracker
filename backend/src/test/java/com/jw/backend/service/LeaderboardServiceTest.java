@@ -320,6 +320,24 @@ class LeaderboardServiceTest {
     }
 
     @Test
+    void getLeaderboard_freshCacheBeatsPrefetchSnapshot() {
+        // e.g. the player renamed and changed icon; a profile view / Riot ID search refreshed the caches
+        LeaderboardPrefetchService prefetchService = mock(LeaderboardPrefetchService.class);
+        LeaderboardService serviceWithPrefetch = new LeaderboardService(riotApiService, new ObjectMapper(), prefetchService);
+        when(prefetchService.getCached("challenger", "RANKED_SOLO_5x5", RiotRegion.NA))
+                .thenReturn(Optional.of(List.of(
+                        new LeaderboardPrefetchService.ResolvedEntry("OldName#NA1", "p1", "CHALLENGER", "I", 1200, 200, 80, 71.4, 111))));
+        when(riotApiService.getLeagueByTier("challenger", "RANKED_SOLO_5x5", RiotRegion.NA)).thenReturn(THREE_PLAYER_LEAGUE);
+        cacheAccount("p1", "NewName");
+        when(riotApiService.peekProfileIconId("p1", RiotRegion.NA)).thenReturn(222);
+
+        var result = serviceWithPrefetch.getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 0, 50);
+
+        assertEquals("NewName#NA1", result.entries().get(0).summonerName());
+        assertEquals(222, result.entries().get(0).profileIconId());
+    }
+
+    @Test
     void getLeaderboard_cachedNamesAndIcons_needNoRiotCalls() {
         when(riotApiService.getLeagueByTier("challenger", "RANKED_SOLO_5x5", RiotRegion.NA)).thenReturn(THREE_PLAYER_LEAGUE);
         for (String p : List.of("p1", "p2", "p3")) {

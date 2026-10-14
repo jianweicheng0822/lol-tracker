@@ -523,6 +523,53 @@ class RiotApiServiceTest {
     }
 
     @Test
+    void refreshAccountByPuuidCache_storesRiotIdLookupUnderItsPuuid() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        String json = "{\"puuid\":\"p1\",\"gameName\":\"NewName\",\"tagLine\":\"NA1\"}";
+
+        riotApiService.refreshAccountByPuuidCache(json, RiotRegion.NA);
+
+        verify(valueOperations).set(eq("account-puuid:" + RiotRegion.NA.routing() + ":p1"), eq(json), ttlBetweenHours(20, 28));
+    }
+
+    @Test
+    void refreshProfileIconCache_storesIconFromFreshSummonerData() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+
+        riotApiService.refreshProfileIconCache("p1", "{\"puuid\":\"p1\",\"profileIconId\":5367}", RiotRegion.NA);
+
+        verify(valueOperations).set(eq("profile-icon:" + RiotRegion.NA.platform() + ":p1"), eq("5367"), ttlBetweenHours(10, 14));
+    }
+
+    /** Matches a cache TTL within [minHours, maxHours] (leaderboard TTLs are randomized). */
+    private static Duration ttlBetweenHours(long minHours, long maxHours) {
+        return argThat(d -> d.compareTo(Duration.ofHours(minHours)) >= 0 && d.compareTo(Duration.ofHours(maxHours)) <= 0);
+    }
+
+    @Test
+    void leaderboardCacheTtls_stayWithinTheirSpreadAndVary() {
+        java.util.Set<Long> iconTtls = new java.util.HashSet<>();
+        for (int i = 0; i < 500; i++) {
+            long icon = RiotApiService.profileIconTtlMs();
+            long account = RiotApiService.accountByPuuidTtlMs();
+            assertTrue(icon >= Duration.ofHours(10).toMillis() && icon <= Duration.ofHours(14).toMillis(), "icon TTL " + icon);
+            assertTrue(account >= Duration.ofHours(20).toMillis() && account <= Duration.ofHours(28).toMillis(), "account TTL " + account);
+            iconTtls.add(icon);
+        }
+        // Randomized, so entries cached together don't all expire together
+        assertTrue(iconTtls.size() > 400, "TTLs should vary, got " + iconTtls.size() + " distinct values");
+    }
+
+    @Test
+    void refreshCaches_ignoreUnusableResponses() {
+        riotApiService.refreshAccountByPuuidCache("not json", RiotRegion.NA);
+        riotApiService.refreshAccountByPuuidCache("{\"gameName\":\"NoPuuid\"}", RiotRegion.NA);
+        riotApiService.refreshProfileIconCache("p1", "{\"puuid\":\"p1\"}", RiotRegion.NA);
+
+        verifyNoInteractions(valueOperations);
+    }
+
+    @Test
     void peekAccountByPuuid_readsCacheOnly() {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.get("account-puuid:" + RiotRegion.NA.routing() + ":p1")).thenReturn("{\"gameName\":\"Cached\"}");
@@ -558,14 +605,14 @@ class RiotApiServiceTest {
     }
 
     @Test
-    void peekProfileIconId_fallsBackToCachedSummonerAndCachesIconFor24h() {
+    void peekProfileIconId_fallsBackToCachedSummonerAndCachesIcon() {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         String iconKey = "profile-icon:" + RiotRegion.NA.platform() + ":p1";
         when(valueOperations.get(iconKey)).thenReturn(null);
         when(valueOperations.get("summoner:" + RiotRegion.NA.platform() + ":p1")).thenReturn("{\"profileIconId\":42}");
 
         assertEquals(42, riotApiService.peekProfileIconId("p1", RiotRegion.NA));
-        verify(valueOperations).set(iconKey, "42", Duration.ofHours(24));
+        verify(valueOperations).set(eq(iconKey), eq("42"), ttlBetweenHours(10, 14));
     }
 
     @Test

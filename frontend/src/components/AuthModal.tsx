@@ -7,6 +7,10 @@ type Props = {
   onClose: () => void;
 };
 
+// Must match the backend's checks in AuthController.register
+const PASSWORD_MIN = 8;
+const USERNAME_MAX = 50;
+
 export default function AuthModal({ onSuccess, onClose }: Props) {
   const [mode, setMode] = useState<"login" | "register">("login");
   const [username, setUsername] = useState("");
@@ -28,6 +32,17 @@ export default function AuthModal({ onSuccess, onClose }: Props) {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!username.trim() || !password.trim()) return;
+    // Same limits the backend enforces, checked here so people don't have to submit to find out
+    if (mode === "register") {
+      if (username.trim().length > USERNAME_MAX) {
+        setError(`Username can be at most ${USERNAME_MAX} characters.`);
+        return;
+      }
+      if (password.length < PASSWORD_MIN) {
+        setError(`Password must be at least ${PASSWORD_MIN} characters.`);
+        return;
+      }
+    }
     setError("");
     setLoading(true);
     try {
@@ -100,6 +115,8 @@ export default function AuthModal({ onSuccess, onClose }: Props) {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="Username"
+            name="username"
+            autoComplete="username"
             autoFocus
             style={inputStyle}
           />
@@ -108,8 +125,24 @@ export default function AuthModal({ onSuccess, onClose }: Props) {
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
             type="password"
+            name="password"
+            // Lets password managers fill a saved password on login, or offer to generate/save one on sign-up
+            autoComplete={mode === "login" ? "current-password" : "new-password"}
+            aria-describedby={mode === "register" ? "password-hint" : undefined}
             style={inputStyle}
           />
+          {mode === "register" && (
+            <div
+              id="password-hint"
+              style={{
+                fontSize: 12,
+                marginTop: -6,
+                color: password.length > 0 && password.length < PASSWORD_MIN ? "#E8A87C" : COLORS.textDim,
+              }}
+            >
+              At least {PASSWORD_MIN} characters
+            </div>
+          )}
 
           {error && (
             <div style={{ color: "#E84057", fontSize: 13, padding: "6px 0" }}>{error}</div>

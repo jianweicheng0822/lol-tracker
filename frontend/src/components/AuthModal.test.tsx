@@ -68,12 +68,67 @@ describe("AuthModal", () => {
     render(<AuthModal onSuccess={onSuccess} onClose={onClose} />);
     await user.click(screen.getByText("Register"));
     await user.type(screen.getByPlaceholderText("Username"), "newuser");
-    await user.type(screen.getByPlaceholderText("Password"), "newpass");
+    await user.type(screen.getByPlaceholderText("Password"), "newpass123");
     await user.click(screen.getByRole("button", { name: "Register" }));
     await waitFor(() => {
-      expect(api.register).toHaveBeenCalledWith("newuser", "newpass");
+      expect(api.register).toHaveBeenCalledWith("newuser", "newpass123");
       expect(onSuccess).toHaveBeenCalled();
     });
+  });
+
+  it("shows the password rule up front when registering", async () => {
+    const user = userEvent.setup();
+    render(<AuthModal onSuccess={onSuccess} onClose={onClose} />);
+    expect(screen.queryByText("At least 8 characters")).not.toBeInTheDocument();
+
+    await user.click(screen.getByText("Register"));
+    expect(screen.getByText("At least 8 characters")).toBeInTheDocument();
+  });
+
+  it("rejects a short password before submitting a registration", async () => {
+    const user = userEvent.setup();
+    render(<AuthModal onSuccess={onSuccess} onClose={onClose} />);
+    await user.click(screen.getByText("Register"));
+    await user.type(screen.getByPlaceholderText("Username"), "newuser");
+    await user.type(screen.getByPlaceholderText("Password"), "short");
+    await user.click(screen.getByRole("button", { name: "Register" }));
+
+    expect(screen.getByText("Password must be at least 8 characters.")).toBeInTheDocument();
+    expect(api.register).not.toHaveBeenCalled();
+  });
+
+  it("rejects a username over 50 characters before submitting a registration", async () => {
+    const user = userEvent.setup();
+    render(<AuthModal onSuccess={onSuccess} onClose={onClose} />);
+    await user.click(screen.getByText("Register"));
+    await user.type(screen.getByPlaceholderText("Username"), "a".repeat(51));
+    await user.type(screen.getByPlaceholderText("Password"), "longenough");
+    await user.click(screen.getByRole("button", { name: "Register" }));
+
+    expect(screen.getByText("Username can be at most 50 characters.")).toBeInTheDocument();
+    expect(api.register).not.toHaveBeenCalled();
+  });
+
+  it("doesn't apply the sign-up password rule when logging in", async () => {
+    vi.mocked(api.login).mockResolvedValue({ token: "abc" });
+    const user = userEvent.setup();
+    render(<AuthModal onSuccess={onSuccess} onClose={onClose} />);
+    await user.type(screen.getByPlaceholderText("Username"), "olduser");
+    await user.type(screen.getByPlaceholderText("Password"), "short");
+    await user.click(screen.getByRole("button", { name: "Log In" }));
+
+    await waitFor(() => expect(api.login).toHaveBeenCalledWith("olduser", "short"));
+  });
+
+  it("tells password managers which fields are which", async () => {
+    const user = userEvent.setup();
+    render(<AuthModal onSuccess={onSuccess} onClose={onClose} />);
+    expect(screen.getByPlaceholderText("Username")).toHaveAttribute("autocomplete", "username");
+    expect(screen.getByPlaceholderText("Password")).toHaveAttribute("autocomplete", "current-password");
+
+    await user.click(screen.getByText("Register"));
+    // On sign-up, managers can offer to generate and save a new password
+    expect(screen.getByPlaceholderText("Password")).toHaveAttribute("autocomplete", "new-password");
   });
 
   it("displays error on login failure", async () => {

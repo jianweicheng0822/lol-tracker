@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { COLORS } from "../utils/colors";
 import { getAuthToken, createCheckoutSession } from "../api";
 
@@ -15,6 +15,13 @@ export default function UpgradeModal({ onClose, onShowAuth }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const isLoggedIn = !!getAuthToken();
+
+  // Esc closes it, like the login dialog
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [onClose]);
 
   async function handleSubscribe() {
     if (!isLoggedIn) {

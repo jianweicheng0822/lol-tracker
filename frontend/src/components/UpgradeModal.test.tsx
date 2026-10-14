@@ -64,6 +64,13 @@ describe("UpgradeModal", () => {
     expect(defaultProps.onClose).toHaveBeenCalled();
   });
 
+  it("calls onClose when Escape is pressed", async () => {
+    const user = userEvent.setup();
+    render(<UpgradeModal {...defaultProps} />);
+    await user.keyboard("{Escape}");
+    expect(defaultProps.onClose).toHaveBeenCalled();
+  });
+
   it("calls onClose and onShowAuth when not logged in and subscribe clicked", async () => {
     vi.mocked(api.getAuthToken).mockReturnValue(null);
     const user = userEvent.setup();

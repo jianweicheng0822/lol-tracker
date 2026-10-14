@@ -77,6 +77,15 @@ describe("MatchDetailPage", () => {
     });
   });
 
+  it("wraps the scoreboard in its own horizontal scroll area", async () => {
+    vi.mocked(fetchMatchDetail).mockResolvedValue(makeMatchDetail({ queueId: 420 }));
+    render(<MatchDetailPage />);
+    const scroll = await screen.findByTestId("scoreboard-scroll");
+    // A wide scoreboard should scroll inside this box rather than widen the page
+    expect(scroll.style.overflowX).toBe("auto");
+    expect(scroll).toContainElement(screen.getAllByTestId("team-table")[0]);
+  });
+
   it("renders ArenaScoreboard for Arena matches", async () => {
     vi.mocked(fetchMatchDetail).mockResolvedValue(makeMatchDetail({ queueId: 1700 }));
     render(<MatchDetailPage />);

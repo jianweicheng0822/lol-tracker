@@ -100,30 +100,32 @@ export default function MatchDetailPage() {
               )}
             </div>
 
-            {/* Scoreboard */}
-            {isArenaQueue(match.queueId) ? (
-              <ArenaScoreboard
-                participants={match.participants}
-                imgBase={imgBase}
-                highlightPuuid={puuid}
-                region={region}
-              />
-            ) : (
-              match.teams.map((team) => {
-                const teamPlayers = match.participants.filter((p) => p.teamId === team.teamId);
-                return (
-                  <ScoreboardTeamTable
-                    key={team.teamId}
-                    team={team}
-                    participants={teamPlayers}
-                    imgBase={imgBase}
-                    highlightPuuid={puuid}
-                    queueId={match.queueId}
-                    region={region}
-                  />
-                );
-              })
-            )}
+            {/* Scoreboard: scrolls sideways on its own when wider than the page */}
+            <div style={{ overflowX: "auto" }} data-testid="scoreboard-scroll">
+              {isArenaQueue(match.queueId) ? (
+                <ArenaScoreboard
+                  participants={match.participants}
+                  imgBase={imgBase}
+                  highlightPuuid={puuid}
+                  region={region}
+                />
+              ) : (
+                match.teams.map((team) => {
+                  const teamPlayers = match.participants.filter((p) => p.teamId === team.teamId);
+                  return (
+                    <ScoreboardTeamTable
+                      key={team.teamId}
+                      team={team}
+                      participants={teamPlayers}
+                      imgBase={imgBase}
+                      highlightPuuid={puuid}
+                      queueId={match.queueId}
+                      region={region}
+                    />
+                  );
+                })
+              )}
+            </div>
           </>
         )}
       </div>

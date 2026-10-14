@@ -628,7 +628,10 @@ export default function MatchList({ matches, region, puuid, onLoadMore, isLoadin
                     borderRadius: "0 0 6px 6px",
                     padding: "8px 12px",
                     marginTop: -2,
+                    // The scoreboard is wider than the card on narrower screens; scroll it here
+                    overflowX: "auto",
                   }}
+                  data-testid="expanded-scoreboard"
                 >
                   <InlineScoreboard
                     matchId={m.matchId}

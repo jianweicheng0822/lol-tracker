@@ -171,6 +171,16 @@ describe("MatchList", () => {
     expect(screen.getByText("Victory")).toBeInTheDocument();
   });
 
+  it("lets an expanded scoreboard scroll sideways inside its card", async () => {
+    const user = userEvent.setup();
+    render(<MatchList matches={[makeMatchSummary()]} region="NA" puuid="test" />);
+    await user.click(screen.getByTitle("Expand scoreboard"));
+
+    const expanded = await screen.findByTestId("expanded-scoreboard");
+    // Without this the ~900px scoreboard pushes the whole page wider on smaller screens
+    expect(expanded.style.overflowX).toBe("auto");
+  });
+
   it("treats the current Arena queue (1750) as Arena", () => {
     const match = makeMatchSummary({
       queueId: 1750,

@@ -115,7 +115,9 @@ export default function OverviewTab({
 const styles: Record<string, React.CSSProperties> = {
   gridLayout: {
     display: "grid",
-    gridTemplateColumns: "280px 1fr",
+    // minmax(0, 1fr): a plain 1fr column can't shrink below its content, so a wide expanded
+    // scoreboard would stretch the column and push the whole page sideways
+    gridTemplateColumns: "280px minmax(0, 1fr)",
     gap: 20,
   },
   stackLayout: {

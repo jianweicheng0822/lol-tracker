@@ -1,46 +1,46 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchMultiSearch } from "../api";
 import { COLORS } from "../utils/colors";
 import { REGIONS } from "../types";
 import type { Region, MultiSearchPlayer } from "../types";
 import MultiSearchCard from "../components/MultiSearchCard";
+import { parseMultiSearchInput, MULTI_SEARCH_LIMIT } from "../utils/multiSearch";
+
+const toRegion = (value: string | null): Region =>
+  REGIONS.includes(value as Region) ? (value as Region) : "NA";
 
 export default function MultiSearchPage() {
   const navigate = useNavigate();
-  const [input, setInput] = useState("");
-  const [region, setRegion] = useState<Region>("NA");
+  // The searched names live in the URL (?q=Name#Tag,...&region=NA), so going back from a player
+  // page, refreshing, or sharing the link brings the same search back
+  const [searchParams, setSearchParams] = useSearchParams();
+  const initialQuery = searchParams.get("q") ?? "";
+  const [input, setInput] = useState(() => initialQuery.split(",").filter(Boolean).join("\n"));
+  const [region, setRegion] = useState<Region>(() => toRegion(searchParams.get("region")));
   const [results, setResults] = useState<MultiSearchPlayer[]>([]);
   const [status, setStatus] = useState<"idle" | "loading" | "done" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
+  // Lines that weren't searched (bad format or over the limit), shown next to the results
+  const [skipped, setSkipped] = useState<{ invalid: string[]; overLimit: string[] }>({ invalid: [], overLimit: [] });
 
-  const parseNames = (text: string): string[] => {
-    return text
-      .split(/[,\n]+/)
-      .map(s => s.trim())
-      .filter(s => s.length > 0);
-  };
+  const runSearch = async (text: string, searchRegion: Region) => {
+    if (!text.trim()) return;
+    const { names, invalid, overLimit } = parseMultiSearchInput(text);
+    setSkipped({ invalid, overLimit });
 
-  const handleSearch = async () => {
-    const names = parseNames(input);
-    if (names.length === 0) return;
-
-    const invalid = names.filter(n => !n.includes("#"));
-    if (invalid.length > 0) {
-      setErrorMsg(`Invalid format (missing #): ${invalid.join(", ")}`);
-      setStatus("error");
-      return;
-    }
-    if (names.length > 5) {
-      setErrorMsg("Maximum 5 players allowed");
+    if (names.length === 0) {
+      setErrorMsg("No valid Riot IDs found. Use the Name#Tag format, e.g. Faker#KR1.");
       setStatus("error");
       return;
     }
 
+    // Replace rather than push, so Back doesn't step through every search
+    setSearchParams({ q: names.join(","), region: searchRegion }, { replace: true });
     setStatus("loading");
     setErrorMsg("");
     try {
-      const data = await fetchMultiSearch(names, region);
+      const data = await fetchMultiSearch(names, searchRegion);
       setResults(data);
       setStatus("done");
     } catch (e) {
@@ -48,6 +48,18 @@ export default function MultiSearchPage() {
       setStatus("error");
     }
   };
+
+  const handleSearch = () => runSearch(input, region);
+
+  // Coming back to (or opening) a URL with a search in it: run it again
+  const restored = useRef(false);
+  useEffect(() => {
+    if (restored.current || !initialQuery) return;
+    restored.current = true;
+    runSearch(initialQuery, region);
+    // Only on first mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <div style={styles.page}>
@@ -93,6 +105,19 @@ export default function MultiSearchPage() {
 
         {status === "error" && (
           <div style={styles.errorBox}>{errorMsg}</div>
+        )}
+
+        {status !== "error" && (skipped.invalid.length > 0 || skipped.overLimit.length > 0) && (
+          <div style={styles.noticeBox} role="status">
+            {skipped.invalid.length > 0 && (
+              <div>Skipped, not in Name#Tag format: {skipped.invalid.join(", ")}</div>
+            )}
+            {skipped.overLimit.length > 0 && (
+              <div>
+                Only the first {MULTI_SEARCH_LIMIT} players are searched. Skipped: {skipped.overLimit.join(", ")}
+              </div>
+            )}
+          </div>
         )}
 
         {status === "done" && results.length > 0 && (
@@ -195,6 +220,18 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 6,
     marginTop: 16,
     fontSize: 13,
+  },
+  noticeBox: {
+    background: "rgba(212,160,23,0.08)",
+    border: "1px solid rgba(212,160,23,0.25)",
+    color: "#E8C46A",
+    padding: 12,
+    borderRadius: 6,
+    marginTop: 16,
+    fontSize: 13,
+    display: "flex",
+    flexDirection: "column",
+    gap: 4,
   },
   grid: {
     display: "grid",

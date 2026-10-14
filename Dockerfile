@@ -16,9 +16,16 @@ RUN npm run build
 FROM maven:3.9-eclipse-temurin-21 AS backend-build
 
 WORKDIR /app/backend
+# Retry flaky downloads (and give up on stuck ones) instead of failing or hanging the whole deploy
+ENV MAVEN_ARGS="-B -Daether.connector.http.retryHandler.count=5 -Daether.connector.connectTimeout=60000 -Daether.connector.requestTimeout=60000"
+
 COPY backend/pom.xml ./
-# Download dependencies first (cached layer)
-RUN mvn dependency:go-offline -B
+# Download dependencies AND every plugin the package phase needs into this cached layer.
+# go-offline alone misses some plugin dependencies, so also package the (still empty) project;
+# start-class gives Spring Boot's repackage a placeholder main class so it runs too.
+RUN mvn dependency:go-offline \
+ && mvn package -DskipTests -Dstart-class=placeholder.Main \
+ && rm -rf target
 
 COPY backend/src ./src
 
@@ -26,8 +33,9 @@ COPY backend/src ./src
 # Spring Boot auto-serves anything in /static on the classpath
 COPY --from=frontend-build /app/frontend/dist/ ./src/main/resources/static/
 
-# Build the JAR (skip tests — they run in CI, not in Docker build)
-RUN mvn package -DskipTests -B
+# Build the JAR offline: everything was fetched above, so a network blip can't break this step.
+# (Tests are skipped here — they run in CI.)
+RUN mvn -o package -DskipTests
 # Output: /app/backend/target/backend-0.0.1-SNAPSHOT.jar
 
 # =============================================================

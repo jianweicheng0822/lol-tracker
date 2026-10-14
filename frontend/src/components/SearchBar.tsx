@@ -21,10 +21,53 @@ export default function SearchBar({ compact, initialRegion, initialGameName, ini
   const [showHistory, setShowHistory] = useState(false);
   const [historyItems, setHistoryItems] = useState<SearchEntry[]>([]);
   const [highlightIndex, setHighlightIndex] = useState(-1);
+  const [hint, setHint] = useState<string | null>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const gameNameRef = useRef<HTMLInputElement>(null);
+  const tagRef = useRef<HTMLInputElement>(null);
 
-  const canSearch = gameName.trim().length > 0 && tag.trim().length > 0;
+  const canSearch = gameName.trim().length > 0 && tag.replace(/^#/, "").trim().length > 0;
+
+  /** Riot IDs can't contain "#", so "name#tag" typed or pasted into the name box is split for the user. */
+  const handleGameNameChange = (value: string) => {
+    setHint(null);
+    setHighlightIndex(-1);
+    const hashIndex = value.indexOf("#");
+    if (hashIndex === -1) {
+      setGameName(value);
+      return;
+    }
+    setGameName(value.slice(0, hashIndex));
+    const tagPart = value.slice(hashIndex + 1).replace(/#/g, "");
+    if (tagPart) setTag(tagPart);
+    // Typed "#" with nothing after it yet: carry on typing in the tag box
+    else tagRef.current?.focus();
+  };
+
+  /** Also accept the full "name#tag" pasted into the tag box when the name box is still empty. */
+  const handleTagChange = (value: string) => {
+    setHint(null);
+    setHighlightIndex(-1);
+    const hashIndex = value.indexOf("#");
+    if (hashIndex > 0 && !gameName.trim()) {
+      setGameName(value.slice(0, hashIndex));
+      setTag(value.slice(hashIndex + 1).replace(/#/g, ""));
+      return;
+    }
+    setTag(value);
+  };
+
+  /** Explain why nothing happened instead of silently ignoring the search. */
+  const showMissingFieldHint = () => {
+    setShowHistory(false);
+    if (!gameName.trim()) {
+      setHint("Enter a game name");
+      gameNameRef.current?.focus();
+    } else {
+      setHint("Add the tag after # (e.g. NA1)");
+      tagRef.current?.focus();
+    }
+  };
 
   const loadHistory = useCallback(async () => {
     try {
@@ -45,7 +88,10 @@ export default function SearchBar({ compact, initialRegion, initialGameName, ini
   }, []);
 
   const handleSearch = () => {
-    if (!canSearch) return;
+    if (!canSearch) {
+      showMissingFieldHint();
+      return;
+    }
     const cleanTag = tag.trim().replace(/^#/, "");
     setShowHistory(false);
     navigate(`/player/${region}/${encodeURIComponent(gameName.trim())}/${encodeURIComponent(cleanTag)}`);
@@ -167,7 +213,7 @@ export default function SearchBar({ compact, initialRegion, initialGameName, ini
           style={{ ...styles.input, width: "100%", padding: inputPadding, fontSize: inputFontSize }}
           placeholder="Game Name"
           value={gameName}
-          onChange={(e) => { setGameName(e.target.value); setHighlightIndex(-1); }}
+          onChange={(e) => handleGameNameChange(e.target.value)}
           onKeyDown={handleKeyDown}
           onFocus={handleFocus}
           autoComplete="off"
@@ -205,11 +251,12 @@ export default function SearchBar({ compact, initialRegion, initialGameName, ini
       </div>
 
       <input
+        ref={tagRef}
         className="gold-input"
         style={{ ...styles.input, width: compact ? 90 : 120, padding: inputPadding, fontSize: inputFontSize }}
         placeholder="#Tag"
         value={tag}
-        onChange={(e) => { setTag(e.target.value); setHighlightIndex(-1); }}
+        onChange={(e) => handleTagChange(e.target.value)}
         onKeyDown={handleKeyDown}
       />
 
@@ -219,11 +266,18 @@ export default function SearchBar({ compact, initialRegion, initialGameName, ini
           padding: compact ? "10px 20px" : "14px 28px",
           fontSize: compact ? 14 : 15,
         }}
-        disabled={!canSearch}
+        // aria-disabled rather than disabled, so a click can still explain what's missing
+        aria-disabled={!canSearch}
         onClick={handleSearch}
       >
         Search
       </button>
+
+      {hint && (
+        <div role="alert" style={styles.hint}>
+          {hint}
+        </div>
+      )}
     </div>
   );
 }
@@ -263,6 +317,14 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "not-allowed",
     border: "none",
     fontWeight: 700,
+    whiteSpace: "nowrap",
+  },
+  hint: {
+    position: "absolute",
+    top: "calc(100% + 6px)",
+    left: 0,
+    fontSize: 13,
+    color: "#E8A87C",
     whiteSpace: "nowrap",
   },
   dropdown: {

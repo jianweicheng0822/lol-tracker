@@ -51,9 +51,9 @@ describe("SearchBar", () => {
     expect(screen.getByRole("button", { name: "Search" })).toBeInTheDocument();
   });
 
-  it("disables search button when fields are empty", () => {
+  it("marks search button disabled when fields are empty", () => {
     render(<SearchBar />);
-    expect(screen.getByRole("button", { name: "Search" })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Search" })).toHaveAttribute("aria-disabled", "true");
   });
 
   it("enables search button when both fields have values", async () => {
@@ -61,7 +61,66 @@ describe("SearchBar", () => {
     render(<SearchBar />);
     await user.type(screen.getByPlaceholderText("Game Name"), "Faker");
     await user.type(screen.getByPlaceholderText("#Tag"), "KR1");
-    expect(screen.getByRole("button", { name: "Search" })).toBeEnabled();
+    expect(screen.getByRole("button", { name: "Search" })).toHaveAttribute("aria-disabled", "false");
+  });
+
+  // --- name#tag splitting and missing-field hints ---
+
+  it("splits a pasted name#tag into the name and tag boxes", async () => {
+    const user = userEvent.setup();
+    render(<SearchBar />);
+    await user.click(screen.getByPlaceholderText("Game Name"));
+    await user.paste("duoking1#freex");
+
+    expect(screen.getByPlaceholderText("Game Name")).toHaveValue("duoking1");
+    expect(screen.getByPlaceholderText("#Tag")).toHaveValue("freex");
+    await user.keyboard("{Enter}");
+    expect(mockNavigate).toHaveBeenCalledWith("/player/NA/duoking1/freex");
+  });
+
+  it("moves to the tag box when # is typed in the name box", async () => {
+    const user = userEvent.setup();
+    render(<SearchBar />);
+    await user.type(screen.getByPlaceholderText("Game Name"), "Faker#KR1");
+
+    expect(screen.getByPlaceholderText("Game Name")).toHaveValue("Faker");
+    expect(screen.getByPlaceholderText("#Tag")).toHaveValue("KR1");
+    expect(screen.getByPlaceholderText("#Tag")).toHaveFocus();
+  });
+
+  it("splits a full Riot ID pasted into the tag box when the name is empty", async () => {
+    const user = userEvent.setup();
+    render(<SearchBar />);
+    await user.click(screen.getByPlaceholderText("#Tag"));
+    await user.paste("Faker#KR1");
+
+    expect(screen.getByPlaceholderText("Game Name")).toHaveValue("Faker");
+    expect(screen.getByPlaceholderText("#Tag")).toHaveValue("KR1");
+  });
+
+  it("explains a missing tag instead of silently ignoring Enter", async () => {
+    const user = userEvent.setup();
+    render(<SearchBar />);
+    await user.type(screen.getByPlaceholderText("Game Name"), "Faker{Enter}");
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Add the tag after #");
+    expect(screen.getByPlaceholderText("#Tag")).toHaveFocus();
+    expect(mockNavigate).not.toHaveBeenCalled();
+
+    // The hint goes away once the user starts typing
+    await user.type(screen.getByPlaceholderText("#Tag"), "K");
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
+  it("explains a missing name when the search button is clicked", async () => {
+    const user = userEvent.setup();
+    render(<SearchBar />);
+    await user.type(screen.getByPlaceholderText("#Tag"), "KR1");
+    await user.click(screen.getByRole("button", { name: "Search" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Enter a game name");
+    expect(screen.getByPlaceholderText("Game Name")).toHaveFocus();
+    expect(mockNavigate).not.toHaveBeenCalled();
   });
 
   it("navigates to player page on button click", async () => {

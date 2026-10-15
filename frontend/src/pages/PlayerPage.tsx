@@ -8,7 +8,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import SearchBar from "../components/SearchBar";
+import AppHeader from "../components/AppHeader";
 import AuthModal from "../components/AuthModal";
 import Toast from "../components/Toast";
 import ProfileHeader from "../components/ProfileHeader";
@@ -16,6 +16,7 @@ import TabBar from "../components/TabBar";
 import OverviewTab from "../components/tabs/OverviewTab";
 import ChampionsTab from "../components/tabs/ChampionsTab";
 import { useTabNavigation } from "../hooks/useTabNavigation";
+import { useAuth } from "../hooks/useAuth";
 import { fetchAccount, fetchAccountByPuuid, fetchMatchSummaries, fetchStats, fetchRanked, checkIsFavorite, addFavorite, removeFavorite, fetchTier, fetchLiveGame, getAuthToken, setAuthToken, addSearchHistory, AuthRequiredError, PlayerNotFoundError } from "../api";
 import { addLocalEntry } from "../utils/searchHistory";
 import type { Region, Account, MatchSummary, PlayerStats, RankedEntry, LiveGame } from "../types";
@@ -148,6 +149,22 @@ export default function PlayerPage() {
     return () => { cancelled.current = true; };
   }, [load]);
 
+  // Logging in or out (from the header, the favorite prompt, or another tab) changes what this
+  // page may show: PRO features depend on the tier and the star on the favorite status.
+  const { isLoggedIn } = useAuth();
+  const prevLoggedIn = useRef(isLoggedIn);
+  useEffect(() => {
+    if (prevLoggedIn.current === isLoggedIn) return;
+    prevLoggedIn.current = isLoggedIn;
+    if (!isLoggedIn) {
+      setTier(0);
+      setIsFav(false);
+      return;
+    }
+    fetchTier().then((d) => setTier(d.tier)).catch(() => setTier(0));
+    if (account) checkIsFavorite(account.puuid).then(setIsFav).catch(() => {});
+  }, [isLoggedIn, account]);
+
   /** The same player's page in another region (used by "Try in: ..." when they weren't found). */
   const playerPathIn = (otherRegion: Region) =>
     puuidParam
@@ -246,41 +263,21 @@ export default function PlayerPage() {
   return (
     <div style={styles.page}>
       {toastMsg && <Toast message={toastMsg} onDone={() => setToastMsg(null)} />}
-      {/* Top bar with search */}
-      <div style={styles.topBar}>
-        <span style={styles.logo} onClick={() => window.location.href = "/"}>LoL Tracker</span>
-        <div style={{ flex: 1, minWidth: 0 }}>
-          <SearchBar
-            compact
-            initialRegion={region as Region}
-            initialGameName={decodeURIComponent(gameName || "")}
-            initialTag={decodeURIComponent(tag || "")}
-          />
-        </div>
-        <div style={{ flexShrink: 0 }}>
-          {getAuthToken() ? (
-            <button
-              onClick={() => { setAuthToken(null); setTier(0); setToastMsg("Logged out successfully"); }}
-              style={styles.authBtn}
-            >
-              Log out
-            </button>
-          ) : (
-            <button onClick={() => setShowAuthModal(true)} style={styles.authBtn}>
-              Log in
-            </button>
-          )}
-        </div>
-      </div>
+      <AppHeader
+        searchDefaults={{
+          region: region as Region,
+          gameName: decodeURIComponent(gameName || ""),
+          tag: decodeURIComponent(tag || ""),
+        }}
+      />
 
+      {/* Opened by the Favorite button when logged out; logging in from the header goes through AppHeader */}
       {showAuthModal && (
         <AuthModal
           onSuccess={async () => {
             // Read the flag synchronously: AuthModal calls onClose right after onSuccess without awaiting
             const pendingFavorite = favoriteAfterLogin.current;
             favoriteAfterLogin.current = false;
-            const d = await fetchTier().catch(() => ({ tier: 0 }));
-            setTier(d.tier);
             setToastMsg("Logged in successfully");
             if (pendingFavorite) await completePendingFavorite();
           }}
@@ -388,21 +385,6 @@ const styles: Record<string, React.CSSProperties> = {
     color: COLORS.textPrimary,
     fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
   },
-  topBar: {
-    display: "flex",
-    alignItems: "center",
-    gap: 20,
-    padding: "12px 24px",
-    background: "#111110",
-    borderBottom: "1px solid #1e1c18",
-  },
-  logo: {
-    fontWeight: 800,
-    fontSize: 18,
-    cursor: "pointer",
-    whiteSpace: "nowrap",
-    flexShrink: 0,
-  },
   content: {
     maxWidth: 1200,
     margin: "0 auto",
@@ -475,15 +457,5 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 13,
     fontWeight: 600,
     cursor: "pointer",
-  },
-  authBtn: {
-    background: "transparent",
-    color: COLORS.textTertiary,
-    border: "1px solid #1e1c18",
-    borderRadius: 6,
-    padding: "6px 14px",
-    cursor: "pointer",
-    fontWeight: 600,
-    fontSize: 13,
   },
 };

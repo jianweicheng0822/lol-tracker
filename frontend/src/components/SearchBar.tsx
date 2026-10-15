@@ -194,7 +194,7 @@ export default function SearchBar({ compact, initialRegion, initialGameName, ini
   const maxW = compact ? 600 : 700;
 
   return (
-    <div ref={wrapperRef} style={{ position: "relative", display: "flex", gap, alignItems: "center", width: "100%", maxWidth: maxW }}>
+    <div ref={wrapperRef} className="search-bar" style={{ position: "relative", display: "flex", gap, alignItems: "center", width: "100%", maxWidth: maxW }}>
       <select
         className="gold-input"
         style={{ ...styles.select, padding: inputPadding, fontSize: inputFontSize }}
@@ -206,7 +206,7 @@ export default function SearchBar({ compact, initialRegion, initialGameName, ini
         ))}
       </select>
 
-      <div style={{ position: "relative", flex: 1 }}>
+      <div className="search-bar__name" style={{ position: "relative", flex: 1, minWidth: 0 }}>
         <input
           ref={gameNameRef}
           className="gold-input"
@@ -252,7 +252,7 @@ export default function SearchBar({ compact, initialRegion, initialGameName, ini
 
       <input
         ref={tagRef}
-        className="gold-input"
+        className="gold-input search-bar__tag"
         style={{ ...styles.input, width: compact ? 90 : 120, padding: inputPadding, fontSize: inputFontSize }}
         placeholder="#Tag"
         value={tag}

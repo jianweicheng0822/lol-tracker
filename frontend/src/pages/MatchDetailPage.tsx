@@ -21,6 +21,7 @@ import {
 } from "../utils/ddragon";
 import { ScoreboardTeamTable, ArenaScoreboard } from "../components/ScoreboardTable";
 import { COLORS } from "../utils/colors";
+import AppHeader from "../components/AppHeader";
 
 export default function MatchDetailPage() {
   const { region, matchId } = useParams<{ region: string; matchId: string }>();
@@ -63,13 +64,10 @@ export default function MatchDetailPage() {
 
   return (
     <div style={styles.page}>
-      {/* Top bar */}
-      <div style={styles.topBar}>
-        <span style={styles.logo} onClick={() => navigate("/")}>LoL Tracker</span>
-        <button onClick={() => navigate(-1)} style={styles.backBtn}>Back</button>
-      </div>
+      <AppHeader />
 
       <div style={styles.content}>
+        <button onClick={() => navigate(-1)} style={styles.backBtn}>&larr; Back</button>
         {status === "loading" && (
           <div style={styles.loadingBox}>Loading match details...</div>
         )}
@@ -139,21 +137,6 @@ const styles: Record<string, React.CSSProperties> = {
     background: "#121210",
     color: COLORS.textPrimary,
     fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
-  },
-  topBar: {
-    display: "flex",
-    alignItems: "center",
-    gap: 20,
-    padding: "12px 24px",
-    background: "#111110",
-    borderBottom: "1px solid #1e1c18",
-  },
-  logo: {
-    fontWeight: 800,
-    fontSize: 18,
-    cursor: "pointer",
-    whiteSpace: "nowrap",
-    flexShrink: 0,
   },
   backBtn: {
     padding: "6px 14px",

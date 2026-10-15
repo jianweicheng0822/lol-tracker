@@ -25,6 +25,11 @@ function renderPage(url = "/leaderboard") {
   );
 }
 
+// The header has its own tests
+vi.mock("../components/AppHeader", () => ({
+  default: () => <header data-testid="app-header" />,
+}));
+
 vi.mock("../api", () => ({
   fetchLeaderboard: vi.fn(),
 }));
@@ -148,11 +153,9 @@ describe("LeaderboardPage", () => {
     expect(api.fetchLeaderboard).toHaveBeenCalledWith("NA", "RANKED_FLEX_SR", "challenger", 0, 25);
   });
 
-  it("navigates home when back button is clicked", async () => {
-    const user = userEvent.setup();
+  it("renders the shared header", () => {
     renderPage();
-    await user.click(screen.getByText(/Home/));
-    expect(mockNavigate).toHaveBeenCalledWith("/");
+    expect(screen.getByTestId("app-header")).toBeInTheDocument();
   });
 
   it("renders the page title", () => {

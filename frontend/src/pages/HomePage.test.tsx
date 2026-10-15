@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { render, screen, act } from "@testing-library/react";
 import HomePage from "./HomePage";
 import * as api from "../api";
 
@@ -12,19 +12,21 @@ vi.mock("../api", () => ({
   fetchFavorites: vi.fn(),
   fetchLeaderboard: vi.fn(),
   getAuthToken: vi.fn(),
-  setAuthToken: vi.fn(),
+}));
+
+// Login state comes from useAuth; tests flip it to simulate logging in or out
+const authState = { isLoggedIn: false, username: null as string | null };
+vi.mock("../hooks/useAuth", () => ({
+  useAuth: () => authState,
+}));
+
+// The header (nav, log in/out) has its own tests
+vi.mock("../components/AppHeader", () => ({
+  default: () => <header data-testid="app-header" />,
 }));
 
 vi.mock("../components/SearchBar", () => ({
   default: () => <div data-testid="search-bar">SearchBar</div>,
-}));
-
-vi.mock("../components/AuthModal", () => ({
-  default: ({ onClose }: { onClose: () => void }) => (
-    <div data-testid="auth-modal">
-      <button onClick={onClose}>Close</button>
-    </div>
-  ),
 }));
 
 vi.mock("../components/FavoritesList", () => ({
@@ -39,11 +41,17 @@ describe("HomePage", () => {
     vi.mocked(api.fetchFavorites).mockResolvedValue([]);
     vi.mocked(api.fetchLeaderboard).mockResolvedValue({ entries: [], totalEntries: 0 });
     vi.mocked(api.getAuthToken).mockReturnValue(null);
+    authState.isLoggedIn = false;
   });
+
+  function logIn() {
+    authState.isLoggedIn = true;
+    vi.mocked(api.getAuthToken).mockReturnValue("some-token");
+  }
 
   it("renders the title and subtitle", () => {
     render(<HomePage />);
-    expect(screen.getByText("LoL Tracker")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "LoL Tracker" })).toBeInTheDocument();
     expect(screen.getByText("Track LP progression, analyze match history, and discover champion trends.")).toBeInTheDocument();
   });
 
@@ -55,47 +63,43 @@ describe("HomePage", () => {
   it("renders demo player buttons", () => {
     render(<HomePage />);
     expect(screen.getByText("duoking1 #freex")).toBeInTheDocument();
-    expect(screen.getByText("EDG Viper #NA11")).toBeInTheDocument();
+    expect(screen.getByText("C9 Loki #kr3")).toBeInTheDocument();
   });
 
-  it("shows Log in button when not authenticated", () => {
+  it("renders the shared header", () => {
     render(<HomePage />);
-    expect(screen.getByText("Log in")).toBeInTheDocument();
-  });
-
-  it("shows Log out button when authenticated", () => {
-    vi.mocked(api.getAuthToken).mockReturnValue("some-token");
-    render(<HomePage />);
-    expect(screen.getByText("Log out")).toBeInTheDocument();
+    expect(screen.getByTestId("app-header")).toBeInTheDocument();
   });
 
   it("loads favorites on mount when authenticated", () => {
-    vi.mocked(api.getAuthToken).mockReturnValue("some-token");
+    logIn();
     render(<HomePage />);
     expect(api.fetchFavorites).toHaveBeenCalled();
   });
 
   it("skips loading favorites when not authenticated", () => {
-    vi.mocked(api.getAuthToken).mockReturnValue(null);
     render(<HomePage />);
     expect(api.fetchFavorites).not.toHaveBeenCalled();
+  });
+
+  it("loads favorites after logging in from the header, and hides them after logging out", async () => {
+    vi.mocked(api.fetchFavorites).mockResolvedValue([{ puuid: "p1" }] as never);
+    const { rerender } = render(<HomePage />);
+    expect(screen.getByTestId("favorites-list")).toHaveTextContent("0 favorites");
+
+    logIn();
+    await act(async () => rerender(<HomePage />));
+    expect(api.fetchFavorites).toHaveBeenCalledTimes(1);
+    expect(screen.getByTestId("favorites-list")).toHaveTextContent("1 favorites");
+
+    authState.isLoggedIn = false;
+    await act(async () => rerender(<HomePage />));
+    expect(screen.getByTestId("favorites-list")).toHaveTextContent("0 favorites");
   });
 
   it("renders favorites list component", () => {
     render(<HomePage />);
     expect(screen.getByTestId("favorites-list")).toBeInTheDocument();
-  });
-
-  it("renders leaderboard nav link", () => {
-    render(<HomePage />);
-    expect(screen.getByText("Leaderboard")).toBeInTheDocument();
-  });
-
-  it("navigates to leaderboard when nav link is clicked", async () => {
-    const user = (await import("@testing-library/user-event")).default.setup();
-    render(<HomePage />);
-    await user.click(screen.getByText("Leaderboard"));
-    expect(mockNavigate).toHaveBeenCalledWith("/leaderboard");
   });
 
   it("fetches leaderboard preview on mount", () => {

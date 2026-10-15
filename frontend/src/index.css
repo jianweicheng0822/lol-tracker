@@ -31,3 +31,25 @@ body {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/*
+ * Phone layouts. Most styling is inline, which can't use media queries, so the few
+ * components that need to rearrange on narrow screens hang these classes off their elements.
+ */
+@media (max-width: 640px) {
+  /* Header: logo and nav on the first row, the search box on its own row below */
+  .app-header { padding: 10px 16px !important; }
+  .app-header__search { order: 3; flex-basis: 100% !important; }
+  .app-header__nav { margin-left: auto !important; }
+  .app-header__username { display: none; }
+
+  /* Search bar: name gets the full first row; region, tag and button share the second */
+  .search-bar { flex-wrap: wrap; }
+  .search-bar__name { order: -1; flex: 1 1 100% !important; }
+  .search-bar__tag { flex: 1 1 0; min-width: 0; }
+}
+
+@media (max-width: 400px) {
+  .app-header__logo { font-size: 16px !important; }
+  .app-header__link { padding: 5px 8px !important; font-size: 12px !important; }
+}

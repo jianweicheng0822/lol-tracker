@@ -12,7 +12,10 @@
  */
 const BASE = import.meta.env.DEV ? "http://localhost:8080" : "";
 
-const TOKEN_KEY = "lol_tracker_jwt";
+export const TOKEN_KEY = "lol_tracker_jwt";
+
+/** Fired on window whenever the stored token changes (login, logout, OAuth), so UI can update. */
+export const AUTH_CHANGE_EVENT = "lol-tracker:auth-change";
 
 const DEFAULT_TIMEOUT_MS = 15_000;
 
@@ -33,6 +36,7 @@ export function setAuthToken(token: string | null) {
   } else {
     localStorage.removeItem(TOKEN_KEY);
   }
+  window.dispatchEvent(new Event(AUTH_CHANGE_EVENT));
 }
 
 /**
@@ -42,6 +46,26 @@ export function setAuthToken(token: string | null) {
  */
 export function getAuthToken(): string | null {
   return localStorage.getItem(TOKEN_KEY);
+}
+
+/**
+ * Read the username (the JWT "sub" claim) from a token, for display only. The token isn't
+ * verified here; the backend does that on every request.
+ *
+ * @returns The username, or null if the token can't be read.
+ */
+export function usernameFromToken(token: string): string | null {
+  try {
+    const payload = token.split(".")[1];
+    if (!payload) return null;
+    // base64url -> base64, then decode as UTF-8 so non-ASCII usernames survive
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(payload.length / 4) * 4, "=");
+    const json = new TextDecoder().decode(Uint8Array.from(atob(base64), (c) => c.charCodeAt(0)));
+    const sub = JSON.parse(json).sub;
+    return typeof sub === "string" && sub ? sub : null;
+  } catch {
+    return null;
+  }
 }
 
 /**

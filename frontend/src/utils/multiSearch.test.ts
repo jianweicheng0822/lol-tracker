@@ -16,6 +16,11 @@ describe("parseMultiSearchInput", () => {
     expect(parseMultiSearchInput("EDG Viper # NA11").names).toEqual(["EDG Viper#NA11"]);
   });
 
+  it("accepts lines copied from the champ select chat", () => {
+    const lobby = "C9 Loki #kr3 joined the lobby\nduoking1#freex joined the lobby\nEDG Viper#NA11 left the lobby";
+    expect(parseMultiSearchInput(lobby).names).toEqual(["C9 Loki#kr3", "duoking1#freex", "EDG Viper#NA11"]);
+  });
+
   it("drops duplicates regardless of case", () => {
     expect(parseMultiSearchInput("Faker#KR1, faker#kr1, FAKER#KR1").names).toEqual(["Faker#KR1"]);
   });

@@ -11,6 +11,7 @@ import { analyzeMatchStream } from "../api";
 import type { AiMatchData, AiChatMessage } from "../api";
 import { COLORS } from "../utils/colors";
 import { isArenaQueue } from "../utils/ddragon";
+import { championDisplayName, useChampionNames } from "../utils/champion";
 
 type Props = {
   match: MatchSummary;
@@ -55,6 +56,7 @@ type Message = { role: "user" | "assistant"; content: string };
  * @returns The AI chat modal overlay element.
  */
 export default function AiChatModal({ match, onClose }: Props) {
+  const championNames = useChampionNames();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -148,7 +150,7 @@ export default function AiChatModal({ match, onClose }: Props) {
         >
           <div>
             <div style={{ fontSize: 15, fontWeight: 700, color: COLORS.textPrimary }}>
-              {match.championName}
+              {championDisplayName(match.championName, championNames)}
               <span
                 style={{
                   marginLeft: 8,

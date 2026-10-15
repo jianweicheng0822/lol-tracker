@@ -24,6 +24,11 @@ function renderPage(url = "/multi-search") {
     </MemoryRouter>,
   );
 }
+// The header has its own tests
+vi.mock("../components/AppHeader", () => ({
+  default: () => <header data-testid="app-header" />,
+}));
+
 vi.mock("../api", () => ({
   fetchMultiSearch: vi.fn(),
 }));

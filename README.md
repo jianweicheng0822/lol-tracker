@@ -48,11 +48,19 @@ Full-stack League of Legends analytics dashboard with AI-powered match coaching.
       <img src="screenshots/pro-upgrade.png" alt="PRO Upgrade" width="200" />
     </td>
   </tr>
+  <tr>
+    <td align="center"><b>Champions</b></td>
+    <td align="center"><b>Mobile</b></td>
+  </tr>
+  <tr>
+    <td><img src="screenshots/champions.png" alt="Champions" width="480" /></td>
+    <td align="center"><img src="screenshots/mobile.png" alt="Mobile" width="200" /></td>
+  </tr>
 </table>
 
 ## Features
 
-**Player Dashboard** — Tabbed profile (Overview, Performance, Champions, Match History) with URL-driven navigation, ranked badges, and persistent favorites
+**Player Dashboard** — Tabbed profile (Overview, Champions) with URL-driven navigation, ranked badges, win/loss streaks, and persistent favorites. A shared header with search and navigation on every page, and layouts that work down to phone width
 
 **Match History** — Match cards with champion icons, KDA, items, runes, and summoner spells. Expandable inline scoreboards with full 10-player stats. Arena mode support with augment icons. Cross-navigation between player profiles
 
@@ -62,7 +70,7 @@ Full-stack League of Legends analytics dashboard with AI-powered match coaching.
 
 **Live Game** — Real-time in-game view for any active player via the Spectator API. Displays champions, ranks, and team compositions for the current match
 
-**Multi-Search** — Batch player lookup. Paste multiple Riot IDs to quickly view ranked stats and recent performance side by side
+**Multi-Search** — Batch player lookup. Paste up to 5 Riot IDs, or lines copied straight from the champ select lobby chat, to compare ranked stats side by side. The search lives in the URL, so it can be shared
 
 **AI Match Analysis** — Click the sparkle button on any match to open a chat modal. Streaming responses via SSE for real-time coaching. System prompt constructed server-side from structured match data
 

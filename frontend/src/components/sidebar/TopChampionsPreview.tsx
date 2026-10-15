@@ -2,6 +2,7 @@ import { useState } from "react";
 import type { MatchSummary } from "../../types";
 import { useDdragonVersion, ddragonBase, championIconUrl, championIconOnError } from "../../utils/ddragon";
 import { COLORS } from "../../utils/colors";
+import { championDisplayName, useChampionNames } from "../../utils/champion";
 
 type ChampPerf = {
   championName: string;
@@ -41,6 +42,7 @@ type Props = {
 export default function TopChampionsPreview({ matches, onViewAll, scopeLabel }: Props) {
   const ddVersion = useDdragonVersion();
   const imgBase = ddragonBase(ddVersion);
+  const names = useChampionNames();
   const champs = aggregateChampions(matches);
 
   if (champs.length === 0) return null;
@@ -51,7 +53,7 @@ export default function TopChampionsPreview({ matches, onViewAll, scopeLabel }: 
       {scopeLabel && <div style={styles.scope}>{scopeLabel}</div>}
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         {champs.map((c) => (
-          <ChampRow key={c.championName} champ={c} imgBase={imgBase} />
+          <ChampRow key={c.championName} champ={c} imgBase={imgBase} name={championDisplayName(c.championName, names)} />
         ))}
       </div>
       <button style={styles.viewAll} onClick={onViewAll}>
@@ -101,7 +103,7 @@ function WinLossBar({ wins, losses }: { wins: number; losses: number }) {
   );
 }
 
-function ChampRow({ champ, imgBase }: { champ: ChampPerf; imgBase: string }) {
+function ChampRow({ champ, imgBase, name }: { champ: ChampPerf; imgBase: string; name: string }) {
   const [hovered, setHovered] = useState(false);
   const wr = champ.games > 0 ? Math.round((champ.wins / champ.games) * 100) : 0;
   const losses = champ.games - champ.wins;
@@ -134,7 +136,7 @@ function ChampRow({ champ, imgBase }: { champ: ChampPerf; imgBase: string }) {
       <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: 3 }}>
         <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between" }}>
           <span style={{ fontSize: 12, fontWeight: 600, color: COLORS.textSecondary, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-            {champ.championName}
+            {name}
           </span>
           <span style={{ fontSize: 10, fontWeight: 600, flexShrink: 0, marginLeft: 6 }}>
             <span style={{ color: COLORS.textDim }}>{wr}%</span>

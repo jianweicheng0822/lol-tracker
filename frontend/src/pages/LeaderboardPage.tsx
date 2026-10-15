@@ -10,6 +10,7 @@ import { COLORS, winRateColor } from "../utils/colors";
 import { TIER_COLORS } from "../utils/lp";
 import { useDdragonVersion, ddragonBase } from "../utils/ddragon";
 import type { LeaderboardEntry, Region } from "../types";
+import AppHeader from "../components/AppHeader";
 
 // Leaderboards cover the three major regions only (must match the backend's LEADERBOARD_REGIONS)
 const LEADERBOARD_REGIONS: Region[] = ["NA", "EUW", "KR"];
@@ -133,10 +134,9 @@ export default function LeaderboardPage() {
 
   return (
     <div style={styles.page}>
+      <AppHeader />
+      <div style={styles.body}>
       <div style={styles.header}>
-        <button onClick={() => navigate("/")} style={styles.backBtn}>
-          &larr; Home
-        </button>
         <h1 style={styles.title}>Leaderboard</h1>
       </div>
 
@@ -386,6 +386,7 @@ export default function LeaderboardPage() {
           </button>
         </div>
       )}
+      </div>
     </div>
   );
 }
@@ -396,7 +397,9 @@ const styles: Record<string, React.CSSProperties> = {
     background: COLORS.pageBg,
     color: COLORS.textPrimary,
     fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
-    padding: "24px 20px 60px",
+  },
+  body: {
+    padding: "24px 16px 60px",
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
@@ -408,16 +411,6 @@ const styles: Record<string, React.CSSProperties> = {
     width: "100%",
     maxWidth: 900,
     marginBottom: 24,
-  },
-  backBtn: {
-    background: "transparent",
-    border: `1px solid ${COLORS.cardBorder}`,
-    color: COLORS.textSecondary,
-    borderRadius: 6,
-    padding: "6px 14px",
-    cursor: "pointer",
-    fontWeight: 600,
-    fontSize: 13,
   },
   title: {
     fontSize: 28,
@@ -455,6 +448,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   tabs: {
     display: "flex",
+    flexWrap: "wrap",
     gap: 8,
   },
   tab: {
@@ -487,7 +481,8 @@ const styles: Record<string, React.CSSProperties> = {
     background: COLORS.cardBg,
     border: `1px solid ${COLORS.cardBorder}`,
     borderRadius: 12,
-    overflow: "hidden",
+    // Scroll sideways on phones instead of cutting off the LP and win rate columns
+    overflowX: "auto",
   },
   table: {
     width: "100%",

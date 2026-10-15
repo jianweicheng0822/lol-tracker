@@ -1,17 +1,17 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import { fetchMultiSearch } from "../api";
 import { COLORS } from "../utils/colors";
 import { REGIONS } from "../types";
 import type { Region, MultiSearchPlayer } from "../types";
 import MultiSearchCard from "../components/MultiSearchCard";
 import { parseMultiSearchInput, MULTI_SEARCH_LIMIT } from "../utils/multiSearch";
+import AppHeader from "../components/AppHeader";
 
 const toRegion = (value: string | null): Region =>
   REGIONS.includes(value as Region) ? (value as Region) : "NA";
 
 export default function MultiSearchPage() {
-  const navigate = useNavigate();
   // The searched names live in the URL (?q=Name#Tag,...&region=NA), so going back from a player
   // page, refreshing, or sharing the link brings the same search back
   const [searchParams, setSearchParams] = useSearchParams();
@@ -63,14 +63,12 @@ export default function MultiSearchPage() {
 
   return (
     <div style={styles.page}>
-      <div style={styles.topBar}>
-        <span style={styles.logo} onClick={() => navigate("/")}>LoL Tracker</span>
-      </div>
+      <AppHeader />
 
       <div style={styles.content}>
         <h1 style={styles.title}>Multi-Search</h1>
         <p style={styles.subtitle}>
-          Paste up to 5 player names (Name#Tag) separated by commas or newlines.
+          Paste up to 5 Riot IDs (Name#Tag), one per line or separated by commas. Lines copied from the lobby chat work too.
         </p>
 
         <div style={styles.inputArea}>
@@ -138,20 +136,6 @@ const styles: Record<string, React.CSSProperties> = {
     background: "#121210",
     color: COLORS.textPrimary,
     fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
-  },
-  topBar: {
-    display: "flex",
-    alignItems: "center",
-    gap: 20,
-    padding: "12px 24px",
-    background: "#111110",
-    borderBottom: "1px solid #1e1c18",
-  },
-  logo: {
-    fontWeight: 800,
-    fontSize: 18,
-    cursor: "pointer",
-    whiteSpace: "nowrap",
   },
   content: {
     maxWidth: 800,

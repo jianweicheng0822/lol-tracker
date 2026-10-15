@@ -24,6 +24,12 @@ vi.mock("../api", () => ({
   PlayerNotFoundError: class PlayerNotFoundError extends Error {},
 }));
 
+// The header has its own tests; login state follows the mocked token like the real useAuth
+vi.mock("../components/AppHeader", () => ({ default: () => <header /> }));
+vi.mock("../hooks/useAuth", async () => {
+  const mockedApi = await import("../api");
+  return { useAuth: () => ({ isLoggedIn: !!mockedApi.getAuthToken(), username: null }) };
+});
 vi.mock("../utils/searchHistory", () => ({ addLocalEntry: vi.fn() }));
 vi.mock("../components/SearchBar", () => ({ default: () => <div /> }));
 vi.mock("../components/TabBar", () => ({ default: () => <div /> }));
@@ -123,15 +129,38 @@ describe("PlayerPage favorites", () => {
 
   it("does not add a favorite if the login prompt was dismissed", async () => {
     const user = userEvent.setup();
-    renderPage();
+    const { rerender } = renderPage();
     await user.click(await screen.findByText("Favorite"));
     await user.click(screen.getByText("Dismiss"));
 
     // Logging in later from the header should not add the earlier favorite
-    await user.click(screen.getByRole("button", { name: "Log in" }));
-    await user.click(screen.getByText("Submit login"));
+    vi.mocked(api.getAuthToken).mockReturnValue("token");
+    rerender(
+      <MemoryRouter initialEntries={["/player/NA/Faker/KR1"]}>
+        <Routes>
+          <Route path="/player/:region/:gameName/:tag" element={<PlayerPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
     await waitFor(() => expect(api.fetchTier).toHaveBeenCalledTimes(2));
     expect(api.addFavorite).not.toHaveBeenCalled();
+  });
+
+  it("clears the favorite star when the user logs out from the header", async () => {
+    vi.mocked(api.getAuthToken).mockReturnValue("token");
+    vi.mocked(api.checkIsFavorite).mockResolvedValue(true);
+    const { rerender } = renderPage();
+    expect(await screen.findByText("Favorited")).toBeInTheDocument();
+
+    vi.mocked(api.getAuthToken).mockReturnValue(null);
+    rerender(
+      <MemoryRouter initialEntries={["/player/NA/Faker/KR1"]}>
+        <Routes>
+          <Route path="/player/:region/:gameName/:tag" element={<PlayerPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(await screen.findByText("Favorite")).toBeInTheDocument();
   });
 
   it("shows an error toast when adding a favorite fails", async () => {

@@ -60,6 +60,11 @@ const MOCK_GAME = {
 const mockFetchAccount = vi.fn();
 const mockFetchLiveGame = vi.fn();
 
+// The header has its own tests
+vi.mock("../components/AppHeader", () => ({
+  default: () => <header data-testid="app-header" />,
+}));
+
 vi.mock("../api", () => ({
   fetchAccount: (...args: unknown[]) => mockFetchAccount(...args),
   fetchLiveGame: (...args: unknown[]) => mockFetchLiveGame(...args),

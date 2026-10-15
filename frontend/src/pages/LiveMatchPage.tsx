@@ -7,6 +7,7 @@ import { useDdragonVersion, ddragonBase, championIconFallbackUrl, hideOnError, Q
 import { loadChampionMap } from "../utils/champion";
 import { COLORS, winRateColor } from "../utils/colors";
 import { TIER_COLORS } from "../utils/lp";
+import AppHeader from "../components/AppHeader";
 
 const TIER_ICON_BASE =
   "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-mini-crests";
@@ -78,9 +79,7 @@ export default function LiveMatchPage() {
 
   return (
     <div style={styles.page}>
-      <div style={styles.topBar}>
-        <span style={styles.logo} onClick={() => navigate("/")}>LoL Tracker</span>
-      </div>
+      <AppHeader />
 
       <div style={styles.content}>
         {status === "loading" && (
@@ -217,19 +216,6 @@ const styles: Record<string, React.CSSProperties> = {
     background: "#121210",
     color: COLORS.textPrimary,
     fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
-  },
-  topBar: {
-    display: "flex",
-    alignItems: "center",
-    padding: "12px 24px",
-    background: "#111110",
-    borderBottom: "1px solid #1e1c18",
-  },
-  logo: {
-    fontWeight: 800,
-    fontSize: 18,
-    cursor: "pointer",
-    whiteSpace: "nowrap",
   },
   content: {
     maxWidth: 1000,

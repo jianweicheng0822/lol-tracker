@@ -10,6 +10,11 @@ vi.mock("react-router-dom", () => ({
   useNavigate: () => mockNavigate,
 }));
 
+// The header has its own tests
+vi.mock("../components/AppHeader", () => ({
+  default: () => <header data-testid="app-header" />,
+}));
+
 vi.mock("../api", () => ({
   fetchMatchDetail: vi.fn(),
 }));
@@ -94,19 +99,11 @@ describe("MatchDetailPage", () => {
     });
   });
 
-  it("navigates home when logo is clicked", async () => {
-    vi.mocked(fetchMatchDetail).mockResolvedValue(makeMatchDetail());
-    const user = userEvent.setup();
-    render(<MatchDetailPage />);
-    await user.click(screen.getByText("LoL Tracker"));
-    expect(mockNavigate).toHaveBeenCalledWith("/");
-  });
-
   it("navigates back when Back button is clicked", async () => {
     vi.mocked(fetchMatchDetail).mockResolvedValue(makeMatchDetail());
     const user = userEvent.setup();
     render(<MatchDetailPage />);
-    await user.click(screen.getByText("Back"));
+    await user.click(screen.getByRole("button", { name: /Back/ }));
     expect(mockNavigate).toHaveBeenCalledWith(-1);
   });
 });

@@ -11,6 +11,7 @@ import { fetchChampionStats } from "../../api";
 import { useDdragonVersion, ddragonBase, championIconUrl, championIconOnError } from "../../utils/ddragon";
 import { COLORS, winRateColor, kdaColor } from "../../utils/colors";
 import type { ChampionStats } from "../../types";
+import { championDisplayName, useChampionNames } from "../../utils/champion";
 
 type Props = {
   puuid: string;
@@ -57,6 +58,7 @@ export default function ChampionsTab({ puuid, refreshToken = 0 }: Props) {
   const [queueFilter, setQueueFilter] = useState<number | undefined>(undefined);
   const ddVersion = useDdragonVersion();
   const imgBase = ddragonBase(ddVersion);
+  const names = useChampionNames();
   const fetchIdRef = useRef(0);
 
   useEffect(() => {
@@ -134,7 +136,7 @@ export default function ChampionsTab({ puuid, refreshToken = 0 }: Props) {
                     onError={championIconOnError(c.championName)}
                   />
                   <div>
-                    <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.textPrimary }}>{c.championName}</div>
+                    <div style={{ fontSize: 14, fontWeight: 700, color: COLORS.textPrimary }}>{championDisplayName(c.championName, names)}</div>
                     <div style={{ fontSize: 11, color: COLORS.textDim }}>{c.games} games</div>
                   </div>
                 </div>

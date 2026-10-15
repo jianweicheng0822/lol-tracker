@@ -6,26 +6,24 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import SearchBar from "../components/SearchBar";
-import AuthModal from "../components/AuthModal";
-import Toast from "../components/Toast";
+import AppHeader from "../components/AppHeader";
 import FavoritesList from "../components/FavoritesList";
-import { fetchFavorites, fetchLeaderboard, getAuthToken, setAuthToken } from "../api";
+import { fetchFavorites, fetchLeaderboard, getAuthToken } from "../api";
+import { useAuth } from "../hooks/useAuth";
 import { COLORS } from "../utils/colors";
 import { TIER_COLORS } from "../utils/lp";
 import type { FavoritePlayer, LeaderboardEntry } from "../types";
 
 const DEMO_PLAYERS = [
   { label: "duoking1 #freex", puuid: "JZsCBcQ18XWqlQS2NDBS0Vi9uuUnhJJjhIBdHvNFoTEM8qLzsvkMSTYbDneGtgqr6OOx7fCX0OeTXA", region: "NA" },
-  { label: "EDG Viper #NA11", puuid: "87RUqIRwJjjEFIW8qEK8fhiCjgB2uU9y6ZnPQK2H2h2GpyjzTN76r6JaXOXJAqrczw1d05y0putLfA", region: "NA" },
+  { label: "C9 Loki #kr3", puuid: "YdeyIKCDDnlZ3jNZ4OQue9ChPbyO3yFq9O0S4r10GEUpoS47QEDfrnrqIDG0rLruHeBaHAaDcA8mgA", region: "NA" },
 ] as const;
 
 export default function HomePage() {
   const navigate = useNavigate();
   const [favorites, setFavorites] = useState<FavoritePlayer[]>([]);
-  const [showAuthModal, setShowAuthModal] = useState(false);
-  const [loggedIn, setLoggedIn] = useState(!!getAuthToken());
+  const { isLoggedIn } = useAuth();
   const [topPlayers, setTopPlayers] = useState<LeaderboardEntry[]>([]);
-  const [toastMsg, setToastMsg] = useState<string | null>(null);
 
   const loadFavorites = useCallback(() => {
     if (!getAuthToken()) {
@@ -37,12 +35,15 @@ export default function HomePage() {
       .catch(e => console.error("Failed to load favorites:", e));
   }, []);
 
+  // Favorites belong to the account, so reload them whenever the user logs in or out
   useEffect(() => {
-    if (getAuthToken()) {
-      fetchFavorites()
-        .then(data => setFavorites(data))
-        .catch(e => console.error("Failed to load favorites:", e));
-    }
+    if (!isLoggedIn) return;
+    fetchFavorites()
+      .then(data => setFavorites(data))
+      .catch(e => console.error("Failed to load favorites:", e));
+  }, [isLoggedIn]);
+
+  useEffect(() => {
     fetchLeaderboard("NA", "RANKED_SOLO_5x5", "challenger", 0, 3)
       .then((data: { entries: LeaderboardEntry[] }) => setTopPlayers(data.entries))
       .catch(e => console.error("Failed to load leaderboard preview:", e));
@@ -50,50 +51,7 @@ export default function HomePage() {
 
   return (
     <div style={styles.page}>
-      {toastMsg && <Toast message={toastMsg} onDone={() => setToastMsg(null)} />}
-      <div style={styles.authCorner}>
-        <button
-          onClick={() => navigate("/multi-search")}
-          style={styles.navLink}
-          onMouseEnter={(e) => { e.currentTarget.style.background = `${COLORS.gold}20`; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-        >
-          Multi-Search
-        </button>
-        <button
-          onClick={() => navigate("/leaderboard")}
-          style={styles.navLink}
-          onMouseEnter={(e) => { e.currentTarget.style.background = `${COLORS.gold}20`; }}
-          onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-        >
-          Leaderboard
-        </button>
-        {loggedIn ? (
-          <button
-            onClick={() => { setAuthToken(null); setLoggedIn(false); setToastMsg("Logged out successfully"); }}
-            style={styles.logoutBtn}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(232,64,87,0.12)"; e.currentTarget.style.borderColor = "rgba(232,64,87,0.5)"; e.currentTarget.style.color = "#E84057"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.borderColor = "rgba(255,255,255,0.15)"; e.currentTarget.style.color = COLORS.textSecondary; }}
-          >
-            Log out
-          </button>
-        ) : (
-          <button
-            onClick={() => setShowAuthModal(true)}
-            style={styles.loginBtn}
-            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(58,143,214,0.15)"; }}
-            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(58,143,214,0.08)"; }}
-          >
-            Log in
-          </button>
-        )}
-      </div>
-      {showAuthModal && (
-        <AuthModal
-          onSuccess={() => { setLoggedIn(true); loadFavorites(); setToastMsg("Logged in successfully"); }}
-          onClose={() => setShowAuthModal(false)}
-        />
-      )}
+      <AppHeader showSearch={false} transparent />
       <div style={styles.center}>
         <h1 style={styles.title}>LoL Tracker</h1>
         <p style={styles.subtitle}>
@@ -152,7 +110,7 @@ export default function HomePage() {
           </div>
         )}
 
-        <FavoritesList favorites={favorites} onUpdate={loadFavorites} />
+        <FavoritesList favorites={isLoggedIn ? favorites : []} onUpdate={loadFavorites} />
       </div>
     </div>
   );
@@ -160,25 +118,27 @@ export default function HomePage() {
 
 const styles: Record<string, React.CSSProperties> = {
   page: {
-    position: "relative",
     display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
+    flexDirection: "column",
     minHeight: "100vh",
     background: `radial-gradient(circle at 50% 40%, rgba(212,160,23,0.08), transparent 50%), ${COLORS.pageBg}`,
     color: COLORS.textPrimary,
     fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
   },
   center: {
+    flex: 1,
     display: "flex",
     flexDirection: "column",
     alignItems: "center",
-    padding: "40px 20px",
+    justifyContent: "center",
+    padding: "24px 16px 60px",
     width: "100%",
     maxWidth: 720,
+    margin: "0 auto",
+    boxSizing: "border-box",
   },
   title: {
-    fontSize: 60,
+    fontSize: "clamp(40px, 11vw, 60px)",
     fontWeight: 800,
     margin: 0,
     letterSpacing: -1.5,
@@ -226,25 +186,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 13,
     fontWeight: 500,
     transition: "all 0.15s ease",
-  },
-  authCorner: {
-    position: "absolute",
-    top: 16,
-    right: 24,
-    display: "flex",
-    gap: 10,
-    alignItems: "center",
-  },
-  navLink: {
-    background: "transparent",
-    color: COLORS.gold,
-    border: `1px solid ${COLORS.gold}50`,
-    borderRadius: 6,
-    cursor: "pointer",
-    fontWeight: 600,
-    fontSize: 13,
-    padding: "6px 14px",
-    transition: "background 0.15s ease",
   },
   leaderboardCard: {
     marginTop: 28,
@@ -308,27 +249,5 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     fontSize: 13,
     transition: "background 0.15s ease",
-  },
-  loginBtn: {
-    background: "rgba(58,143,214,0.08)",
-    color: "#3A8FD6",
-    border: "1px solid rgba(58,143,214,0.4)",
-    borderRadius: 6,
-    padding: "6px 14px",
-    cursor: "pointer",
-    fontWeight: 600,
-    fontSize: 13,
-    transition: "background 0.15s ease",
-  },
-  logoutBtn: {
-    background: "transparent",
-    color: COLORS.textSecondary,
-    border: "1px solid rgba(255,255,255,0.15)",
-    borderRadius: 6,
-    padding: "6px 14px",
-    cursor: "pointer",
-    fontWeight: 600,
-    fontSize: 13,
-    transition: "all 0.15s ease",
   },
 };

@@ -32,7 +32,9 @@ export function parseMultiSearchInput(text: string): ParsedMultiSearch {
     // Riot IDs can't contain "#", so exactly one is expected, with text on both sides
     const parts = entry.split("#");
     const name = parts[0]?.trim();
-    const tag = parts[1]?.trim();
+    // Tags never contain spaces, so anything after the first space is extra text, e.g. the
+    // " joined the lobby" on lines copied from the champ select chat
+    const tag = parts[1]?.trim().split(/\s/)[0];
     if (parts.length !== 2 || !name || !tag) {
       invalid.push(entry);
       continue;

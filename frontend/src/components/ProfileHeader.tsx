@@ -32,7 +32,7 @@ export default function ProfileHeader({
 
   return (
     <div style={styles.header}>
-      <div style={{ display: "flex", alignItems: "center", gap: 14 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 14, minWidth: 0 }}>
         <img
           src={`https://ddragon.leagueoflegends.com/cdn/${ddVersion}/img/profileicon/${account.profileIconId}.png`}
           alt="Profile Icon"
@@ -40,7 +40,7 @@ export default function ProfileHeader({
           onError={hideOnError}
         />
         <div>
-          <h2 style={{ margin: 0, fontSize: 28 }}>
+          <h2 style={{ margin: 0, fontSize: "clamp(22px, 6vw, 28px)", overflowWrap: "anywhere" }}>
             {account.gameName}
             <span style={{ color: COLORS.textDim, fontWeight: 400 }}> #{account.tagLine}</span>
           </h2>
@@ -95,6 +95,9 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
+    // On narrow screens the refresh/favorite buttons move below the name instead of off-screen
+    flexWrap: "wrap",
+    gap: 12,
     marginBottom: 24,
     paddingBottom: 16,
     borderBottom: `1px solid ${COLORS.cardBorder}`,

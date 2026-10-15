@@ -16,9 +16,10 @@ describe("RecentStatsPreview", () => {
     expect(screen.getByText("3.76")).toBeInTheDocument();
   });
 
-  it("renders title with game count", () => {
-    render(<RecentStatsPreview stats={makePlayerStats()} matches={[makeMatchSummary()]} />);
-    expect(screen.getByText(/Recent 20 Ranked Games/)).toBeInTheDocument();
+  it("renders the title and which games it covers", () => {
+    render(<RecentStatsPreview stats={makePlayerStats()} matches={[makeMatchSummary()]} scopeLabel="18 ranked games in the last 20" />);
+    expect(screen.getByText("Recent Ranked Games")).toBeInTheDocument();
+    expect(screen.getByText("18 ranked games in the last 20")).toBeInTheDocument();
   });
 
   it("renders main role from match positions", () => {

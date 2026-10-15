@@ -83,3 +83,12 @@ export function computeClimbStatus(
   if (wr < 45) return "falling";
   return "stable";
 }
+
+/**
+ * Which games the sidebar stats cover. "Last 18 ranked games" read like a bug when it meant that 18
+ * of the last 20 games were ranked, so say that.
+ */
+export function rankedScopeLabel(ranked: number, sampled: number): string {
+  const games = (n: number) => `${n} ranked ${n === 1 ? "game" : "games"}`;
+  return ranked === sampled ? `Last ${games(ranked)}` : `${games(ranked)} in the last ${sampled}`;
+}

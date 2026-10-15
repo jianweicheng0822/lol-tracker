@@ -86,8 +86,10 @@ function WinLossBar({ wins, losses }: { wins: number; losses: number }) {
         color: "#48D1A0",
         textAlign: "center",
         whiteSpace: "nowrap",
+        overflow: "hidden",
       }}>
-        {wins}W
+        {/* A 0-width segment would still print its label over the other color */}
+        {wins > 0 && `${wins}W`}
       </div>
       <div style={{
         width: `${100 - winPct}%`,
@@ -96,8 +98,9 @@ function WinLossBar({ wins, losses }: { wins: number; losses: number }) {
         color: "#E84057",
         textAlign: "center",
         whiteSpace: "nowrap",
+        overflow: "hidden",
       }}>
-        {losses}L
+        {losses > 0 && `${losses}L`}
       </div>
     </div>
   );

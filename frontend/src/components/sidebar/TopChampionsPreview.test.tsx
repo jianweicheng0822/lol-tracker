@@ -18,6 +18,16 @@ describe("TopChampionsPreview", () => {
     expect(container.innerHTML).toBe("");
   });
 
+  it("doesn't print a 0W or 0L label over the other half of the bar", () => {
+    const matches = [
+      makeMatchSummary({ championName: "Zilean", win: false }),
+      makeMatchSummary({ championName: "Zilean", win: false }),
+    ];
+    render(<TopChampionsPreview matches={matches} onViewAll={vi.fn()} />);
+    expect(screen.getByText("2L")).toBeInTheDocument();
+    expect(screen.queryByText("0W")).not.toBeInTheDocument();
+  });
+
   it("aggregates and shows top 5 champions sorted by games", () => {
     const matches = [
       makeMatchSummary({ championName: "Ahri" }),

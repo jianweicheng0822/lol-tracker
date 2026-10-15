@@ -58,7 +58,7 @@ describe("OverviewSidebar", () => {
 
     expect(screen.getByTestId("top-champs")).toHaveAttribute("data-count", "18");
     expect(screen.getByTestId("recent-stats")).toHaveAttribute("data-count", "18");
-    expect(screen.getByTestId("top-champs")).toHaveTextContent("Last 18 ranked games");
+    expect(screen.getByTestId("top-champs")).toHaveTextContent("18 ranked games in the last 20");
   });
 
   it("renders all sections on desktop", () => {
@@ -77,7 +77,7 @@ describe("OverviewSidebar", () => {
   it("shows accordion buttons on mobile", () => {
     vi.mocked(useIsMobile).mockReturnValue(true);
     render(<OverviewSidebar {...defaultProps} />);
-    expect(screen.getByText("Recent 20 Ranked Games")).toBeInTheDocument();
+    expect(screen.getByText("Recent Ranked Games")).toBeInTheDocument();
     expect(screen.getByText("Top Champions")).toBeInTheDocument();
   });
 
@@ -86,7 +86,7 @@ describe("OverviewSidebar", () => {
     const user = userEvent.setup();
     render(<OverviewSidebar {...defaultProps} />);
 
-    const recentBtn = screen.getByText("Recent 20 Ranked Games");
+    const recentBtn = screen.getByText("Recent Ranked Games");
     await user.click(recentBtn);
     expect(screen.getByTestId("recent-stats")).toBeInTheDocument();
   });

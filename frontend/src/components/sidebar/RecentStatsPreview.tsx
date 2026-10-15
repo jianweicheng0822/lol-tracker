@@ -28,9 +28,11 @@ function computeMainRole(matches: MatchSummary[]): string | null {
 type Props = {
   stats: PlayerStats;
   matches: MatchSummary[];
+  /** Which games these stats cover, e.g. "18 ranked games in the last 20". */
+  scopeLabel?: string;
 };
 
-export default function RecentStatsPreview({ stats, matches }: Props) {
+export default function RecentStatsPreview({ stats, matches, scopeLabel }: Props) {
   if (stats.totalGames === 0) return null;
 
   const wrColor = winRateColor(stats.winRate);
@@ -40,7 +42,8 @@ export default function RecentStatsPreview({ stats, matches }: Props) {
 
   return (
     <div style={styles.card}>
-      <div style={styles.title}>Recent {stats.totalGames} Ranked {stats.totalGames === 1 ? "Game" : "Games"}</div>
+      <div style={styles.title}>Recent Ranked Games</div>
+      {scopeLabel && <div style={styles.scope}>{scopeLabel}</div>}
       <div style={styles.row}>
         <div>
           <div style={{ ...styles.value, color: wrColor }}>{stats.winRate}%</div>
@@ -66,6 +69,12 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 6,
     padding: 12,
     marginBottom: 12,
+  },
+  scope: {
+    fontSize: 11,
+    color: COLORS.textTertiary,
+    marginTop: -4,
+    marginBottom: 8,
   },
   title: {
     fontSize: 11,

@@ -1,4 +1,4 @@
-import { computeStreak, computeRecentForm, computeMainChampion, computeClimbStatus } from "./playerInsights";
+import { computeStreak, computeRecentForm, computeMainChampion, computeClimbStatus, rankedScopeLabel } from "./playerInsights";
 import { makeMatchSummary } from "../test/fixtures";
 
 describe("computeStreak", () => {
@@ -140,5 +140,13 @@ describe("computeClimbStatus", () => {
   it("only considers the last 20 solo games", () => {
     // 20 recent losses followed by older wins: only the losses count
     expect(computeClimbStatus(soloGames("L".repeat(20) + "W".repeat(20)), NOW)).toBe("falling");
+  });
+});
+
+describe("rankedScopeLabel", () => {
+  it("describes which games the stats cover", () => {
+    expect(rankedScopeLabel(20, 20)).toBe("Last 20 ranked games");
+    expect(rankedScopeLabel(18, 20)).toBe("18 ranked games in the last 20");
+    expect(rankedScopeLabel(1, 3)).toBe("1 ranked game in the last 3");
   });
 });

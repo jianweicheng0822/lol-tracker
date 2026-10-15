@@ -264,10 +264,11 @@ export default function PlayerPage() {
     <div style={styles.page}>
       {toastMsg && <Toast message={toastMsg} onDone={() => setToastMsg(null)} />}
       <AppHeader
+        // Prefer the loaded account: /player/puuid/... URLs have no name or tag to show
         searchDefaults={{
           region: region as Region,
-          gameName: decodeURIComponent(gameName || ""),
-          tag: decodeURIComponent(tag || ""),
+          gameName: account?.gameName ?? decodeURIComponent(gameName || ""),
+          tag: account?.tagLine ?? decodeURIComponent(tag || ""),
         }}
       />
 

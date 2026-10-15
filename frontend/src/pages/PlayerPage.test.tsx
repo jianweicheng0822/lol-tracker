@@ -25,7 +25,11 @@ vi.mock("../api", () => ({
 }));
 
 // The header has its own tests; login state follows the mocked token like the real useAuth
-vi.mock("../components/AppHeader", () => ({ default: () => <header /> }));
+vi.mock("../components/AppHeader", () => ({
+  default: ({ searchDefaults }: { searchDefaults?: { gameName?: string; tag?: string } }) => (
+    <header data-testid="header-search">{`${searchDefaults?.gameName ?? ""}#${searchDefaults?.tag ?? ""}`}</header>
+  ),
+}));
 vi.mock("../hooks/useAuth", async () => {
   const mockedApi = await import("../api");
   return { useAuth: () => ({ isLoggedIn: !!mockedApi.getAuthToken(), username: null }) };
@@ -294,5 +298,33 @@ describe("PlayerPage errors", () => {
 
     await user.click(screen.getByRole("button", { name: "Retry" }));
     expect(await screen.findByTestId("header-name")).toHaveTextContent("Faker");
+  });
+});
+
+describe("PlayerPage header search", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(api.getAuthToken).mockReturnValue(null);
+    vi.mocked(api.fetchAccountByPuuid).mockResolvedValue(account);
+    vi.mocked(api.fetchTier).mockResolvedValue({ tier: 0 });
+    vi.mocked(api.fetchMatchSummaries).mockResolvedValue([]);
+    vi.mocked(api.fetchRanked).mockResolvedValue([]);
+    vi.mocked(api.fetchLiveGame).mockResolvedValue(null);
+    vi.mocked(api.fetchStats).mockResolvedValue({
+      totalGames: 0, wins: 0, losses: 0, winRate: 0,
+      averageKills: 0, averageDeaths: 0, averageAssists: 0, averageKda: 0,
+    });
+  });
+
+  it("fills the search box with the player's Riot ID when opened by PUUID", async () => {
+    render(
+      <MemoryRouter initialEntries={["/player/puuid/NA/puuid-1"]}>
+        <Routes>
+          <Route path="/player/puuid/:region/:puuid" element={<PlayerPage />} />
+        </Routes>
+      </MemoryRouter>,
+    );
+    expect(screen.getByTestId("header-search")).toHaveTextContent(/^#$/);
+    await waitFor(() => expect(screen.getByTestId("header-search")).toHaveTextContent("Faker#KR1"));
   });
 });

@@ -205,7 +205,7 @@ export default function LeaderboardPage() {
 
       {status === "loading" && (
         <div style={styles.tableWrapper}>
-          <table style={styles.table}>
+          <table className="lb-table" style={styles.table}>
             <thead>
               <tr>
                 <th style={{ ...styles.th, width: 60, textAlign: "center" }}>#</th>
@@ -255,7 +255,7 @@ export default function LeaderboardPage() {
       )}
       {status === "done" && (
         <div style={styles.tableWrapper}>
-          <table style={styles.table}>
+          <table className="lb-table" style={styles.table}>
             <thead>
               <tr>
                 <th style={{ ...styles.th, width: 60, textAlign: "center" }}>#</th>
@@ -318,6 +318,7 @@ export default function LeaderboardPage() {
                         <img
                           src={tierIconUrl(entry.tier)}
                           alt={entry.tier}
+                          className="lb-tier-icon"
                           style={styles.tierIcon}
                           onError={(e) => {
                             (e.target as HTMLImageElement).style.display = "none";

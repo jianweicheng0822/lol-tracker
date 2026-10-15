@@ -53,3 +53,16 @@ body {
   .app-header__logo { font-size: 16px !important; }
   .app-header__link { padding: 5px 8px !important; font-size: 12px !important; }
 }
+
+/*
+ * Leaderboard on phones: drop the W/L column (the win rate already says it) and the small tier
+ * icon, and tighten the cells, so rank, player, LP and win rate fit without sideways scrolling.
+ */
+@media (max-width: 640px) {
+  .lb-table th, .lb-table td { padding: 10px 6px !important; }
+  .lb-table th:first-child, .lb-table td:first-child { width: 32px !important; }
+  .lb-table th:nth-child(3), .lb-table th:nth-child(4) { width: auto !important; }
+  .lb-table td:nth-child(3) { white-space: nowrap; }
+  .lb-table td:nth-child(2) { overflow-wrap: anywhere; }
+  .lb-table th:nth-child(5), .lb-table td:nth-child(5), .lb-tier-icon { display: none !important; }
+}

@@ -22,6 +22,7 @@ import { addLocalEntry } from "../utils/searchHistory";
 import type { Region, Account, MatchSummary, PlayerStats, RankedEntry, LiveGame } from "../types";
 import { REGIONS } from "../types";
 import LiveGameCard from "../components/LiveGameCard";
+import PlayerPageSkeleton from "../components/PlayerPageSkeleton";
 import { computeStreak, computeClimbStatus } from "../utils/playerInsights";
 import { COLORS } from "../utils/colors";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
@@ -296,7 +297,7 @@ export default function PlayerPage() {
       {/* Content */}
       <div style={styles.content}>
         {status === "loading" && (
-          <div style={styles.loadingBox}>Loading player data...</div>
+          <PlayerPageSkeleton />
         )}
 
         {status === "error" && notFound && (
@@ -394,12 +395,6 @@ const styles: Record<string, React.CSSProperties> = {
     maxWidth: 1200,
     margin: "0 auto",
     padding: "30px 20px",
-  },
-  loadingBox: {
-    textAlign: "center",
-    padding: 40,
-    opacity: 0.6,
-    fontSize: 16,
   },
   errorBox: {
     background: "#2d1111",

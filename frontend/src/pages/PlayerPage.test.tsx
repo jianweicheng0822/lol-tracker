@@ -205,6 +205,19 @@ describe("PlayerPage refresh", () => {
     });
   });
 
+  it("shows a skeleton of the page while the player loads", async () => {
+    let finishLoad!: (value: typeof account) => void;
+    vi.mocked(api.fetchAccount).mockReturnValueOnce(new Promise((resolve) => { finishLoad = resolve; }));
+    renderPage();
+
+    expect(screen.getByRole("status", { name: "Loading player" })).toBeInTheDocument();
+    expect(screen.queryByTestId("header-name")).not.toBeInTheDocument();
+
+    finishLoad(account);
+    expect(await screen.findByTestId("header-name")).toHaveTextContent("Faker");
+    expect(screen.queryByRole("status", { name: "Loading player" })).not.toBeInTheDocument();
+  });
+
   it("keeps the page on screen while refreshing, then shows the new data", async () => {
     const user = userEvent.setup();
     renderPage();
@@ -215,7 +228,7 @@ describe("PlayerPage refresh", () => {
     await user.click(screen.getByText("Refresh"));
 
     // No full-page loading state: the current data stays visible
-    expect(screen.queryByText("Loading player data...")).not.toBeInTheDocument();
+    expect(screen.queryByRole("status", { name: "Loading player" })).not.toBeInTheDocument();
     expect(screen.getByTestId("header-name")).toHaveTextContent("Faker");
     expect(screen.getByTestId("refreshing")).toHaveTextContent("true");
 
@@ -267,8 +280,8 @@ describe("PlayerPage errors", () => {
     vi.mocked(api.fetchAccount).mockRejectedValue(new api.PlayerNotFoundError("Riot account not found."));
     renderPage();
 
-    const box = await screen.findByRole("status");
-    expect(box).toHaveTextContent("No player named Faker#KR1 found in NA");
+    // Wait for the loading skeleton (also a status region) to give way to the message
+    await waitFor(() => expect(screen.getByRole("status")).toHaveTextContent("No player named Faker#KR1 found in NA"));
     const regionButtons = ["EUW", "KR", "JP", "BR", "OCE"];
     for (const r of regionButtons) expect(screen.getByRole("button", { name: r })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "NA" })).not.toBeInTheDocument();

@@ -90,7 +90,7 @@ export default function ChampionsTab({ puuid, refreshToken = 0 }: Props) {
               onClick={() => { setCountFilter(opt.value); setLoading(true); }}
               style={{
                 ...styles.pill,
-                background: countFilter === opt.value ? "#D4A017" : "transparent",
+                background: countFilter === opt.value ? "#C89B3C" : "transparent",
                 color: countFilter === opt.value ? COLORS.pageBg : COLORS.textTertiary,
               }}
             >
@@ -105,7 +105,7 @@ export default function ChampionsTab({ puuid, refreshToken = 0 }: Props) {
               onClick={() => { setQueueFilter(opt.value); setLoading(true); }}
               style={{
                 ...styles.pill,
-                background: queueFilter === opt.value ? "#D4A017" : "transparent",
+                background: queueFilter === opt.value ? "#C89B3C" : "transparent",
                 color: queueFilter === opt.value ? COLORS.pageBg : COLORS.textTertiary,
               }}
             >
@@ -196,8 +196,8 @@ function WinLossBar({ wins, losses }: { wins: number; losses: number }) {
       <div style={{
         width: `${winPct}%`,
         minWidth: wins > 0 ? 20 : 0,
-        background: "rgba(72,209,160,0.25)",
-        color: "#48D1A0",
+        background: "rgba(10,200,185,0.25)",
+        color: "#0AC8B9",
         textAlign: "center",
         whiteSpace: "nowrap",
       }}>
@@ -253,7 +253,7 @@ const styles: Record<string, React.CSSProperties> = {
   card: {
     background: COLORS.cardBg,
     border: `1px solid ${COLORS.cardBorder}`,
-    borderRadius: 6,
+    borderRadius: 3,
     padding: 16,
   },
   statsRow: {

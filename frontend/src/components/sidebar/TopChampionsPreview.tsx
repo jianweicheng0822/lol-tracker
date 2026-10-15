@@ -82,8 +82,8 @@ function WinLossBar({ wins, losses }: { wins: number; losses: number }) {
       <div style={{
         width: `${winPct}%`,
         minWidth: wins > 0 ? 20 : 0,
-        background: "rgba(72,209,160,0.25)",
-        color: "#48D1A0",
+        background: "rgba(10,200,185,0.25)",
+        color: "#0AC8B9",
         textAlign: "center",
         whiteSpace: "nowrap",
         overflow: "hidden",
@@ -161,7 +161,7 @@ const styles: Record<string, React.CSSProperties> = {
   card: {
     background: COLORS.cardBg,
     border: `1px solid ${COLORS.cardBorder}`,
-    borderRadius: 6,
+    borderRadius: 3,
     padding: 12,
     marginBottom: 12,
   },
@@ -180,7 +180,7 @@ const styles: Record<string, React.CSSProperties> = {
   viewAll: {
     background: "none",
     border: "none",
-    color: "#D4A017",
+    color: "#C89B3C",
     fontSize: 12,
     fontWeight: 600,
     cursor: "pointer",

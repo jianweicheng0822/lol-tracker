@@ -116,7 +116,7 @@ export default function LiveMatchPage() {
             <div style={styles.teamsGrid}>
               <TeamColumn
                 label="Blue Team"
-                labelColor="#3A8FD6"
+                labelColor="#0AC8B9"
                 participants={blueTeam}
                 region={region!}
                 base={base}
@@ -215,9 +215,9 @@ function TeamColumn({
 const styles: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "100vh",
-    background: "#121210",
+    background: "transparent",
     color: COLORS.textPrimary,
-    fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
+    fontFamily: "Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
   },
   content: {
     maxWidth: 1000,
@@ -234,7 +234,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: "#2d1111",
     color: "#E88A8A",
     padding: 20,
-    borderRadius: 8,
+    borderRadius: 4,
     textAlign: "center",
   },
   backBtn: {
@@ -242,7 +242,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: "transparent",
     color: COLORS.textTertiary,
     border: `1px solid ${COLORS.cardBorder}`,
-    borderRadius: 6,
+    borderRadius: 3,
     padding: "8px 18px",
     cursor: "pointer",
     fontWeight: 600,
@@ -289,7 +289,7 @@ const styles: Record<string, React.CSSProperties> = {
   teamCol: {
     background: COLORS.cardBg,
     border: `1px solid ${COLORS.cardBorder}`,
-    borderRadius: 10,
+    borderRadius: 4,
     padding: "16px 20px",
     display: "flex",
     flexDirection: "column",
@@ -311,7 +311,7 @@ const styles: Record<string, React.CSSProperties> = {
   champIcon: {
     width: 48,
     height: 48,
-    borderRadius: 8,
+    borderRadius: 4,
   },
   participantInfo: {
     flex: 1,

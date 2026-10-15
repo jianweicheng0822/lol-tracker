@@ -78,7 +78,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: 56,
     height: 56,
     borderRadius: "50%",
-    background: "linear-gradient(135deg, #D4A017, #F5D060)",
+    background: "linear-gradient(135deg, #C89B3C, #F0E6D2)",
     color: "#1a1a1a",
     fontSize: 28,
     fontWeight: 700,
@@ -107,7 +107,7 @@ const styles: Record<string, React.CSSProperties> = {
   btn: {
     background: "rgba(255,255,255,0.08)",
     border: `1px solid ${COLORS.cardBorder}`,
-    borderRadius: 8,
+    borderRadius: 4,
     color: "#fff",
     padding: "10px 28px",
     fontSize: 14,

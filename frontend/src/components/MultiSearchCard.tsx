@@ -122,7 +122,7 @@ function RecentForm({ puuid, region }: { puuid: string; region: string }) {
           {games.map((g) => (
             <span
               key={g.matchId}
-              style={{ ...styles.formBox, background: g.win ? "#1f6f55" : "#7a2734" }}
+              style={{ ...styles.formBox, background: g.win ? "#0B7A71" : "#7a2734" }}
               title={`${g.win ? "Win" : "Loss"} · ${g.championName} ${g.kills}/${g.deaths}/${g.assists}`}
             >
               {g.win ? "W" : "L"}
@@ -215,7 +215,7 @@ const styles: Record<string, React.CSSProperties> = {
   card: {
     background: COLORS.cardBg,
     border: `1px solid ${COLORS.cardBorder}`,
-    borderRadius: 10,
+    borderRadius: 4,
     padding: "16px 20px",
     cursor: "pointer",
     transition: "border-color 0.15s ease",
@@ -237,7 +237,7 @@ const styles: Record<string, React.CSSProperties> = {
   icon: {
     width: 40,
     height: 40,
-    borderRadius: 8,
+    borderRadius: 4,
   },
   name: {
     fontSize: 15,
@@ -336,7 +336,7 @@ const styles: Record<string, React.CSSProperties> = {
   mainIcon: {
     width: 28,
     height: 28,
-    borderRadius: 6,
+    borderRadius: 3,
   },
   mainPoints: {
     fontSize: 11,

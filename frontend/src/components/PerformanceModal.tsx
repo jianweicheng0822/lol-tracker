@@ -60,7 +60,7 @@ export default function PerformanceModal({ puuid, onClose }: Props) {
     };
   });
 
-  const tooltipStyle = { background: COLORS.pageBg, border: `1px solid ${COLORS.cardBorder}`, borderRadius: 6, fontSize: 12, color: COLORS.textPrimary };
+  const tooltipStyle = { background: COLORS.pageBg, border: `1px solid ${COLORS.cardBorder}`, borderRadius: 3, fontSize: 12, color: COLORS.textPrimary };
 
   const tierTicks = [0, 400, 800, 1200, 1600, 2000, 2400, 2800];
   const tierNames: Record<number, string> = {
@@ -72,7 +72,7 @@ export default function PerformanceModal({ puuid, onClose }: Props) {
     if (cx == null || cy == null || index == null) return null;
     const point = lpChartData[index];
     if (!point) return null;
-    const color = TIER_COLORS[point.tier] ?? "#D4A017";
+    const color = TIER_COLORS[point.tier] ?? "#C89B3C";
     return <circle cx={cx} cy={cy} r={4} fill={color} stroke={COLORS.pageBg} strokeWidth={1} />;
   };
 
@@ -80,7 +80,7 @@ export default function PerformanceModal({ puuid, onClose }: Props) {
   const renderLpTooltip = ({ active, payload }: any) => {
     if (!active || !payload?.[0]) return null;
     const d = payload[0].payload as (typeof lpChartData)[number];
-    const color = TIER_COLORS[d.tier] ?? "#D4A017";
+    const color = TIER_COLORS[d.tier] ?? "#C89B3C";
     return (
       <div style={{ ...tooltipStyle, padding: "8px 12px" }}>
         <div style={{ color, fontWeight: 700, marginBottom: 2 }}>{d.label}</div>
@@ -107,7 +107,7 @@ export default function PerformanceModal({ puuid, onClose }: Props) {
                 onClick={() => { setQueue(q.id); setLoading(true); }}
                 style={{
                   ...styles.pill,
-                  background: queue === q.id ? "#D4A017" : "transparent",
+                  background: queue === q.id ? "#C89B3C" : "transparent",
                   color: queue === q.id ? COLORS.pageBg : COLORS.textTertiary,
                 }}
               >
@@ -137,8 +137,8 @@ export default function PerformanceModal({ puuid, onClose }: Props) {
                     title={tooltip}
                     style={{
                       ...styles.rangePill,
-                      background: lpRange === r ? "#D4A017" : "transparent",
-                      color: lpRange === r ? COLORS.pageBg : disabled ? "#2a2a30" : COLORS.textTertiary,
+                      background: lpRange === r ? "#C89B3C" : "transparent",
+                      color: lpRange === r ? COLORS.pageBg : disabled ? "#3C3C41" : COLORS.textTertiary,
                       cursor: disabled ? "default" : "pointer",
                     }}
                   >
@@ -173,7 +173,7 @@ export default function PerformanceModal({ puuid, onClose }: Props) {
                   domain={["dataMin - 100", "dataMax + 100"]}
                 />
                 <Tooltip content={renderLpTooltip} />
-                <Line type="monotone" dataKey="lp" stroke="#D4A017" strokeWidth={2} dot={renderLpDot} />
+                <Line type="monotone" dataKey="lp" stroke="#C89B3C" strokeWidth={2} dot={renderLpDot} />
               </LineChart>
             </ResponsiveContainer>
           )}
@@ -196,7 +196,7 @@ const styles: Record<string, React.CSSProperties> = {
   modal: {
     background: COLORS.pageBg,
     border: `1px solid ${COLORS.cardBorder}`,
-    borderRadius: 10,
+    borderRadius: 4,
     maxWidth: 900,
     width: "90vw",
     maxHeight: "80vh",
@@ -250,7 +250,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   rangePill: {
     border: `1px solid ${COLORS.cardBorder}`,
-    borderRadius: 12,
+    borderRadius: 4,
     padding: "3px 10px",
     fontSize: 11,
     fontWeight: 600,

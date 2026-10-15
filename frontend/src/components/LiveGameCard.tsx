@@ -75,7 +75,7 @@ export default function LiveGameCard({
       </div>
 
       <div style={styles.teams}>
-        <TeamIcons participants={blueTeam} base={base} championMap={championMap} color="#3A8FD6" label="Blue" />
+        <TeamIcons participants={blueTeam} base={base} championMap={championMap} color="#0AC8B9" label="Blue" />
         <span style={styles.vs}>VS</span>
         <TeamIcons participants={redTeam} base={base} championMap={championMap} color="#E84057" label="Red" />
       </div>
@@ -133,7 +133,7 @@ const styles: Record<string, React.CSSProperties> = {
   card: {
     background: COLORS.cardBg,
     border: `1px solid ${COLORS.cardBorder}`,
-    borderRadius: 10,
+    borderRadius: 4,
     padding: "16px 20px",
     marginBottom: 20,
   },
@@ -225,13 +225,13 @@ const styles: Record<string, React.CSSProperties> = {
   champIcon: {
     width: 28,
     height: 28,
-    borderRadius: 6,
+    borderRadius: 3,
   },
   viewBtn: {
-    background: "rgba(72,209,160,0.15)",
-    color: "#48D1A0",
-    border: "1px solid rgba(72,209,160,0.3)",
-    borderRadius: 6,
+    background: "rgba(10,200,185,0.15)",
+    color: "#0AC8B9",
+    border: "1px solid rgba(10,200,185,0.3)",
+    borderRadius: 3,
     padding: "8px 18px",
     cursor: "pointer",
     fontWeight: 700,

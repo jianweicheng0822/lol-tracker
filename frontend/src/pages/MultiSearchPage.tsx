@@ -95,7 +95,7 @@ export default function MultiSearchPage() {
               style={styles.searchBtn}
               onClick={handleSearch}
               disabled={status === "loading"}
-              onMouseEnter={(e) => { if (status !== "loading") e.currentTarget.style.background = "#c49415"; }}
+              onMouseEnter={(e) => { if (status !== "loading") e.currentTarget.style.background = "#C89B3C"; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = COLORS.gold; }}
             >
               {status === "loading" ? "Searching..." : "Search"}
@@ -135,9 +135,9 @@ export default function MultiSearchPage() {
 const styles: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "100vh",
-    background: "#121210",
+    background: "transparent",
     color: COLORS.textPrimary,
-    fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
+    fontFamily: "Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
   },
   content: {
     maxWidth: 800,
@@ -163,9 +163,9 @@ const styles: Record<string, React.CSSProperties> = {
   },
   textarea: {
     width: "100%",
-    background: "rgba(35,35,40,0.85)",
+    background: "rgba(30,40,45,0.55)",
     border: `1px solid ${COLORS.cardBorder}`,
-    borderRadius: 8,
+    borderRadius: 4,
     color: COLORS.textPrimary,
     padding: "12px 14px",
     fontSize: 14,
@@ -180,9 +180,9 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
   },
   select: {
-    background: "rgba(35,35,40,0.85)",
+    background: "rgba(30,40,45,0.55)",
     border: `1px solid ${COLORS.cardBorder}`,
-    borderRadius: 6,
+    borderRadius: 3,
     color: COLORS.textPrimary,
     padding: "8px 12px",
     fontSize: 13,
@@ -192,7 +192,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: COLORS.gold,
     color: "#000",
     border: "none",
-    borderRadius: 6,
+    borderRadius: 3,
     padding: "8px 24px",
     fontSize: 14,
     fontWeight: 700,
@@ -203,16 +203,16 @@ const styles: Record<string, React.CSSProperties> = {
     background: "#2d1111",
     color: "#E88A8A",
     padding: 12,
-    borderRadius: 6,
+    borderRadius: 3,
     marginTop: 16,
     fontSize: 13,
   },
   noticeBox: {
-    background: "rgba(212,160,23,0.08)",
-    border: "1px solid rgba(212,160,23,0.25)",
-    color: "#E8C46A",
+    background: "rgba(200,155,60,0.08)",
+    border: "1px solid rgba(200,155,60,0.25)",
+    color: "#F0E6D2",
     padding: 12,
-    borderRadius: 6,
+    borderRadius: 3,
     marginTop: 16,
     fontSize: 13,
     display: "flex",

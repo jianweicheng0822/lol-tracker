@@ -28,14 +28,14 @@ describe("StatsBar", () => {
     expect(screen.getByText("3.76")).toBeInTheDocument();
   });
 
-  it("color-codes KDA (green for >=3)", () => {
+  it("color-codes KDA (teal for >=3)", () => {
     render(<StatsBar stats={makePlayerStats({ averageKda: 3.5 })} matches={[makeMatchSummary()]} />);
-    expect(screen.getByText("3.50")).toHaveStyle({ color: "#48D1A0" });
+    expect(screen.getByText("3.50")).toHaveStyle({ color: "#0AC8B9" });
   });
 
   it("color-codes KDA (gray for >=2 and <3)", () => {
     render(<StatsBar stats={makePlayerStats({ averageKda: 2.5 })} matches={[makeMatchSummary()]} />);
-    expect(screen.getByText("2.50")).toHaveStyle({ color: "#9AA4AF" });
+    expect(screen.getByText("2.50")).toHaveStyle({ color: "#A09B8C" });
   });
 
   it("color-codes KDA (red for <2)", () => {

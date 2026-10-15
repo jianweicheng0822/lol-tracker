@@ -106,7 +106,7 @@ const styles: Record<string, React.CSSProperties> = {
   badge: {
     background: COLORS.cardBg,
     border: `1px solid ${COLORS.cardBorder}`,
-    borderRadius: 6,
+    borderRadius: 3,
     padding: "12px 20px",
     minWidth: 180,
   },
@@ -138,7 +138,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   lp: {
     fontSize: 14,
-    color: "#D4A017",
+    color: "#C89B3C",
     fontWeight: 600,
   },
   record: {

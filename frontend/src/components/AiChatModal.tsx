@@ -130,8 +130,8 @@ export default function AiChatModal({ match, onClose }: Props) {
         style={{
           width: 520,
           maxHeight: "85vh",
-          background: "#111110",
-          borderRadius: 10,
+          background: "#0A1428",
+          borderRadius: 4,
           display: "flex",
           flexDirection: "column",
           border: "1px solid rgba(255,255,255,0.08)",
@@ -156,7 +156,7 @@ export default function AiChatModal({ match, onClose }: Props) {
                   marginLeft: 8,
                   fontSize: 12,
                   fontWeight: 500,
-                  color: isWin ? "#D4A017" : "#E84057",
+                  color: isWin ? "#0AC8B9" : "#E84057",
                 }}
               >
                 {isWin ? "Victory" : "Defeat"}
@@ -213,7 +213,7 @@ export default function AiChatModal({ match, onClose }: Props) {
                 style={{
                   padding: "10px 14px",
                   borderRadius: msg.role === "user" ? "14px 14px 4px 14px" : "14px 14px 14px 4px",
-                  background: msg.role === "user" ? "#B8860B" : "#1e1c18",
+                  background: msg.role === "user" ? "#785A28" : "#1E2328",
                   color: COLORS.textPrimary,
                   fontSize: 13,
                   lineHeight: 1.5,
@@ -232,7 +232,7 @@ export default function AiChatModal({ match, onClose }: Props) {
                 style={{
                   padding: "10px 14px",
                   borderRadius: "14px 14px 14px 4px",
-                  background: "#1e1c18",
+                  background: "#1E2328",
                   color: COLORS.textPrimary,
                   fontSize: 13,
                   lineHeight: 1.5,
@@ -251,7 +251,7 @@ export default function AiChatModal({ match, onClose }: Props) {
                 style={{
                   padding: "10px 14px",
                   borderRadius: "14px 14px 14px 4px",
-                  background: "#1e1c18",
+                  background: "#1E2328",
                   display: "flex",
                   gap: 4,
                   alignItems: "center",
@@ -299,9 +299,9 @@ export default function AiChatModal({ match, onClose }: Props) {
             style={{
               flex: 1,
               padding: "10px 14px",
-              borderRadius: 6,
+              borderRadius: 3,
               border: "1px solid rgba(255,255,255,0.1)",
-              background: "#121210",
+              background: "#010A13",
               color: COLORS.textPrimary,
               fontSize: 13,
               outline: "none",
@@ -312,9 +312,9 @@ export default function AiChatModal({ match, onClose }: Props) {
             disabled={isLoading || !input.trim()}
             style={{
               padding: "10px 18px",
-              borderRadius: 6,
+              borderRadius: 3,
               border: "none",
-              background: isLoading || !input.trim() ? "#1e1c18" : "#B8860B",
+              background: isLoading || !input.trim() ? "#1E2328" : "#785A28",
               color: isLoading || !input.trim() ? COLORS.textDim : "#fff",
               cursor: isLoading || !input.trim() ? "not-allowed" : "pointer",
               fontSize: 13,

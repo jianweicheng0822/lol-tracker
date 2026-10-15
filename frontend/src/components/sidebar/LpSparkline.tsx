@@ -121,7 +121,7 @@ export default function LpSparkline({ puuid, onClick }: Props) {
   };
 
   const displayPoint = hoveredIdx !== null ? data[hoveredIdx] : latest;
-  const tierColor = TIER_COLORS[displayPoint.tier.toUpperCase()] ?? "#D4A017";
+  const tierColor = TIER_COLORS[displayPoint.tier.toUpperCase()] ?? "#C89B3C";
 
   return (
     <div style={styles.card}>
@@ -150,7 +150,7 @@ export default function LpSparkline({ puuid, onClick }: Props) {
             cx={p.x}
             cy={p.y}
             r={hoveredIdx === i ? 5 : 3.5}
-            fill={TIER_COLORS[data[i].tier.toUpperCase()] ?? "#D4A017"}
+            fill={TIER_COLORS[data[i].tier.toUpperCase()] ?? "#C89B3C"}
             stroke={hoveredIdx === i ? COLORS.textPrimary : "none"}
             strokeWidth={hoveredIdx === i ? 1.5 : 0}
           />
@@ -162,7 +162,7 @@ export default function LpSparkline({ puuid, onClick }: Props) {
             y1={PAD_Y}
             x2={points[hoveredIdx].x}
             y2={H - PAD_Y}
-            stroke="rgba(212,160,23,0.3)"
+            stroke="rgba(200,155,60,0.3)"
             strokeWidth={1}
             strokeDasharray="3,3"
           />
@@ -180,7 +180,7 @@ const styles: Record<string, React.CSSProperties> = {
   card: {
     background: COLORS.cardBg,
     border: `1px solid ${COLORS.cardBorder}`,
-    borderRadius: 6,
+    borderRadius: 3,
     padding: 12,
     marginBottom: 12,
   },
@@ -204,7 +204,7 @@ const styles: Record<string, React.CSSProperties> = {
   infoTier: {
     fontSize: 13,
     fontWeight: 700,
-    color: "#D4A017",
+    color: "#C89B3C",
   },
   infoLp: {
     fontSize: 16,

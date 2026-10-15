@@ -6,9 +6,10 @@
 
 body {
   min-height: 100vh;
-  background: #1c1c1f;
-  color: #FFFFFF;
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  /* Hextech: navy fading to near-black, like the League client */
+  background: linear-gradient(180deg, #0A1428 0%, #010A13 70%) fixed, #010A13;
+  color: #F0E6D2;
+  font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
@@ -17,10 +18,21 @@ body {
   min-height: 100vh;
 }
 
+/* Form controls don't inherit the page font by default, so buttons and inputs fell back to Arial */
+button, input, select, textarea {
+  font-family: inherit;
+}
+
+/* Page titles use the League-style serif; body text stays Inter */
+h1, h2 {
+  font-family: Cinzel, Georgia, serif;
+  letter-spacing: 0.5px;
+}
+
 /* Focus glow for gold-themed inputs */
 .gold-input:focus {
-  border-color: rgba(212,160,23,0.45) !important;
-  box-shadow: 0 0 0 2px rgba(212,160,23,0.25);
+  border-color: rgba(200,155,60,0.45) !important;
+  box-shadow: 0 0 0 2px rgba(200,155,60,0.25);
 }
 
 @keyframes shimmer {

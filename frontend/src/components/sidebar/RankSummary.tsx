@@ -85,7 +85,7 @@ const styles: Record<string, React.CSSProperties> = {
   card: {
     background: COLORS.cardBg,
     border: `1px solid ${COLORS.cardBorder}`,
-    borderRadius: 6,
+    borderRadius: 3,
     padding: 20,
     marginBottom: 12,
     display: "flex",
@@ -118,7 +118,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   lp: {
     fontSize: 16,
-    color: "#D4A017",
+    color: "#C89B3C",
     fontWeight: 700,
   },
   record: {

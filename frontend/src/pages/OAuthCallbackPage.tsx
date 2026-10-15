@@ -46,14 +46,14 @@ export default function OAuthCallbackPage() {
 const styles: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "100vh",
-    background: "#121210",
+    background: "transparent",
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
   },
   card: {
-    background: "#111110",
-    borderRadius: 10,
+    background: "#0A1428",
+    borderRadius: 4,
     border: "1px solid rgba(255,255,255,0.08)",
     padding: "40px 32px",
     textAlign: "center",
@@ -66,9 +66,9 @@ const styles: Record<string, React.CSSProperties> = {
   },
   button: {
     padding: "10px 24px",
-    borderRadius: 6,
+    borderRadius: 3,
     border: "none",
-    background: "#D4A017",
+    background: "#C89B3C",
     color: "#0F0F0F",
     cursor: "pointer",
     fontWeight: 700,

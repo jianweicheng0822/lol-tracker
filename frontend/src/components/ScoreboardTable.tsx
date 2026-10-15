@@ -30,7 +30,7 @@ function MultiKillBadges({ p }: { p: MatchDetailParticipant }) {
   const badges: { label: string; color: string }[] = [];
   if (p.pentaKills > 0) badges.push({ label: "PENTA", color: "#F5A623" });
   else if (p.quadraKills > 0) badges.push({ label: "QUADRA", color: "#a78bfa" });
-  else if (p.tripleKills > 0) badges.push({ label: "TRIPLE", color: "#D4A017" });
+  else if (p.tripleKills > 0) badges.push({ label: "TRIPLE", color: "#C89B3C" });
   else if (p.doubleKills > 0) badges.push({ label: "DOUBLE", color: COLORS.textTertiary });
   if (badges.length === 0) return null;
   return (
@@ -41,10 +41,10 @@ function MultiKillBadges({ p }: { p: MatchDetailParticipant }) {
 }
 
 const PLACEMENT_COLORS: Record<number, string> = {
-  1: "#c9952c",
-  2: "#D4A017",
-  3: "#D4A017",
-  4: "#D4A017",
+  1: "#C89B3C",
+  2: "#C89B3C",
+  3: "#C89B3C",
+  4: "#C89B3C",
   5: "#E84057",
   6: "#E84057",
   7: "#E84057",
@@ -183,9 +183,9 @@ function ArenaPlayerRow({
         gap: 4,
         padding: "6px 8px",
         alignItems: "center",
-        background: isMe ? "rgba(212,160,23,0.1)" : undefined,
+        background: isMe ? "rgba(200,155,60,0.1)" : undefined,
         borderRadius: 4,
-        borderLeft: isMe ? "2px solid #D4A017" : "2px solid transparent",
+        borderLeft: isMe ? "2px solid #C89B3C" : "2px solid transparent",
       }}
     >
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -229,7 +229,7 @@ function ArenaPlayerRow({
         <div style={{ height: "100%", width: `${dmgPct}%`, background: plColor, borderRadius: 4, opacity: 0.7 }} />
       </div>
 
-      <div style={{ textAlign: "center", fontSize: 12, color: "#eab308" }}>
+      <div style={{ textAlign: "center", fontSize: 12, color: "#C89B3C" }}>
         {formatNumber(p.goldEarned)}
       </div>
 
@@ -265,7 +265,7 @@ export function ScoreboardTeamTable({
   const isAram = queueId === 450;
   const showWards = !isAram;
 
-  const teamColor = team.win ? "#D4A017" : "#E84057";
+  const teamColor = team.win ? "#0AC8B9" : "#E84057";
   const teamLabel = team.win ? "Victory" : "Defeat";
 
   const maxDamage = Math.max(...participants.map((p) => p.totalDamageDealtToChampions), 1) || 1;
@@ -276,7 +276,7 @@ export function ScoreboardTeamTable({
 
   return (
     <div style={{ marginBottom: 24 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8, padding: "8px 12px", borderLeft: `4px solid ${teamColor}`, background: team.win ? "rgba(212,160,23,0.08)" : "rgba(232,64,87,0.08)", borderRadius: "0 6px 6px 0" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 8, padding: "8px 12px", borderLeft: `4px solid ${teamColor}`, background: team.win ? "rgba(10,200,185,0.08)" : "rgba(232,64,87,0.08)", borderRadius: "0 6px 6px 0" }}>
         <span style={{ fontWeight: 700, color: teamColor, fontSize: 14 }}>{teamLabel}</span>
       </div>
 
@@ -308,9 +308,9 @@ export function ScoreboardTeamTable({
               gap: 4,
               padding: "6px 8px",
               alignItems: "center",
-              background: isMe ? "rgba(212,160,23,0.1)" : undefined,
+              background: isMe ? "rgba(200,155,60,0.1)" : undefined,
               borderRadius: 4,
-              borderLeft: isMe ? "2px solid #D4A017" : "2px solid transparent",
+              borderLeft: isMe ? "2px solid #C89B3C" : "2px solid transparent",
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
@@ -352,10 +352,10 @@ export function ScoreboardTeamTable({
             </div>
 
             <div style={{ height: 8, background: COLORS.divider, borderRadius: 4, overflow: "hidden" }}>
-              <div style={{ height: "100%", width: `${dmgPct}%`, background: team.win ? "#D4A017" : "#E84057", borderRadius: 4 }} />
+              <div style={{ height: "100%", width: `${dmgPct}%`, background: team.win ? "#0AC8B9" : "#E84057", borderRadius: 4 }} />
             </div>
 
-            <div style={{ textAlign: "center", fontSize: 12, color: "#eab308" }}>
+            <div style={{ textAlign: "center", fontSize: 12, color: "#C89B3C" }}>
               {formatNumber(p.goldEarned)}
             </div>
 
@@ -415,12 +415,12 @@ function PlayerName({
         whiteSpace: "nowrap",
         cursor: canNavigate ? "pointer" : undefined,
         textDecoration: canNavigate && hovered ? "underline" : undefined,
-        color: canNavigate && hovered ? "#D4A017" : undefined,
+        color: canNavigate && hovered ? "#C89B3C" : undefined,
         transition: "color 0.15s",
       }}
     >
       {name}
-      {isMe && <span style={{ color: "#D4A017", fontSize: 9, marginLeft: 3, opacity: 0.8 }}>(You)</span>}
+      {isMe && <span style={{ color: "#C89B3C", fontSize: 9, marginLeft: 3, opacity: 0.8 }}>(You)</span>}
     </span>
   );
 }

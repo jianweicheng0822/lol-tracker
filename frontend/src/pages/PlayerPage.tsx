@@ -387,9 +387,9 @@ export default function PlayerPage() {
 const styles: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "100vh",
-    background: "#121210",
+    background: "transparent",
     color: COLORS.textPrimary,
-    fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
+    fontFamily: "Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
   },
   content: {
     maxWidth: 1200,
@@ -400,7 +400,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: "#2d1111",
     color: "#E88A8A",
     padding: 15,
-    borderRadius: 6,
+    borderRadius: 3,
     display: "flex",
     alignItems: "center",
     justifyContent: "space-between",
@@ -410,7 +410,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: "transparent",
     border: "1px solid rgba(232,138,138,0.4)",
     color: "#E88A8A",
-    borderRadius: 6,
+    borderRadius: 3,
     padding: "6px 14px",
     fontSize: 13,
     fontWeight: 600,
@@ -420,7 +420,7 @@ const styles: Record<string, React.CSSProperties> = {
   notFoundBox: {
     background: COLORS.cardBg,
     border: `1px solid ${COLORS.cardBorder}`,
-    borderRadius: 10,
+    borderRadius: 4,
     padding: "28px 24px",
     textAlign: "center",
     maxWidth: 640,
@@ -430,6 +430,9 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 20,
     fontWeight: 700,
     margin: "0 0 10px",
+    // Contains a Riot ID, so not the all-caps heading font
+    fontFamily: "inherit",
+    letterSpacing: "normal",
   },
   notFoundText: {
     fontSize: 14,
@@ -449,10 +452,10 @@ const styles: Record<string, React.CSSProperties> = {
     color: COLORS.textTertiary,
   },
   regionBtn: {
-    background: "rgba(212,160,23,0.1)",
-    border: "1px solid rgba(212,160,23,0.3)",
+    background: "rgba(200,155,60,0.1)",
+    border: "1px solid rgba(200,155,60,0.3)",
     color: COLORS.gold,
-    borderRadius: 6,
+    borderRadius: 3,
     padding: "6px 14px",
     fontSize: 13,
     fontWeight: 600,

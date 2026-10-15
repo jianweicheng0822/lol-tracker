@@ -57,7 +57,7 @@ export default function StatsBar({ stats, matches }: StatsBarProps) {
                 fontSize: 24,
                 fontWeight: 800,
                 lineHeight: 1,
-                color: streak.type === "win" ? "#48D1A0" : "#E84057",
+                color: streak.type === "win" ? "#0AC8B9" : "#E84057",
               }}>
                 {streak.type === "win" ? "\u2191" : "\u2193"} {streak.count}{streak.type === "win" ? "W" : "L"}
               </div>
@@ -112,7 +112,7 @@ export default function StatsBar({ stats, matches }: StatsBarProps) {
                   width: 10,
                   height: 10,
                   borderRadius: "50%",
-                  background: m.win ? "#48D1A0" : "#E84057",
+                  background: m.win ? "#0AC8B9" : "#E84057",
                 }}
               />
             ))}
@@ -130,7 +130,7 @@ const styles: Record<string, React.CSSProperties> = {
   container: {
     background: COLORS.cardBg,
     border: `1px solid ${COLORS.cardBorder}`,
-    borderRadius: 6,
+    borderRadius: 3,
     padding: 16,
     marginBottom: 16,
   },

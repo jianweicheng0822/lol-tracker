@@ -79,8 +79,8 @@ export default function AuthModal({ onSuccess, onClose }: Props) {
         onClick={(e) => e.stopPropagation()}
         style={{
           width: 380,
-          background: "#111110",
-          borderRadius: 10,
+          background: "#0A1428",
+          borderRadius: 4,
           border: "1px solid rgba(255,255,255,0.08)",
           boxShadow: "0 24px 48px rgba(0,0,0,0.5)",
           padding: "28px 24px",
@@ -99,7 +99,7 @@ export default function AuthModal({ onSuccess, onClose }: Props) {
             style={{
               background: "none",
               border: "none",
-              color: "#D4A017",
+              color: "#C89B3C",
               cursor: "pointer",
               fontSize: 13,
               textDecoration: "underline",
@@ -153,9 +153,9 @@ export default function AuthModal({ onSuccess, onClose }: Props) {
             disabled={loading || !username.trim() || !password.trim()}
             style={{
               padding: "10px 0",
-              borderRadius: 6,
+              borderRadius: 3,
               border: "none",
-              background: loading || !username.trim() || !password.trim() ? "#1e1c18" : "#B8860B",
+              background: loading || !username.trim() || !password.trim() ? "#1E2328" : "#785A28",
               color: loading || !username.trim() || !password.trim() ? COLORS.textDim : "#fff",
               cursor: loading || !username.trim() || !password.trim() ? "not-allowed" : "pointer",
               fontSize: 14,
@@ -225,9 +225,9 @@ function DiscordIcon() {
 
 const inputStyle: React.CSSProperties = {
   padding: "10px 14px",
-  borderRadius: 6,
+  borderRadius: 3,
   border: "1px solid rgba(255,255,255,0.1)",
-  background: "#121210",
+  background: "#010A13",
   color: COLORS.textPrimary,
   fontSize: 14,
   outline: "none",
@@ -239,7 +239,7 @@ const oauthBtnStyle: React.CSSProperties = {
   justifyContent: "center",
   gap: 10,
   padding: "10px 0",
-  borderRadius: 6,
+  borderRadius: 3,
   border: "1px solid rgba(255,255,255,0.15)",
   background: "#fff",
   color: "#333",

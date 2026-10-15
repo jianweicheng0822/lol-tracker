@@ -39,14 +39,14 @@ describe("RecentStatsPreview", () => {
     expect(screen.getByText("Support")).toBeInTheDocument();
   });
 
-  it("uses blue color for win rate >= 60", () => {
+  it("uses gold for win rate >= 60", () => {
     render(<RecentStatsPreview stats={makePlayerStats({ winRate: 65 })} matches={[makeMatchSummary()]} />);
-    expect(screen.getByText("65%")).toHaveStyle({ color: "#3A8FD6" });
+    expect(screen.getByText("65%")).toHaveStyle({ color: "#C89B3C" });
   });
 
-  it("uses green color for win rate between 50 and 59", () => {
+  it("uses teal for win rate between 50 and 59", () => {
     render(<RecentStatsPreview stats={makePlayerStats({ winRate: 55 })} matches={[makeMatchSummary()]} />);
-    expect(screen.getByText("55%")).toHaveStyle({ color: "#48D1A0" });
+    expect(screen.getByText("55%")).toHaveStyle({ color: "#0AC8B9" });
   });
 
   it("uses red color for win rate below 50", () => {

@@ -40,7 +40,8 @@ export default function ProfileHeader({
           onError={hideOnError}
         />
         <div>
-          <h2 style={{ margin: 0, fontSize: "clamp(22px, 6vw, 28px)", overflowWrap: "anywhere" }}>
+          {/* Body font, not the Cinzel used for headings: it is all caps and would change how the Riot ID reads */}
+          <h2 style={{ margin: 0, fontSize: "clamp(22px, 6vw, 28px)", overflowWrap: "anywhere", fontFamily: "inherit", letterSpacing: "normal" }}>
             {account.gameName}
             <span style={{ color: COLORS.textDim, fontWeight: 400 }}> #{account.tagLine}</span>
           </h2>
@@ -52,8 +53,8 @@ export default function ProfileHeader({
                 fontWeight: 600,
                 padding: "2px 8px",
                 borderRadius: 4,
-                background: streak.type === "win" ? "rgba(72,209,160,0.12)" : "rgba(232,64,87,0.12)",
-                color: streak.type === "win" ? "#48D1A0" : "#E84057",
+                background: streak.type === "win" ? "rgba(10,200,185,0.12)" : "rgba(232,64,87,0.12)",
+                color: streak.type === "win" ? "#0AC8B9" : "#E84057",
               }}>
                 {streak.type === "win" ? "\u2191" : "\u2193"} {streak.count}{streak.type === "win" ? "W" : "L"} Streak
               </span>
@@ -104,30 +105,30 @@ const styles: Record<string, React.CSSProperties> = {
   },
   favBtn: {
     padding: "8px 16px",
-    borderRadius: 6,
-    background: "rgba(212,160,23,0.1)",
-    border: "1px solid rgba(212,160,23,0.3)",
-    color: "#D4A017",
+    borderRadius: 3,
+    background: "rgba(200,155,60,0.1)",
+    border: "1px solid rgba(200,155,60,0.3)",
+    color: "#C89B3C",
     cursor: "pointer",
     fontSize: 13,
     fontWeight: 600,
   },
   favBtnActive: {
     padding: "8px 16px",
-    borderRadius: 6,
-    background: "rgba(212,160,23,0.25)",
-    border: "1px solid rgba(212,160,23,0.5)",
-    color: "#E8C84A",
+    borderRadius: 3,
+    background: "rgba(200,155,60,0.25)",
+    border: "1px solid rgba(200,155,60,0.5)",
+    color: "#F0E6D2",
     cursor: "pointer",
     fontSize: 13,
     fontWeight: 600,
   },
   refreshBtn: {
     padding: "8px 12px",
-    borderRadius: 6,
-    background: "rgba(212,160,23,0.1)",
-    border: "1px solid rgba(212,160,23,0.3)",
-    color: "#D4A017",
+    borderRadius: 3,
+    background: "rgba(200,155,60,0.1)",
+    border: "1px solid rgba(200,155,60,0.3)",
+    color: "#C89B3C",
     cursor: "pointer",
     fontSize: 16,
     fontWeight: 600,
@@ -151,8 +152,8 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     padding: "2px 8px",
     borderRadius: 4,
-    background: "rgba(72,209,160,0.15)",
-    color: "#48D1A0",
+    background: "rgba(10,200,185,0.15)",
+    color: "#0AC8B9",
   },
   fallBadge: {
     fontSize: 12,

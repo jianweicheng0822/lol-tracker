@@ -83,7 +83,7 @@ export default function MatchDetailPage() {
         {status === "done" && match && (
           <>
             {/* Match header */}
-            <div style={{ ...styles.header, borderLeftColor: myWin ? "#D4A017" : "#E84057" }}>
+            <div style={{ ...styles.header, borderLeftColor: myWin ? "#0AC8B9" : "#E84057" }}>
               <div>
                 <span style={{ fontSize: 20, fontWeight: 700 }}>{queueName}</span>
                 <span style={{ fontSize: 14, color: COLORS.textTertiary, marginLeft: 12 }}>
@@ -94,7 +94,7 @@ export default function MatchDetailPage() {
                 </span>
               </div>
               {myParticipant && (
-                <span style={{ fontSize: 18, fontWeight: 700, color: myWin ? "#D4A017" : "#E84057" }}>
+                <span style={{ fontSize: 18, fontWeight: 700, color: myWin ? "#0AC8B9" : "#E84057" }}>
                   {myWin ? "Victory" : "Defeat"}
                 </span>
               )}
@@ -136,15 +136,15 @@ export default function MatchDetailPage() {
 const styles: Record<string, React.CSSProperties> = {
   page: {
     minHeight: "100vh",
-    background: "#121210",
+    background: "transparent",
     color: COLORS.textPrimary,
-    fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
+    fontFamily: "Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
   },
   backBtn: {
     padding: "6px 14px",
-    borderRadius: 6,
+    borderRadius: 3,
     background: "rgba(255,255,255,0.08)",
-    border: "1px solid #1e1c18",
+    border: "1px solid #1E2328",
     color: "#B8A88A",
     cursor: "pointer",
     fontSize: 13,
@@ -161,8 +161,8 @@ const styles: Record<string, React.CSSProperties> = {
     marginBottom: 24,
     padding: "16px 20px",
     background: "rgba(255,255,255,0.03)",
-    borderRadius: 6,
-    borderLeft: "4px solid #1e1c18",
+    borderRadius: 3,
+    borderLeft: "4px solid #1E2328",
   },
   loadingBox: {
     textAlign: "center",
@@ -174,6 +174,6 @@ const styles: Record<string, React.CSSProperties> = {
     background: "#2d1111",
     color: "#E88A8A",
     padding: 15,
-    borderRadius: 6,
+    borderRadius: 3,
   },
 };

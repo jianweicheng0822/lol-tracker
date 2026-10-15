@@ -98,7 +98,7 @@ function getPerformanceTag(
   if (kda >= 5 && killParticipation >= 60)
     return { label: "MVP", color: "#F5A623" };
   if (kda >= 3.5 || (kda >= 2.5 && killParticipation >= 55))
-    return { label: "Strong", color: "#48D1A0" };
+    return { label: "Strong", color: "#0AC8B9" };
   if (kda < 1 || (deaths >= 8 && kda < 1.5))
     return { label: "Struggled", color: COLORS.textDim };
   if (win && kda >= 1.5 && killParticipation >= 35)
@@ -151,7 +151,7 @@ function MatchCard({
       style={{
         display: "flex",
         alignItems: "center",
-        borderRadius: 6,
+        borderRadius: 3,
         background: winBg,
         padding: "8px 12px",
         borderLeft: `4px solid ${winColor}`,
@@ -177,10 +177,10 @@ function AiButton({ onClick, locked }: { onClick: (e: React.MouseEvent) => void;
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        background: hovered ? "rgba(212,160,23,0.2)" : "rgba(255,255,255,0.04)",
+        background: hovered ? "rgba(200,155,60,0.2)" : "rgba(255,255,255,0.04)",
         border: `1px solid ${COLORS.cardBorder}`,
         borderRadius: 4,
-        color: hovered ? "#D4A017" : COLORS.textDim,
+        color: hovered ? "#C89B3C" : COLORS.textDim,
         cursor: "pointer",
         padding: "4px 8px",
         fontSize: 12,
@@ -198,7 +198,7 @@ function AiButton({ onClick, locked }: { onClick: (e: React.MouseEvent) => void;
           position: "absolute",
           top: -6,
           right: -6,
-          background: "linear-gradient(135deg, #D4A017, #F5D060)",
+          background: "linear-gradient(135deg, #C89B3C, #F0E6D2)",
           color: "#1a1a1a",
           fontSize: 7,
           fontWeight: 800,
@@ -378,11 +378,12 @@ export default function MatchList({ matches, region, puuid, onLoadMore, isLoadin
           const isArena = isArenaQueue(m.queueId);
           const isWin = isArena ? (m.placement >= 1 && m.placement <= 4) : m.win;
 
-          const winColor = isWin ? "#D4A017" : "#E84057";
-          const winTextColor = isWin ? "#D4A017" : "#E84057";
+          // Hextech: teal for wins, red for losses (gold is reserved for "you" and highlights)
+          const winColor = isWin ? "#0AC8B9" : "#E84057";
+          const winTextColor = isWin ? "#0AC8B9" : "#E84057";
           const winText = isWin ? "Victory" : "Defeat";
           const winBg = isWin
-            ? "linear-gradient(135deg, rgba(212,160,23,0.12) 0%, rgba(212,160,23,0.04) 100%)"
+            ? "linear-gradient(135deg, rgba(10,200,185,0.10) 0%, rgba(10,200,185,0.03) 100%)"
             : "linear-gradient(135deg, rgba(232,64,87,0.12) 0%, rgba(232,64,87,0.04) 100%)";
 
           const queueName =
@@ -442,7 +443,7 @@ export default function MatchList({ matches, region, puuid, onLoadMore, isLoadin
                            height: 22,
                            borderRadius: 4,
                            overflow: "hidden",
-                           background: "rgba(35,35,40,0.6)",
+                           background: "rgba(1,10,19,0.6)",
                            border: "1px solid rgba(255,255,255,0.15)",
                            boxShadow: "0 0 6px rgba(255,255,255,0.15)",
                          }}
@@ -622,7 +623,7 @@ export default function MatchList({ matches, region, puuid, onLoadMore, isLoadin
               {isExpanded && region && (
                 <div
                   style={{
-                    background: "rgba(20,20,24,0.95)",
+                    background: "rgba(10,20,40,0.97)",
                     border: `1px solid ${COLORS.divider}`,
                     borderTop: "none",
                     borderRadius: "0 0 6px 6px",
@@ -654,7 +655,7 @@ export default function MatchList({ matches, region, puuid, onLoadMore, isLoadin
             disabled={isLoadingMore}
             style={{
               padding: "10px 32px",
-              borderRadius: 6,
+              borderRadius: 3,
               background: isLoadingMore ? "rgba(255,255,255,0.04)" : "rgba(255,255,255,0.08)",
               border: `1px solid ${COLORS.cardBorder}`,
               color: isLoadingMore ? COLORS.textDim : COLORS.textSecondary,

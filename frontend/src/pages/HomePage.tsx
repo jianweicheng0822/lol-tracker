@@ -76,7 +76,7 @@ export default function HomePage() {
                 key={p.label}
                 style={styles.demoBadge}
                 onClick={() => navigate(`/player/puuid/${p.region}/${encodeURIComponent(p.puuid)}`)}
-                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(212,160,23,0.45)"; e.currentTarget.style.background = "rgba(212,160,23,0.08)"; }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(200,155,60,0.45)"; e.currentTarget.style.background = "rgba(200,155,60,0.08)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.background = "transparent"; }}
               >
                 {p.label}
@@ -115,7 +115,7 @@ export default function HomePage() {
             <button
               onClick={() => navigate("/leaderboard")}
               style={styles.leaderboardBtn}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(212,160,23,0.15)"; }}
+              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(200,155,60,0.15)"; }}
               onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
             >
               View Full Leaderboard &rarr;
@@ -134,9 +134,10 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     flexDirection: "column",
     minHeight: "100vh",
-    background: `radial-gradient(circle at 50% 40%, rgba(212,160,23,0.08), transparent 50%), ${COLORS.pageBg}`,
+    // A soft gold glow over the page's navy gradient
+    background: "radial-gradient(circle at 50% 40%, rgba(200,155,60,0.10), transparent 50%)",
     color: COLORS.textPrimary,
-    fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
+    fontFamily: "Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
   },
   center: {
     flex: 1,
@@ -152,15 +153,15 @@ const styles: Record<string, React.CSSProperties> = {
   },
   title: {
     fontSize: "clamp(40px, 11vw, 60px)",
-    fontWeight: 800,
+    fontWeight: 700,
     margin: 0,
-    letterSpacing: -1.5,
+    letterSpacing: 1,
     // Gold gradient text with a soft glow, matching the gold used across the UI
-    background: "linear-gradient(180deg, #F7DE8A 0%, #D4A017 55%, #9C7410 100%)",
+    background: "linear-gradient(180deg, #F0E6D2 0%, #C89B3C 55%, #785A28 100%)",
     WebkitBackgroundClip: "text",
     backgroundClip: "text",
     color: "transparent",
-    filter: "drop-shadow(0 4px 24px rgba(212,160,23,0.35))",
+    filter: "drop-shadow(0 4px 24px rgba(200,155,60,0.35))",
   },
   subtitle: {
     fontSize: 16,
@@ -210,7 +211,7 @@ const styles: Record<string, React.CSSProperties> = {
     width: "100%",
     maxWidth: 420,
     border: `1px solid ${COLORS.gold}40`,
-    borderRadius: 12,
+    borderRadius: 4,
     padding: "20px 24px",
     background: COLORS.cardBg,
   },
@@ -243,7 +244,7 @@ const styles: Record<string, React.CSSProperties> = {
     // Reset button styles so rows look like the list they replace
     background: "transparent",
     border: "none",
-    borderRadius: 6,
+    borderRadius: 3,
     padding: "4px 6px",
     margin: "0 -6px",
     boxSizing: "content-box",
@@ -274,7 +275,7 @@ const styles: Record<string, React.CSSProperties> = {
     background: "transparent",
     border: `1px solid ${COLORS.gold}40`,
     color: COLORS.gold,
-    borderRadius: 8,
+    borderRadius: 4,
     padding: "8px 0",
     cursor: "pointer",
     fontWeight: 600,

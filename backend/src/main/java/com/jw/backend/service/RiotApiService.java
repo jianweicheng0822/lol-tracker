@@ -146,17 +146,55 @@ public class RiotApiService {
     }
 
     public String getRecentMatchIds(String puuid, RiotRegion region, int count, int start) {
+        return getRecentMatchIds(puuid, region, count, start, null);
+    }
+
+    /**
+     * @param queue Riot queue ID to filter by (e.g. 420 for ranked solo), or null for all queues.
+     *              Filtering on Riot's side means asking for 5 ranked games costs 5 detail calls,
+     *              not however many ARAMs and normals came in between.
+     */
+    public String getRecentMatchIds(String puuid, RiotRegion region, int count, int start, Integer queue) {
         long ttlMs = 30_000;
 
         String baseUrl = "https://" + region.routing() + ".api.riotgames.com";
-        String cacheKey = "matchIds:" + region.routing() + ":" + puuid + ":start=" + start + ":count=" + count;
+        String cacheKey = "matchIds:" + region.routing() + ":" + puuid + ":start=" + start + ":count=" + count
+                + (queue != null ? ":queue=" + queue : "");
+
+        String cached = getCached(cacheKey);
+        if (cached != null) return cached;
+
+        riotRateLimiter.acquire();
+        String result = queue == null
+                ? getClient(baseUrl).get()
+                        .uri("/lol/match/v5/matches/by-puuid/{puuid}/ids?start={start}&count={count}", puuid, start, count)
+                        .header("X-Riot-Token", apiKey)
+                        .retrieve()
+                        .body(String.class)
+                : getClient(baseUrl).get()
+                        .uri("/lol/match/v5/matches/by-puuid/{puuid}/ids?start={start}&count={count}&queue={queue}",
+                                puuid, start, count, queue)
+                        .header("X-Riot-Token", apiKey)
+                        .retrieve()
+                        .body(String.class);
+
+        putCached(cacheKey, result, ttlMs);
+        return result;
+    }
+
+    /** Champion-Mastery-v4 top champions. 1h TTL — mastery points change slowly. */
+    public String getTopChampionMasteries(String puuid, RiotRegion region, int count) {
+        long ttlMs = 60L * 60 * 1000;
+
+        String baseUrl = "https://" + region.platform() + ".api.riotgames.com";
+        String cacheKey = "mastery-top:" + region.platform() + ":" + puuid + ":count=" + count;
 
         String cached = getCached(cacheKey);
         if (cached != null) return cached;
 
         riotRateLimiter.acquire();
         String result = getClient(baseUrl).get()
-                .uri("/lol/match/v5/matches/by-puuid/{puuid}/ids?start={start}&count={count}", puuid, start, count)
+                .uri("/lol/champion-mastery/v4/champion-masteries/by-puuid/{puuid}/top?count={count}", puuid, count)
                 .header("X-Riot-Token", apiKey)
                 .retrieve()
                 .body(String.class);
@@ -425,7 +463,12 @@ public class RiotApiService {
      * keep latency reasonable when loading a page of 10-20 matches at once.
      */
     public List<com.jw.backend.dto.MatchSummaryDto> getRecentMatchSummaries(String puuid, RiotRegion region, int count, int start) {
-        String idsJson = getRecentMatchIds(puuid, region, Math.max(count, 1), start);
+        return getRecentMatchSummaries(puuid, region, count, start, null);
+    }
+
+    /** @param queue Riot queue ID to filter by, or null for all queues. */
+    public List<com.jw.backend.dto.MatchSummaryDto> getRecentMatchSummaries(String puuid, RiotRegion region, int count, int start, Integer queue) {
+        String idsJson = getRecentMatchIds(puuid, region, Math.max(count, 1), start, queue);
 
         List<String> ids = new ArrayList<>();
         try {

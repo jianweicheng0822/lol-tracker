@@ -31,7 +31,10 @@ vi.mock("../components/AppHeader", () => ({
 
 vi.mock("../api", () => ({
   fetchMultiSearch: vi.fn(),
+  // Each result card loads its recent games; not what these page tests are about
+  fetchMatchSummaries: vi.fn().mockResolvedValue([]),
 }));
+vi.mock("../utils/champion", () => ({ loadChampionMap: vi.fn().mockResolvedValue({}) }));
 
 const MOCK_RESULTS = [
   {

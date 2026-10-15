@@ -190,12 +190,21 @@ export type LeaderboardEntry = {
 };
 
 /** A player result from multi-search lookup. */
+/** One of a player's most-played champions, by mastery points. */
+export type ChampionMastery = {
+  championId: number;
+  championLevel: number;
+  championPoints: number;
+};
+
 export type MultiSearchPlayer = {
   gameName: string;
   tagLine: string;
   puuid: string | null;
   profileIconId: number;
   rankedEntries: RankedEntry[];
+  /** Most-played champions; empty when the lookup failed. */
+  topChampions?: ChampionMastery[];
   error: string | null;
 };
 

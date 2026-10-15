@@ -8,5 +8,7 @@ public record MultiSearchPlayerDto(
         String puuid,
         int profileIconId,
         List<RankedEntryDto> rankedEntries,
+        /** Most-played champions by mastery; empty when unavailable. */
+        List<ChampionMasteryDto> topChampions,
         String error
 ) {}

@@ -1,5 +1,6 @@
 package com.jw.backend;
 
+import com.jw.backend.dto.ChampionMasteryDto;
 import com.jw.backend.dto.MultiSearchPlayerDto;
 import com.jw.backend.dto.RankedEntryDto;
 import com.jw.backend.region.RiotRegion;
@@ -37,9 +38,10 @@ class MultiSearchControllerTest {
     void multiSearch_validRequest_returnsOk() throws Exception {
         List<MultiSearchPlayerDto> results = List.of(
                 new MultiSearchPlayerDto("Player1", "NA1", "puuid-1", 100,
-                        List.of(new RankedEntryDto("RANKED_SOLO_5x5", "GOLD", "II", 45, 50, 40)), null),
+                        List.of(new RankedEntryDto("RANKED_SOLO_5x5", "GOLD", "II", 45, 50, 40)),
+                        List.of(new ChampionMasteryDto(103, 7, 250_000)), null),
                 new MultiSearchPlayerDto("Player2", "EUW", "puuid-2", 200,
-                        List.of(), null)
+                        List.of(), List.of(), null)
         );
         when(multiSearchService.lookup(anyList(), eq(RiotRegion.NA))).thenReturn(results);
 
@@ -53,6 +55,8 @@ class MultiSearchControllerTest {
                 .andExpect(jsonPath("$[0].gameName").value("Player1"))
                 .andExpect(jsonPath("$[0].puuid").value("puuid-1"))
                 .andExpect(jsonPath("$[0].rankedEntries[0].tier").value("GOLD"))
+                .andExpect(jsonPath("$[0].topChampions[0].championId").value(103))
+                .andExpect(jsonPath("$[0].topChampions[0].championPoints").value(250000))
                 .andExpect(jsonPath("$[1].gameName").value("Player2"));
     }
 
@@ -92,8 +96,8 @@ class MultiSearchControllerTest {
     @Test
     void multiSearch_partialFailure_returnsOkWithErrors() throws Exception {
         List<MultiSearchPlayerDto> results = List.of(
-                new MultiSearchPlayerDto("Player1", "NA1", "puuid-1", 100, List.of(), null),
-                new MultiSearchPlayerDto("Unknown", "TAG", null, 0, List.of(), "Player not found")
+                new MultiSearchPlayerDto("Player1", "NA1", "puuid-1", 100, List.of(), List.of(), null),
+                new MultiSearchPlayerDto("Unknown", "TAG", null, 0, List.of(), List.of(), "Player not found")
         );
         when(multiSearchService.lookup(anyList(), eq(RiotRegion.NA))).thenReturn(results);
 

@@ -2,6 +2,7 @@ package com.jw.backend.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.jw.backend.dto.ChampionMasteryDto;
 import com.jw.backend.dto.MultiSearchPlayerDto;
 import com.jw.backend.dto.RankedEntryDto;
 import com.jw.backend.region.RiotRegion;
@@ -9,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
@@ -18,6 +20,9 @@ import java.util.concurrent.Executors;
 public class MultiSearchService {
 
     private static final Logger log = LoggerFactory.getLogger(MultiSearchService.class);
+
+    /** How many "main" champions to show per player. */
+    static final int TOP_CHAMPION_COUNT = 3;
 
     private final RiotApiService riotApiService;
     private final RankedService rankedService;
@@ -35,7 +40,7 @@ public class MultiSearchService {
                 .map(pair -> CompletableFuture.supplyAsync(() -> lookupSingle(pair[0], pair[1], region), executor)
                         .exceptionally(ex -> {
                             log.warn("Multi-search lookup failed for {}#{}: {}", pair[0], pair[1], ex.getMessage());
-                            return new MultiSearchPlayerDto(pair[0], pair[1], null, 0, List.of(), "Player not found");
+                            return new MultiSearchPlayerDto(pair[0], pair[1], null, 0, List.of(), List.of(), "Player not found");
                         }))
                 .toList();
 
@@ -55,10 +60,29 @@ public class MultiSearchService {
             int profileIconId = summonerNode.path("profileIconId").asInt(0);
 
             List<RankedEntryDto> rankedEntries = rankedService.getRankedInfo(puuid, region);
+            List<ChampionMasteryDto> topChampions = topChampions(puuid, region);
 
-            return new MultiSearchPlayerDto(resolvedName, resolvedTag, puuid, profileIconId, rankedEntries, null);
+            return new MultiSearchPlayerDto(resolvedName, resolvedTag, puuid, profileIconId, rankedEntries, topChampions, null);
         } catch (Exception e) {
-            return new MultiSearchPlayerDto(gameName, tagLine, null, 0, List.of(), "Player not found");
+            return new MultiSearchPlayerDto(gameName, tagLine, null, 0, List.of(), List.of(), "Player not found");
+        }
+    }
+
+    /** A player's mains are a nice-to-have: if the lookup fails, the card still shows their rank. */
+    List<ChampionMasteryDto> topChampions(String puuid, RiotRegion region) {
+        try {
+            JsonNode arr = objectMapper.readTree(riotApiService.getTopChampionMasteries(puuid, region, TOP_CHAMPION_COUNT));
+            List<ChampionMasteryDto> result = new ArrayList<>();
+            for (JsonNode n : arr) {
+                result.add(new ChampionMasteryDto(
+                        n.path("championId").asInt(),
+                        n.path("championLevel").asInt(),
+                        n.path("championPoints").asLong()));
+            }
+            return result;
+        } catch (Exception e) {
+            log.debug("Champion mastery lookup failed for {}: {}", puuid, e.getMessage());
+            return List.of();
         }
     }
 }

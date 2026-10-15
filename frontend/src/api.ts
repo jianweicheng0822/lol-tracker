@@ -210,11 +210,13 @@ export async function fetchAccountByPuuid(puuid: string, region: string) {
  * @param region - The Riot API region code.
  * @param count - Number of matches to retrieve per page.
  * @param start - The offset index for pagination (e.g., 0, 10, 20...).
+ * @param queue - Optional Riot queue ID to filter by (e.g. 420 for ranked solo).
  * @returns An array of match summary objects.
  */
-export async function fetchMatchSummaries(puuid: string, region: string, count = 10, start = 0) {
+export async function fetchMatchSummaries(puuid: string, region: string, count = 10, start = 0, queue?: number) {
+  const queueParam = queue != null ? `&queue=${queue}` : "";
   const res = await fetchWithTimeout(
-    `${BASE}/api/matches/summary?puuid=${encodeURIComponent(puuid)}&region=${region}&count=${count}&start=${start}`,
+    `${BASE}/api/matches/summary?puuid=${encodeURIComponent(puuid)}&region=${region}&count=${count}&start=${start}${queueParam}`,
     fetchOpts(),
     30_000
   );

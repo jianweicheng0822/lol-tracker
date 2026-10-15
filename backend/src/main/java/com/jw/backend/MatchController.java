@@ -107,6 +107,7 @@ public class MatchController {
      * @param region the Riot routing region
      * @param count  number of matches to retrieve
      * @param start  pagination offset index
+     * @param queue  optional Riot queue ID filter (e.g. 420 for ranked solo)
      * @return list of match summary DTOs
      */
     @GetMapping("/summary")
@@ -114,12 +115,14 @@ public class MatchController {
             @RequestParam String puuid,
             @RequestParam RiotRegion region,
             @RequestParam(defaultValue = "20") int count,
-            @RequestParam(defaultValue = "0") int start
+            @RequestParam(defaultValue = "0") int start,
+            @RequestParam(required = false) Integer queue
     ) {
         count = Math.max(1, Math.min(count, 100));
         start = Math.max(0, start);
+        if (queue != null && queue <= 0) queue = null;
 
-        List<MatchSummaryDto> summaries = riotApiService.getRecentMatchSummaries(puuid, region, count, start);
+        List<MatchSummaryDto> summaries = riotApiService.getRecentMatchSummaries(puuid, region, count, start, queue);
 
         matchHistoryService.persistMatchRecords(puuid, region.name(), summaries);
 

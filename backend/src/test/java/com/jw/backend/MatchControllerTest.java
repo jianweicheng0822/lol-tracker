@@ -151,7 +151,7 @@ class MatchControllerTest {
                 8112, 8300, new int[]{0,0,0,0}, 0, 12000, 9500, "MIDDLE")
         );
 
-        when(riotApiService.getRecentMatchSummaries("test-puuid", RiotRegion.NA, 3, 0))
+        when(riotApiService.getRecentMatchSummaries("test-puuid", RiotRegion.NA, 3, 0, null))
             .thenReturn(fakeSummaries);
 
         mockMvc.perform(
@@ -176,7 +176,7 @@ class MatchControllerTest {
     /** Verify that the default count of 20 is used for summaries when count is omitted. */
     @Test
     void getMatchSummaries_usesDefaultCount_whenCountNotProvided() throws Exception {
-        when(riotApiService.getRecentMatchSummaries("test-puuid", RiotRegion.NA, 20, 0))
+        when(riotApiService.getRecentMatchSummaries("test-puuid", RiotRegion.NA, 20, 0, null))
             .thenReturn(List.of());
 
         mockMvc.perform(
@@ -187,7 +187,43 @@ class MatchControllerTest {
             .andExpect(status().isOk());
 
         verify(riotApiService, times(1))
-            .getRecentMatchSummaries("test-puuid", RiotRegion.NA, 20, 0);
+            .getRecentMatchSummaries("test-puuid", RiotRegion.NA, 20, 0, null);
+    }
+
+    /** Verify that the optional queue filter is passed through, e.g. for "last 5 ranked games". */
+    @Test
+    void getMatchSummaries_passesQueueFilter() throws Exception {
+        when(riotApiService.getRecentMatchSummaries("test-puuid", RiotRegion.NA, 5, 0, 420))
+            .thenReturn(List.of());
+
+        mockMvc.perform(
+                get("/api/matches/summary")
+                    .param("puuid", "test-puuid")
+                    .param("region", "NA")
+                    .param("count", "5")
+                    .param("queue", "420")
+            )
+            .andExpect(status().isOk());
+
+        verify(riotApiService).getRecentMatchSummaries("test-puuid", RiotRegion.NA, 5, 0, 420);
+    }
+
+    /** Verify that a non-positive queue is treated as "all queues" rather than sent to Riot. */
+    @Test
+    void getMatchSummaries_ignoresInvalidQueue() throws Exception {
+        when(riotApiService.getRecentMatchSummaries("test-puuid", RiotRegion.NA, 5, 0, null))
+            .thenReturn(List.of());
+
+        mockMvc.perform(
+                get("/api/matches/summary")
+                    .param("puuid", "test-puuid")
+                    .param("region", "NA")
+                    .param("count", "5")
+                    .param("queue", "0")
+            )
+            .andExpect(status().isOk());
+
+        verify(riotApiService).getRecentMatchSummaries("test-puuid", RiotRegion.NA, 5, 0, null);
     }
 
     /** Verify that a missing puuid for summaries returns HTTP 400. */

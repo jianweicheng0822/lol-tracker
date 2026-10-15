@@ -508,6 +508,31 @@ class RiotApiServiceTest {
         assertNotNull(riotApiService);
     }
 
+    @Test
+    void getRecentMatchIds_queueFilter_usesItsOwnCacheKey() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        String base = "matchIds:" + RiotRegion.NA.routing() + ":p1:start=0:count=5";
+        when(valueOperations.get(base + ":queue=420")).thenReturn("[\"NA1_ranked\"]");
+        when(valueOperations.get(base)).thenReturn("[\"NA1_any\"]");
+        int permitsBefore = riotRateLimiter.availablePermits();
+
+        assertEquals("[\"NA1_ranked\"]", riotApiService.getRecentMatchIds("p1", RiotRegion.NA, 5, 0, 420));
+        // The unfiltered lookup keeps its original key, so existing cache entries stay valid
+        assertEquals("[\"NA1_any\"]", riotApiService.getRecentMatchIds("p1", RiotRegion.NA, 5, 0));
+        assertEquals(permitsBefore, riotRateLimiter.availablePermits());
+    }
+
+    @Test
+    void getTopChampionMasteries_cacheHit_skipsRiotCall() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get("mastery-top:" + RiotRegion.NA.platform() + ":p1:count=3"))
+                .thenReturn("[{\"championId\":103}]");
+        int permitsBefore = riotRateLimiter.availablePermits();
+
+        assertEquals("[{\"championId\":103}]", riotApiService.getTopChampionMasteries("p1", RiotRegion.NA, 3));
+        assertEquals(permitsBefore, riotRateLimiter.availablePermits());
+    }
+
     // -- Best-effort lookups used by the leaderboard --
     @Test
     void tryGetAccountByPuuid_cacheHit_returnsCachedWithoutUsingPermit() {

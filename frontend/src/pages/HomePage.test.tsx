@@ -60,10 +60,40 @@ describe("HomePage", () => {
     expect(screen.getByTestId("search-bar")).toBeInTheDocument();
   });
 
-  it("renders demo player buttons", () => {
+  it("shows a fallback demo player until the leaderboard loads", () => {
+    vi.mocked(api.fetchLeaderboard).mockReturnValue(new Promise(() => {}));
     render(<HomePage />);
-    expect(screen.getByText("duoking1 #freex")).toBeInTheDocument();
     expect(screen.getByText("C9 Loki #kr3")).toBeInTheDocument();
+  });
+
+  it("picks demo players from the leaderboard below the top 3, and opens them by PUUID", async () => {
+    const entry = (name: string, puuid: string, lp: number) =>
+      ({ summonerName: name, puuid, tier: "CHALLENGER", rank: "I", leaguePoints: lp, wins: 1, losses: 1, winRate: 50 });
+    vi.mocked(api.fetchLeaderboard).mockResolvedValue({ entries: [
+      entry("First#NA1", "p1", 1500), entry("Second#NA1", "p2", 1400), entry("Third#NA1", "p3", 1300),
+      entry("Fourth#NA1", "p4", 1200), entry("Fifth#NA1", "p5", 1100),
+    ], totalEntries: 5 });
+    const user = (await import("@testing-library/user-event")).default.setup();
+    render(<HomePage />);
+
+    // Ranks 4-5 become the two demo badges; the top 3 stay in the preview card only
+    const fourth = await screen.findByRole("button", { name: "Fourth #NA1" });
+    expect(screen.getByRole("button", { name: "Fifth #NA1" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "First #NA1" })).not.toBeInTheDocument();
+    expect(screen.queryByText("C9 Loki #kr3")).not.toBeInTheDocument();
+
+    await user.click(fourth);
+    expect(mockNavigate).toHaveBeenCalledWith("/player/puuid/NA/p4");
+  });
+
+  it("opens a player from the top ranked preview card", async () => {
+    vi.mocked(api.fetchLeaderboard).mockResolvedValue({ entries: [
+      { summonerName: "First#NA1", puuid: "p1", tier: "CHALLENGER", rank: "I", leaguePoints: 1500, wins: 1, losses: 1, winRate: 50 },
+    ], totalEntries: 1 });
+    const user = (await import("@testing-library/user-event")).default.setup();
+    render(<HomePage />);
+    await user.click(await screen.findByRole("button", { name: /First#NA1/ }));
+    expect(mockNavigate).toHaveBeenCalledWith("/player/puuid/NA/p1");
   });
 
   it("renders the shared header", () => {
@@ -104,7 +134,7 @@ describe("HomePage", () => {
 
   it("fetches leaderboard preview on mount", () => {
     render(<HomePage />);
-    expect(api.fetchLeaderboard).toHaveBeenCalledWith("NA", "RANKED_SOLO_5x5", "challenger", 0, 3);
+    expect(api.fetchLeaderboard).toHaveBeenCalledWith("NA", "RANKED_SOLO_5x5", "challenger", 0, 20);
   });
 
   it("renders leaderboard preview card when data loads", async () => {

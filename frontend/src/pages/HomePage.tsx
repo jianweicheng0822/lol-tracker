@@ -13,12 +13,12 @@ import { useAuth } from "../hooks/useAuth";
 import { COLORS } from "../utils/colors";
 import { TIER_COLORS } from "../utils/lp";
 import type { FavoritePlayer, LeaderboardEntry } from "../types";
+import { FALLBACK_DEMO_PLAYERS, pickDemoPlayers, type DemoPlayer } from "../utils/demoPlayers";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
-const DEMO_PLAYERS = [
-  { label: "duoking1 #freex", puuid: "JZsCBcQ18XWqlQS2NDBS0Vi9uuUnhJJjhIBdHvNFoTEM8qLzsvkMSTYbDneGtgqr6OOx7fCX0OeTXA", region: "NA" },
-  { label: "C9 Loki #kr3", puuid: "YdeyIKCDDnlZ3jNZ4OQue9ChPbyO3yFq9O0S4r10GEUpoS47QEDfrnrqIDG0rLruHeBaHAaDcA8mgA", region: "NA" },
-] as const;
+// The preview card shows the top 3; "Try searching" picks from the next ones so names don't repeat
+const LEADERBOARD_FETCH_SIZE = 20;
+const PREVIEW_SIZE = 3;
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -26,6 +26,7 @@ export default function HomePage() {
   const { isLoggedIn } = useAuth();
   useDocumentTitle();
   const [topPlayers, setTopPlayers] = useState<LeaderboardEntry[]>([]);
+  const [demoPlayers, setDemoPlayers] = useState<DemoPlayer[]>(FALLBACK_DEMO_PLAYERS);
 
   const loadFavorites = useCallback(() => {
     if (!getAuthToken()) {
@@ -46,8 +47,12 @@ export default function HomePage() {
   }, [isLoggedIn]);
 
   useEffect(() => {
-    fetchLeaderboard("NA", "RANKED_SOLO_5x5", "challenger", 0, 3)
-      .then((data: { entries: LeaderboardEntry[] }) => setTopPlayers(data.entries))
+    fetchLeaderboard("NA", "RANKED_SOLO_5x5", "challenger", 0, LEADERBOARD_FETCH_SIZE)
+      .then((data: { entries: LeaderboardEntry[] }) => {
+        setTopPlayers(data.entries.slice(0, PREVIEW_SIZE));
+        const picks = pickDemoPlayers(data.entries.slice(PREVIEW_SIZE), "NA");
+        if (picks.length > 0) setDemoPlayers(picks);
+      })
       .catch(e => console.error("Failed to load leaderboard preview:", e));
   }, []);
 
@@ -66,7 +71,7 @@ export default function HomePage() {
         <div style={styles.trySection}>
           <span style={styles.tryLabel}>Try searching</span>
           <div style={styles.demoBadges}>
-            {DEMO_PLAYERS.map((p) => (
+            {demoPlayers.map((p) => (
               <button
                 key={p.label}
                 style={styles.demoBadge}
@@ -88,7 +93,13 @@ export default function HomePage() {
             </div>
             <div style={styles.leaderboardList}>
               {topPlayers.map((p, i) => (
-                <div key={`${p.summonerName}-${i}`} style={styles.leaderboardRow}>
+                <button
+                  key={`${p.summonerName}-${i}`}
+                  style={styles.leaderboardRow}
+                  onClick={() => navigate(`/player/puuid/NA/${encodeURIComponent(p.puuid)}`)}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                >
                   <span style={{
                     ...styles.leaderboardRank,
                     color: COLORS.gold,
@@ -98,7 +109,7 @@ export default function HomePage() {
                     ...styles.leaderboardLp,
                     color: TIER_COLORS.CHALLENGER,
                   }}>{p.leaguePoints.toLocaleString()} LP</span>
-                </div>
+                </button>
               ))}
             </div>
             <button
@@ -228,6 +239,19 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     alignItems: "center",
     gap: 10,
+    width: "100%",
+    // Reset button styles so rows look like the list they replace
+    background: "transparent",
+    border: "none",
+    borderRadius: 6,
+    padding: "4px 6px",
+    margin: "0 -6px",
+    boxSizing: "content-box",
+    color: "inherit",
+    font: "inherit",
+    textAlign: "left",
+    cursor: "pointer",
+    transition: "background 0.15s",
   },
   leaderboardRank: {
     width: 28,

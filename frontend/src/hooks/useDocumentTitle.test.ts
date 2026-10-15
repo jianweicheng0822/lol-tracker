@@ -1,5 +1,5 @@
 import { renderHook } from "@testing-library/react";
-import { useDocumentTitle } from "./useDocumentTitle";
+import { DEFAULT_TITLE, useDocumentTitle } from "./useDocumentTitle";
 
 describe("useDocumentTitle", () => {
   beforeEach(() => {
@@ -11,9 +11,9 @@ describe("useDocumentTitle", () => {
     expect(document.title).toBe("Leaderboard · LoL Tracker");
   });
 
-  it("shows just the site name without a title", () => {
+  it("shows the descriptive default title without a page title", () => {
     renderHook(() => useDocumentTitle(null));
-    expect(document.title).toBe("LoL Tracker");
+    expect(document.title).toBe("LoL Tracker: League of Legends Stats & Match History");
   });
 
   it("updates when the title changes, e.g. once a player has loaded", () => {
@@ -24,9 +24,9 @@ describe("useDocumentTitle", () => {
     expect(document.title).toBe("Faker#KR1 · LoL Tracker");
   });
 
-  it("resets to the site name when the page unmounts", () => {
+  it("resets to the default title when the page unmounts", () => {
     const { unmount } = renderHook(() => useDocumentTitle("Multi-Search"));
     unmount();
-    expect(document.title).toBe("LoL Tracker");
+    expect(document.title).toBe(DEFAULT_TITLE);
   });
 });

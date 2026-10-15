@@ -70,6 +70,9 @@ describe("LiveGameCard", () => {
     );
     expect(screen.getByText("Not currently in a game")).toBeInTheDocument();
     expect(screen.getByText("Check Again")).toBeInTheDocument();
+    // A one-line status, not the full card
+    expect(screen.getByTestId("live-game-idle")).toBeInTheDocument();
+    expect(screen.queryByText("Live Game")).not.toBeInTheDocument();
   });
 
   it("calls onCheckAgain when Check Again is clicked", async () => {

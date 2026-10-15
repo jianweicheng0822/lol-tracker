@@ -39,13 +39,13 @@ export default function LiveGameCard({
     loadChampionMap(version).then(setChampionMap);
   }, [version]);
 
+  // Most of the time the player isn't in a game: a one-line status keeps the ranked stats
+  // and matches above the fold instead of a large, mostly empty card
   if (!game) {
     return (
-      <div style={styles.card}>
-        <div style={styles.header}>
-          <span style={styles.title}>Live Game</span>
-        </div>
-        <p style={styles.notInGame}>Not currently in a game</p>
+      <div style={styles.idleRow} data-testid="live-game-idle">
+        <span style={styles.idleDot} aria-hidden="true" />
+        <span style={styles.notInGame}>Not currently in a game</span>
         <button
           style={{ ...styles.checkBtn, ...(isChecking ? { opacity: 0.6, cursor: "default" } : {}) }}
           onClick={isChecking ? undefined : onCheckAgain}
@@ -143,22 +143,28 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 10,
     marginBottom: 12,
   },
-  title: {
-    fontSize: 14,
-    fontWeight: 700,
-    color: COLORS.textSecondary,
+  idleRow: {
+    display: "flex",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 16,
+    fontSize: 13,
+  },
+  idleDot: {
+    width: 8,
+    height: 8,
+    borderRadius: "50%",
+    background: COLORS.textDim,
+    flexShrink: 0,
   },
   notInGame: {
-    fontSize: 13,
-    color: COLORS.textDim,
-    margin: "4px 0 12px",
+    color: COLORS.textTertiary,
   },
   checkBtn: {
     background: "transparent",
-    color: COLORS.textTertiary,
-    border: `1px solid ${COLORS.cardBorder}`,
-    borderRadius: 6,
-    padding: "6px 14px",
+    color: COLORS.gold,
+    border: "none",
+    padding: "2px 4px",
     cursor: "pointer",
     fontWeight: 600,
     fontSize: 13,

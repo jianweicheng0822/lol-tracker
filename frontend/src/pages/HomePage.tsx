@@ -51,7 +51,7 @@ export default function HomePage() {
 
   return (
     <div style={styles.page}>
-      <AppHeader showSearch={false} transparent />
+      <AppHeader showSearch={false} showLogo={false} transparent />
       <div style={styles.center}>
         <h1 style={styles.title}>LoL Tracker</h1>
         <p style={styles.subtitle}>
@@ -142,7 +142,12 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 800,
     margin: 0,
     letterSpacing: -1.5,
-    color: COLORS.textPrimary,
+    // Gold gradient text with a soft glow, matching the gold used across the UI
+    background: "linear-gradient(180deg, #F7DE8A 0%, #D4A017 55%, #9C7410 100%)",
+    WebkitBackgroundClip: "text",
+    backgroundClip: "text",
+    color: "transparent",
+    filter: "drop-shadow(0 4px 24px rgba(212,160,23,0.35))",
   },
   subtitle: {
     fontSize: 16,

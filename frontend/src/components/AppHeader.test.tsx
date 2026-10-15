@@ -54,6 +54,12 @@ describe("AppHeader", () => {
     expect(screen.getByRole("link", { name: "Multi-Search" })).toHaveAttribute("href", "/multi-search");
   });
 
+  it("can hide the logo", () => {
+    renderHeader({ showLogo: false });
+    expect(screen.queryByRole("link", { name: "LoL Tracker" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Leaderboard" })).toBeInTheDocument();
+  });
+
   it("can hide the search box and pre-fill it", () => {
     const { unmount } = renderHeader({ showSearch: false });
     expect(screen.queryByTestId("search-bar")).not.toBeInTheDocument();

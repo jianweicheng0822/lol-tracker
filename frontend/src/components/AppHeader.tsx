@@ -18,6 +18,8 @@ type Props = {
   showSearch?: boolean;
   /** Pre-fill the search box (e.g. with the player whose page this is). */
   searchDefaults?: { region?: Region; gameName?: string; tag?: string };
+  /** Show the "LoL Tracker" home link. Off on the home page, whose big title already says it. */
+  showLogo?: boolean;
   /** No background or border, so the page behind shows through (the home page hero). */
   transparent?: boolean;
 };
@@ -27,7 +29,7 @@ const NAV_LINKS = [
   { to: "/multi-search", label: "Multi-Search" },
 ];
 
-export default function AppHeader({ showSearch = true, searchDefaults, transparent = false }: Props) {
+export default function AppHeader({ showSearch = true, showLogo = true, searchDefaults, transparent = false }: Props) {
   const { pathname } = useLocation();
   const { isLoggedIn, username } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
@@ -60,7 +62,7 @@ export default function AppHeader({ showSearch = true, searchDefaults, transpare
     <header className="app-header" style={transparent ? { ...styles.bar, ...styles.barTransparent } : styles.bar}>
       {toastMsg && <Toast message={toastMsg} onDone={() => setToastMsg(null)} />}
 
-      <Link to="/" className="app-header__logo" style={styles.logo}>LoL Tracker</Link>
+      {showLogo && <Link to="/" className="app-header__logo" style={styles.logo}>LoL Tracker</Link>}
 
       {showSearch && (
         <div className="app-header__search" style={styles.search}>

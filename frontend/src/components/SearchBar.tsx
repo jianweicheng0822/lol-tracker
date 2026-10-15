@@ -25,6 +25,8 @@ export default function SearchBar({ compact, initialRegion, initialGameName, ini
   const wrapperRef = useRef<HTMLDivElement>(null);
   const gameNameRef = useRef<HTMLInputElement>(null);
   const tagRef = useRef<HTMLInputElement>(null);
+  // Set when the hint moves focus to the name box, so the history dropdown does not cover the hint
+  const skipHistoryOnFocus = useRef(false);
 
   const canSearch = gameName.trim().length > 0 && tag.replace(/^#/, "").trim().length > 0;
 
@@ -62,7 +64,9 @@ export default function SearchBar({ compact, initialRegion, initialGameName, ini
     setShowHistory(false);
     if (!gameName.trim()) {
       setHint("Enter a game name");
+      skipHistoryOnFocus.current = true;
       gameNameRef.current?.focus();
+      skipHistoryOnFocus.current = false;
     } else {
       setHint("Add the tag after # (e.g. NA1)");
       tagRef.current?.focus();
@@ -171,6 +175,7 @@ export default function SearchBar({ compact, initialRegion, initialGameName, ini
   };
 
   const handleFocus = () => {
+    if (skipHistoryOnFocus.current) return;
     loadHistory().then(() => setShowHistory(true));
   };
 
@@ -262,12 +267,11 @@ export default function SearchBar({ compact, initialRegion, initialGameName, ini
 
       <button
         style={{
-          ...(canSearch ? styles.button : styles.buttonDisabled),
+          ...styles.button,
           padding: compact ? "10px 20px" : "14px 28px",
           fontSize: compact ? 14 : 15,
         }}
-        // aria-disabled rather than disabled, so a click can still explain what's missing
-        aria-disabled={!canSearch}
+        // Always clickable: an incomplete search shows a hint saying what's missing
         onClick={handleSearch}
       >
         Search
@@ -309,15 +313,6 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 700,
     whiteSpace: "nowrap",
     transition: "background 0.15s",
-  },
-  buttonDisabled: {
-    borderRadius: 8,
-    background: "rgba(255,255,255,0.06)",
-    color: COLORS.textDim,
-    cursor: "not-allowed",
-    border: "none",
-    fontWeight: 700,
-    whiteSpace: "nowrap",
   },
   hint: {
     position: "absolute",

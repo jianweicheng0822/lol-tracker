@@ -51,17 +51,11 @@ describe("SearchBar", () => {
     expect(screen.getByRole("button", { name: "Search" })).toBeInTheDocument();
   });
 
-  it("marks search button disabled when fields are empty", () => {
+  it("keeps the search button usable while the fields are empty", () => {
     render(<SearchBar />);
-    expect(screen.getByRole("button", { name: "Search" })).toHaveAttribute("aria-disabled", "true");
-  });
-
-  it("enables search button when both fields have values", async () => {
-    const user = userEvent.setup();
-    render(<SearchBar />);
-    await user.type(screen.getByPlaceholderText("Game Name"), "Faker");
-    await user.type(screen.getByPlaceholderText("#Tag"), "KR1");
-    expect(screen.getByRole("button", { name: "Search" })).toHaveAttribute("aria-disabled", "false");
+    const button = screen.getByRole("button", { name: "Search" });
+    expect(button).toBeEnabled();
+    expect(button).not.toHaveAttribute("aria-disabled");
   });
 
   // --- name#tag splitting and missing-field hints ---
@@ -121,6 +115,17 @@ describe("SearchBar", () => {
     expect(screen.getByRole("alert")).toHaveTextContent("Enter a game name");
     expect(screen.getByPlaceholderText("Game Name")).toHaveFocus();
     expect(mockNavigate).not.toHaveBeenCalled();
+  });
+
+  it("doesn't cover the hint with the history dropdown", async () => {
+    mockGetLocalHistory.mockReturnValue([{ region: "NA", gameName: "Faker", tagLine: "KR1", searchedAt: 1 }]);
+    const user = userEvent.setup();
+    render(<SearchBar />);
+    await user.click(screen.getByRole("button", { name: "Search" }));
+
+    expect(screen.getByRole("alert")).toHaveTextContent("Enter a game name");
+    expect(screen.getByPlaceholderText("Game Name")).toHaveFocus();
+    expect(screen.queryByTestId("search-history-dropdown")).not.toBeInTheDocument();
   });
 
   it("navigates to player page on button click", async () => {

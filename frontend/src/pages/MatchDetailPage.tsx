@@ -22,9 +22,11 @@ import {
 import { ScoreboardTeamTable, ArenaScoreboard } from "../components/ScoreboardTable";
 import { COLORS } from "../utils/colors";
 import AppHeader from "../components/AppHeader";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export default function MatchDetailPage() {
   const { region, matchId } = useParams<{ region: string; matchId: string }>();
+  useDocumentTitle("Match details");
   const [searchParams] = useSearchParams();
   const puuid = searchParams.get("puuid") || "";
   const navigate = useNavigate();

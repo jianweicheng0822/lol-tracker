@@ -7,11 +7,13 @@ import type { Region, MultiSearchPlayer } from "../types";
 import MultiSearchCard from "../components/MultiSearchCard";
 import { parseMultiSearchInput, MULTI_SEARCH_LIMIT } from "../utils/multiSearch";
 import AppHeader from "../components/AppHeader";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 const toRegion = (value: string | null): Region =>
   REGIONS.includes(value as Region) ? (value as Region) : "NA";
 
 export default function MultiSearchPage() {
+  useDocumentTitle("Multi-Search");
   // The searched names live in the URL (?q=Name#Tag,...&region=NA), so going back from a player
   // page, refreshing, or sharing the link brings the same search back
   const [searchParams, setSearchParams] = useSearchParams();

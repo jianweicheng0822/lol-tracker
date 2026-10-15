@@ -6,8 +6,10 @@
 import { useNavigate } from "react-router-dom";
 import SearchBar from "../components/SearchBar";
 import { COLORS } from "../utils/colors";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export default function NotFoundPage() {
+  useDocumentTitle("Page not found");
   const navigate = useNavigate();
 
   return (

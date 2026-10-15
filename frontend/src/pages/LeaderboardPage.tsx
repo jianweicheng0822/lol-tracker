@@ -11,6 +11,7 @@ import { TIER_COLORS } from "../utils/lp";
 import { useDdragonVersion, ddragonBase } from "../utils/ddragon";
 import type { LeaderboardEntry, Region } from "../types";
 import AppHeader from "../components/AppHeader";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 // Leaderboards cover the three major regions only (must match the backend's LEADERBOARD_REGIONS)
 const LEADERBOARD_REGIONS: Region[] = ["NA", "EUW", "KR"];
@@ -74,6 +75,7 @@ function paramsFromView(view: LeaderboardView): Record<string, string> {
 type LoadedPage = { key: string; entries: LeaderboardEntry[]; totalEntries: number; error?: string };
 
 export default function LeaderboardPage() {
+  useDocumentTitle("Leaderboard");
   const navigate = useNavigate();
   const ddragonVersion = useDdragonVersion();
   const profileIconUrl = (id: number) => `${ddragonBase(ddragonVersion)}/profileicon/${id}.png`;

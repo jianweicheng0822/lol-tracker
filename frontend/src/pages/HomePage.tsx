@@ -13,6 +13,7 @@ import { useAuth } from "../hooks/useAuth";
 import { COLORS } from "../utils/colors";
 import { TIER_COLORS } from "../utils/lp";
 import type { FavoritePlayer, LeaderboardEntry } from "../types";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 const DEMO_PLAYERS = [
   { label: "duoking1 #freex", puuid: "JZsCBcQ18XWqlQS2NDBS0Vi9uuUnhJJjhIBdHvNFoTEM8qLzsvkMSTYbDneGtgqr6OOx7fCX0OeTXA", region: "NA" },
@@ -23,6 +24,7 @@ export default function HomePage() {
   const navigate = useNavigate();
   const [favorites, setFavorites] = useState<FavoritePlayer[]>([]);
   const { isLoggedIn } = useAuth();
+  useDocumentTitle();
   const [topPlayers, setTopPlayers] = useState<LeaderboardEntry[]>([]);
 
   const loadFavorites = useCallback(() => {

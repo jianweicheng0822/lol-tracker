@@ -8,6 +8,7 @@ import { loadChampionMap } from "../utils/champion";
 import { COLORS, winRateColor } from "../utils/colors";
 import { TIER_COLORS } from "../utils/lp";
 import AppHeader from "../components/AppHeader";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 const TIER_ICON_BASE =
   "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-mini-crests";
@@ -34,6 +35,7 @@ function formatGameDuration(startTime: number, gameLength: number): string {
 
 export default function LiveMatchPage() {
   const { region, gameName, tag } = useParams<{ region: string; gameName: string; tag: string }>();
+  useDocumentTitle(gameName && tag ? `Live game: ${gameName}#${tag}` : "Live game");
   const navigate = useNavigate();
   const version = useDdragonVersion();
   const base = ddragonBase(version);

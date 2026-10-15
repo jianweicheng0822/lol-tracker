@@ -24,6 +24,7 @@ import { REGIONS } from "../types";
 import LiveGameCard from "../components/LiveGameCard";
 import { computeStreak, computeClimbStatus } from "../utils/playerInsights";
 import { COLORS } from "../utils/colors";
+import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 export default function PlayerPage() {
   // Extract player identifiers from the URL route params
@@ -56,6 +57,9 @@ export default function PlayerPage() {
   const [lastUpdated, setLastUpdated] = useState<number | null>(null);
   // Bumped on refresh so tabs with their own data (Champions) refetch while keeping their filters
   const [refreshToken, setRefreshToken] = useState(0);
+
+  // Riot ID in the tab: from the loaded account, or from the URL while it loads
+  useDocumentTitle(account ? `${account.gameName}#${account.tagLine}` : gameName && tag ? `${gameName}#${tag}` : null);
 
   /**
    * Fetches all player data in parallel. Called on mount and on manual refresh.

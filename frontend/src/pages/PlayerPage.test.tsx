@@ -326,5 +326,6 @@ describe("PlayerPage header search", () => {
     );
     expect(screen.getByTestId("header-search")).toHaveTextContent(/^#$/);
     await waitFor(() => expect(screen.getByTestId("header-search")).toHaveTextContent("Faker#KR1"));
+    expect(document.title).toBe("Faker#KR1 · LoL Tracker");
   });
 });

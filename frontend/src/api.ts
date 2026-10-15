@@ -137,12 +137,26 @@ export async function readErrorMessage(res: Response): Promise<string> {
     const type = res.headers.get("content-type") || "";
     if (type.includes("application/json")) {
       const body = await res.json();
-      return body?.message || body?.error || `Error ${res.status}: ${res.statusText}`;
+      return body?.message || body?.error || statusMessage(res.status);
     }
-    return (await res.text()) || `Status ${res.status}`;
+    const text = (await res.text()).trim();
+    // Proxies (nginx, Cloudflare) answer with an HTML error page while the backend is down or
+    // restarting; that markup means nothing to a user, so only short plain text is shown as-is
+    const isHtml = type.includes("text/html") || text.startsWith("<");
+    return text && !isHtml && text.length <= 200 ? text : statusMessage(res.status);
   } catch {
     return "An unknown network error occurred.";
   }
+}
+
+/** A plain-language message for an HTTP error status, for when the body has nothing usable. */
+function statusMessage(status: number): string {
+  if (status === 429) return "Too many requests. Please wait a moment and try again.";
+  if (status === 502 || status === 503 || status === 504) {
+    return "The server is temporarily unavailable. Please try again in a moment.";
+  }
+  if (status >= 500) return "Something went wrong on our side. Please try again.";
+  return `Request failed (error ${status}).`;
 }
 
 /** Thrown when the requested player doesn't exist in that region (HTTP 404). */

@@ -136,6 +136,36 @@ describe("readErrorMessage", () => {
     expect(await readErrorMessage(res)).toBe("Access denied");
   });
 
+  it("never shows an HTML error page, e.g. from nginx while the backend restarts", async () => {
+    const res = {
+      status: 502,
+      statusText: "Bad Gateway",
+      headers: new Headers({ "content-type": "text/html" }),
+      text: () => Promise.resolve("<!DOCTYPE html><html><body><h1>502 Bad Gateway</h1></body></html>"),
+    } as unknown as Response;
+    expect(await readErrorMessage(res)).toBe("The server is temporarily unavailable. Please try again in a moment.");
+  });
+
+  it("treats markup as HTML even without an HTML content type", async () => {
+    const res = {
+      status: 500,
+      statusText: "Internal Server Error",
+      headers: new Headers({ "content-type": "text/plain" }),
+      text: () => Promise.resolve("<html><body>Whitelabel Error Page</body></html>"),
+    } as unknown as Response;
+    expect(await readErrorMessage(res)).toBe("Something went wrong on our side. Please try again.");
+  });
+
+  it("uses a status message when the body is empty", async () => {
+    const res = {
+      status: 429,
+      statusText: "Too Many Requests",
+      headers: new Headers(),
+      text: () => Promise.resolve(""),
+    } as unknown as Response;
+    expect(await readErrorMessage(res)).toBe("Too many requests. Please wait a moment and try again.");
+  });
+
   it("returns generic message on parse failure", async () => {
     const res = {
       status: 500,

@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { login, register, getOAuthUrl, fetchOAuthProviders } from "../api";
 import { COLORS } from "../utils/colors";
+import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 
 type Props = {
   onSuccess: () => void;
@@ -12,6 +13,7 @@ const PASSWORD_MIN = 8;
 const USERNAME_MAX = 50;
 
 export default function AuthModal({ onSuccess, onClose }: Props) {
+  useBodyScrollLock();
   const [mode, setMode] = useState<"login" | "register">("login");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");

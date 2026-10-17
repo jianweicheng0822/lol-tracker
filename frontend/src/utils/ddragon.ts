@@ -271,6 +271,7 @@ export const formatDuration = (sec: number) => {
   return `${m}m ${String(s).padStart(2, "0")}s`;
 };
 
+/** "5m ago" / "3h ago" / "2d ago" for the last week; older games show their date ("May 20"), since "145d ago" is hard to place. */
 export const timeAgo = (timestamp: number) => {
   const diff = Date.now() - timestamp;
   const minutes = Math.floor(diff / 60000);
@@ -278,5 +279,8 @@ export const timeAgo = (timestamp: number) => {
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours}h ago`;
   const days = Math.floor(hours / 24);
-  return `${days}d ago`;
+  if (days < 7) return `${days}d ago`;
+  const date = new Date(timestamp);
+  const sameYear = date.getFullYear() === new Date().getFullYear();
+  return date.toLocaleDateString("en-US", { month: "short", day: "numeric", ...(sameYear ? {} : { year: "numeric" }) });
 };

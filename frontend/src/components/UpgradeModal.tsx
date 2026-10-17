@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { COLORS } from "../utils/colors";
 import { getAuthToken, createCheckoutSession } from "../api";
+import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 
 type Props = {
   onClose: () => void;
@@ -12,6 +13,7 @@ const FEATURES = [
 ];
 
 export default function UpgradeModal({ onClose, onShowAuth }: Props) {
+  useBodyScrollLock();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const isLoggedIn = !!getAuthToken();

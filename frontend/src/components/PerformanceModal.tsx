@@ -8,6 +8,7 @@ import { toAbsoluteLp, TIER_COLORS, LP_TIME_RANGES, pickDefaultRange, filterByRa
 import type { LpTimeRange } from "../utils/lp";
 import { COLORS } from "../utils/colors";
 import type { LpSnapshot } from "../types";
+import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 
 type QueueFilter = "RANKED_SOLO_5x5" | "RANKED_FLEX_SR";
 
@@ -22,6 +23,7 @@ type Props = {
 };
 
 export default function PerformanceModal({ puuid, onClose }: Props) {
+  useBodyScrollLock();
   const [queue, setQueue] = useState<QueueFilter>("RANKED_SOLO_5x5");
   const [lpData, setLpData] = useState<LpSnapshot[]>([]);
   const [loading, setLoading] = useState(true);

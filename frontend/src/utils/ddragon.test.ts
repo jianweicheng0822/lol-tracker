@@ -180,4 +180,16 @@ describe("timeAgo", () => {
     const twoDaysAgo = Date.now() - 2 * 86400000;
     expect(timeAgo(twoDaysAgo)).toBe("2d ago");
   });
+
+  it("still counts days up to a week", () => {
+    expect(timeAgo(Date.now() - 6 * 86400000)).toBe("6d ago");
+  });
+
+  it("shows the date for games a week or more old", () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date(2026, 9, 17, 12));
+    expect(timeAgo(new Date(2026, 4, 20, 12).getTime())).toBe("May 20");
+    expect(timeAgo(new Date(2025, 11, 3, 12).getTime())).toBe("Dec 3, 2025");
+    vi.useRealTimers();
+  });
 });

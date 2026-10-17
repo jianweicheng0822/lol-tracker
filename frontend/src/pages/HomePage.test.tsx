@@ -66,7 +66,7 @@ describe("HomePage", () => {
     expect(screen.getByText("C9 Loki #kr3")).toBeInTheDocument();
   });
 
-  it("picks demo players from the leaderboard below the top 3, and opens them by PUUID", async () => {
+  it("picks demo players from the leaderboard below the top 3, and opens them by Riot ID", async () => {
     const entry = (name: string, puuid: string, lp: number) =>
       ({ summonerName: name, puuid, tier: "CHALLENGER", rank: "I", leaguePoints: lp, wins: 1, losses: 1, winRate: 50 });
     vi.mocked(api.fetchLeaderboard).mockResolvedValue({ entries: [
@@ -83,7 +83,7 @@ describe("HomePage", () => {
     expect(screen.queryByText("C9 Loki #kr3")).not.toBeInTheDocument();
 
     await user.click(fourth);
-    expect(mockNavigate).toHaveBeenCalledWith("/player/puuid/NA/p4");
+    expect(mockNavigate).toHaveBeenCalledWith("/player/NA/Fourth/NA1");
   });
 
   it("opens a player from the top ranked preview card", async () => {
@@ -93,7 +93,7 @@ describe("HomePage", () => {
     const user = (await import("@testing-library/user-event")).default.setup();
     render(<HomePage />);
     await user.click(await screen.findByRole("button", { name: /First#NA1/ }));
-    expect(mockNavigate).toHaveBeenCalledWith("/player/puuid/NA/p1");
+    expect(mockNavigate).toHaveBeenCalledWith("/player/NA/First/NA1");
   });
 
   it("renders the shared header", () => {

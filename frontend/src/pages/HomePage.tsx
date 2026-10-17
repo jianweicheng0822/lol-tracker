@@ -14,6 +14,7 @@ import { COLORS } from "../utils/colors";
 import { TIER_COLORS } from "../utils/lp";
 import type { FavoritePlayer, LeaderboardEntry } from "../types";
 import { FALLBACK_DEMO_PLAYERS, pickDemoPlayers, type DemoPlayer } from "../utils/demoPlayers";
+import { playerPath } from "../utils/playerPath";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 // The preview card shows the top 3; "Try searching" picks from the next ones so names don't repeat
@@ -75,7 +76,7 @@ export default function HomePage() {
               <button
                 key={p.label}
                 style={styles.demoBadge}
-                onClick={() => navigate(`/player/puuid/${p.region}/${encodeURIComponent(p.puuid)}`)}
+                onClick={() => navigate(playerPath(p.region, p.label, p.puuid))}
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = "rgba(200,155,60,0.45)"; e.currentTarget.style.background = "rgba(200,155,60,0.08)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = "rgba(255,255,255,0.12)"; e.currentTarget.style.background = "transparent"; }}
               >
@@ -96,7 +97,7 @@ export default function HomePage() {
                 <button
                   key={`${p.summonerName}-${i}`}
                   style={styles.leaderboardRow}
-                  onClick={() => navigate(`/player/puuid/NA/${encodeURIComponent(p.puuid)}`)}
+                  onClick={() => navigate(playerPath("NA", p.summonerName, p.puuid))}
                   onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.05)"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                 >

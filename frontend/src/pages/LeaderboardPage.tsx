@@ -12,6 +12,7 @@ import { useDdragonVersion, ddragonBase } from "../utils/ddragon";
 import type { LeaderboardEntry, Region } from "../types";
 import AppHeader from "../components/AppHeader";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
+import { playerPath } from "../utils/playerPath";
 
 // Leaderboards cover the three major regions only (must match the backend's LEADERBOARD_REGIONS)
 const LEADERBOARD_REGIONS: Region[] = ["NA", "EUW", "KR"];
@@ -280,7 +281,7 @@ export default function LeaderboardPage() {
                     key={`${entry.puuid || entry.summonerName}-${i}`}
                     style={styles.row}
                     onClick={() => {
-                      if (entry.puuid) navigate(`/player/puuid/${region}/${encodeURIComponent(entry.puuid)}`);
+                      if (entry.puuid) navigate(playerPath(region, entry.summonerName, entry.puuid));
                     }}
                     onMouseEnter={(e) => {
                       (e.currentTarget as HTMLTableRowElement).style.background =

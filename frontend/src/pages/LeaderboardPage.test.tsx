@@ -214,6 +214,17 @@ describe("LeaderboardPage", () => {
     expect(mockNavigate).toHaveBeenCalledWith("/player/puuid/NA/puuid-faker");
   });
 
+  it("opens a player by Riot ID when the name is known", async () => {
+    vi.mocked(api.fetchLeaderboard).mockResolvedValue({
+      entries: [{ ...MOCK_ENTRIES[0], summonerName: "Hide on bush#KR1" }],
+      totalEntries: 1,
+    });
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(await screen.findByText("Hide on bush#KR1"));
+    expect(mockNavigate).toHaveBeenCalledWith("/player/NA/Hide%20on%20bush/KR1");
+  });
+
   it("renders each player's profile icon, with the default icon when it's missing", async () => {
     renderPage();
     await waitFor(() => {

@@ -181,6 +181,28 @@ describe("MatchList", () => {
     expect(expanded.style.overflowX).toBe("auto");
   });
 
+  it("links an expanded match to its own page", async () => {
+    const user = userEvent.setup();
+    render(<MatchList matches={[makeMatchSummary({ matchId: "NA1_42" })]} region="NA" puuid="me" />);
+    await user.click(screen.getByTitle("Expand scoreboard"));
+
+    const link = await screen.findByRole("link", { name: /Open match page/ });
+    expect(link).toHaveAttribute("href", "/match/NA/NA1_42?puuid=me");
+    await user.click(link);
+    expect(mockNavigate).toHaveBeenCalledWith("/match/NA/NA1_42?puuid=me");
+  });
+
+  it("copies a shareable match link", async () => {
+    const user = userEvent.setup();
+    const writeText = vi.spyOn(navigator.clipboard, "writeText").mockResolvedValue();
+    render(<MatchList matches={[makeMatchSummary({ matchId: "NA1_42" })]} region="NA" puuid="me" />);
+    await user.click(screen.getByTitle("Expand scoreboard"));
+
+    await user.click(await screen.findByRole("button", { name: "Copy link" }));
+    expect(writeText).toHaveBeenCalledWith(window.location.origin + "/match/NA/NA1_42?puuid=me");
+    expect(await screen.findByRole("button", { name: "Link copied" })).toBeInTheDocument();
+  });
+
   it("treats the current Arena queue (1750) as Arena", () => {
     const match = makeMatchSummary({
       queueId: 1750,

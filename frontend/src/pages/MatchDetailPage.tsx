@@ -8,7 +8,7 @@
  * to navigate to their match history.
  */
 import { useEffect, useState } from "react";
-import { useParams, useSearchParams, useNavigate } from "react-router-dom";
+import { useParams, useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import { fetchMatchDetail } from "../api";
 import type { MatchDetail } from "../types";
 import {
@@ -30,6 +30,7 @@ export default function MatchDetailPage() {
   const [searchParams] = useSearchParams();
   const puuid = searchParams.get("puuid") || "";
   const navigate = useNavigate();
+  const location = useLocation();
 
   const [match, setMatch] = useState<MatchDetail | null>(null);
   const [status, setStatus] = useState<"loading" | "error" | "done">("loading");
@@ -69,7 +70,8 @@ export default function MatchDetailPage() {
       <AppHeader />
 
       <div style={styles.content}>
-        <button onClick={() => navigate(-1)} style={styles.backBtn}>&larr; Back</button>
+        {/* Opened from a shared link there is no page to go back to, so go home instead */}
+        <button onClick={() => (location.key === "default" ? navigate("/") : navigate(-1))} style={styles.backBtn}>&larr; Back</button>
         {status === "loading" && (
           <div style={styles.loadingBox}>Loading match details...</div>
         )}

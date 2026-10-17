@@ -6,6 +6,7 @@
  * @module frontend.components
  */
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import type { MatchSummary, MatchDetail } from "../types";
 import { fetchMatchDetail } from "../api";
 import {
@@ -244,6 +245,57 @@ function ChevronButton({
     >
       {expanded ? "\u25B2" : "\u25BC"}
     </button>
+  );
+}
+
+/** "Open match page" and "Copy link" for an expanded match, so a single match can be shared. */
+function MatchLinks({ matchId, region, puuid }: { matchId: string; region: string; puuid?: string }) {
+  const navigate = useNavigate();
+  const [copyState, setCopyState] = useState<"idle" | "copied" | "failed">("idle");
+  // puuid highlights the player whose history this came from on the match page
+  const path = `/match/${region}/${encodeURIComponent(matchId)}${puuid ? `?puuid=${encodeURIComponent(puuid)}` : ""}`;
+
+  useEffect(() => {
+    if (copyState === "idle") return;
+    const t = setTimeout(() => setCopyState("idle"), 2000);
+    return () => clearTimeout(t);
+  }, [copyState]);
+
+  const copy = () => {
+    navigator.clipboard
+      .writeText(window.location.origin + path)
+      .then(() => setCopyState("copied"), () => setCopyState("failed"));
+  };
+
+  const linkStyle: React.CSSProperties = {
+    background: "none",
+    border: "none",
+    padding: 0,
+    color: COLORS.textSecondary,
+    fontSize: 12,
+    cursor: "pointer",
+    textDecoration: "none",
+    fontFamily: "inherit",
+  };
+
+  return (
+    <div style={{ display: "flex", justifyContent: "flex-end", gap: 16, padding: "4px 0 2px" }}>
+      <a
+        href={path}
+        style={linkStyle}
+        onClick={(e) => {
+          // Let Ctrl/Cmd/middle-click open a new tab as usual
+          if (e.ctrlKey || e.metaKey || e.shiftKey || e.button !== 0) return;
+          e.preventDefault();
+          navigate(path);
+        }}
+      >
+        Open match page &rarr;
+      </a>
+      <button type="button" style={linkStyle} onClick={copy}>
+        {copyState === "copied" ? "Link copied" : copyState === "failed" ? "Couldn't copy" : "Copy link"}
+      </button>
+    </div>
   );
 }
 
@@ -634,6 +686,7 @@ export default function MatchList({ matches, region, puuid, onLoadMore, isLoadin
                   }}
                   data-testid="expanded-scoreboard"
                 >
+                  <MatchLinks matchId={m.matchId} region={region} puuid={puuid} />
                   <InlineScoreboard
                     matchId={m.matchId}
                     region={region}

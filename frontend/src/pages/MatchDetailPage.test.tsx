@@ -4,10 +4,12 @@ import MatchDetailPage from "./MatchDetailPage";
 import { makeMatchDetail, makeMatchDetailParticipant } from "../test/fixtures";
 
 const mockNavigate = vi.fn();
+let mockLocation = { key: "abc123" };
 vi.mock("react-router-dom", () => ({
   useParams: () => ({ region: "NA", matchId: "NA1_123" }),
   useSearchParams: () => [new URLSearchParams("puuid=p1"), vi.fn()],
   useNavigate: () => mockNavigate,
+  useLocation: () => mockLocation,
 }));
 
 // The header has its own tests
@@ -38,7 +40,10 @@ vi.mock("../components/ScoreboardTable", () => ({
 import { fetchMatchDetail } from "../api";
 
 describe("MatchDetailPage", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    mockLocation = { key: "abc123" };
+  });
 
   it("shows loading state initially", () => {
     vi.mocked(fetchMatchDetail).mockReturnValue(new Promise(() => {}));
@@ -105,5 +110,14 @@ describe("MatchDetailPage", () => {
     render(<MatchDetailPage />);
     await user.click(screen.getByRole("button", { name: /Back/ }));
     expect(mockNavigate).toHaveBeenCalledWith(-1);
+  });
+
+  it("goes home from Back when the page was opened from a shared link", async () => {
+    mockLocation = { key: "default" };
+    vi.mocked(fetchMatchDetail).mockResolvedValue(makeMatchDetail());
+    const user = userEvent.setup();
+    render(<MatchDetailPage />);
+    await user.click(screen.getByRole("button", { name: /Back/ }));
+    expect(mockNavigate).toHaveBeenCalledWith("/");
   });
 });

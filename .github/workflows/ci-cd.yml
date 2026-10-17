@@ -105,6 +105,11 @@ jobs:
           script: |
             set -e
 
+            # --- Free disk space: each deploy leaves the previous :latest image behind ---
+            # Images still used by a container (current app, db, redis, nginx) are kept
+            docker image prune -af
+            df -h /
+
             # --- Login & pull new image ---
             echo "$GH_TOKEN" | docker login ghcr.io -u "$GH_ACTOR" --password-stdin
             docker pull "$IMAGE"

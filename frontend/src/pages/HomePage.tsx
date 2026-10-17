@@ -23,7 +23,8 @@ const PREVIEW_SIZE = 3;
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const [favorites, setFavorites] = useState<FavoritePlayer[]>([]);
+  // null until loaded, so the "no favorites yet" hint doesn't flash before they arrive
+  const [favorites, setFavorites] = useState<FavoritePlayer[] | null>(null);
   const { isLoggedIn } = useAuth();
   useDocumentTitle();
   const [topPlayers, setTopPlayers] = useState<LeaderboardEntry[]>([]);
@@ -86,6 +87,8 @@ export default function HomePage() {
           </div>
         </div>
 
+        {isLoggedIn && favorites && <FavoritesList favorites={favorites} onUpdate={loadFavorites} />}
+
         {topPlayers.length > 0 && (
           <div style={styles.leaderboardCard}>
             <div style={styles.leaderboardHeader}>
@@ -124,7 +127,6 @@ export default function HomePage() {
           </div>
         )}
 
-        <FavoritesList favorites={isLoggedIn ? favorites : []} onUpdate={loadFavorites} />
       </div>
     </div>
   );

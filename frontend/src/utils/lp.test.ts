@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { toAbsoluteLp } from "./lp";
+import { toAbsoluteLp, tierIconUrl } from "./lp";
 
 describe("toAbsoluteLp", () => {
   it("converts Iron IV 0 LP to 0", () => {
@@ -51,5 +51,12 @@ describe("toAbsoluteLp", () => {
     for (const [tier, expected] of tiers) {
       expect(toAbsoluteLp(tier, "IV", 0)).toBe(expected);
     }
+  });
+});
+
+describe("tierIconUrl", () => {
+  it("points at the ranked crest, SVG for Emerald", () => {
+    expect(tierIconUrl("DIAMOND")).toMatch(/ranked-mini-crests\/diamond\.png$/);
+    expect(tierIconUrl("EMERALD")).toMatch(/ranked-mini-crests\/emerald\.svg$/);
   });
 });

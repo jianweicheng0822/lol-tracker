@@ -78,3 +78,12 @@ h1, h2 {
   .lb-table td:nth-child(2) { overflow-wrap: anywhere; }
   .lb-table th:nth-child(5), .lb-table td:nth-child(5), .lb-tier-icon { display: none !important; }
 }
+
+/* Home page favorites: lift on hover; the remove button only shows on hover (always on touch screens) */
+.fav-avatar__open { transition: transform 0.2s; }
+.fav-avatar:hover .fav-avatar__open, .fav-avatar__open:focus-visible { transform: translateY(-3px); }
+.fav-avatar__remove { opacity: 0; transition: opacity 0.15s; }
+.fav-avatar:hover .fav-avatar__remove, .fav-avatar__remove:focus-visible { opacity: 1; }
+@media (hover: none) {
+  .fav-avatar__remove { opacity: 1; }
+}

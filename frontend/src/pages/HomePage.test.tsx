@@ -115,7 +115,7 @@ describe("HomePage", () => {
   it("loads favorites after logging in from the header, and hides them after logging out", async () => {
     vi.mocked(api.fetchFavorites).mockResolvedValue([{ puuid: "p1" }] as never);
     const { rerender } = render(<HomePage />);
-    expect(screen.getByTestId("favorites-list")).toHaveTextContent("0 favorites");
+    expect(screen.queryByTestId("favorites-list")).not.toBeInTheDocument();
 
     logIn();
     await act(async () => rerender(<HomePage />));
@@ -124,12 +124,19 @@ describe("HomePage", () => {
 
     authState.isLoggedIn = false;
     await act(async () => rerender(<HomePage />));
-    expect(screen.getByTestId("favorites-list")).toHaveTextContent("0 favorites");
+    expect(screen.queryByTestId("favorites-list")).not.toBeInTheDocument();
   });
 
-  it("renders favorites list component", () => {
+  it("shows favorites above the top ranked players", async () => {
+    vi.mocked(api.fetchFavorites).mockResolvedValue([{ puuid: "p1" }] as never);
+    vi.mocked(api.fetchLeaderboard).mockResolvedValue({ entries: [
+      { summonerName: "First#NA1", puuid: "p1", tier: "CHALLENGER", rank: "I", leaguePoints: 1500, wins: 1, losses: 1, winRate: 50 },
+    ], totalEntries: 1 });
+    logIn();
     render(<HomePage />);
-    expect(screen.getByTestId("favorites-list")).toBeInTheDocument();
+    const favorites = await screen.findByTestId("favorites-list");
+    const leaderboard = await screen.findByText("Top Ranked Players");
+    expect(favorites.compareDocumentPosition(leaderboard) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
   it("fetches leaderboard preview on mount", () => {

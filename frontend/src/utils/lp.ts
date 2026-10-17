@@ -116,3 +116,12 @@ export function filterByRange<T extends { capturedAt: number }>(snapshots: T[], 
   const cutoff = Date.now() - days * 86_400_000;
   return snapshots.filter((s) => s.capturedAt >= cutoff);
 }
+
+const TIER_ICON_BASE =
+  "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-mini-crests";
+
+/** Small ranked crest for a tier (Emerald only exists as SVG). */
+export function tierIconUrl(tier: string): string {
+  const ext = tier.toUpperCase() === "EMERALD" ? "svg" : "png";
+  return `${TIER_ICON_BASE}/${tier.toLowerCase()}.${ext}`;
+}

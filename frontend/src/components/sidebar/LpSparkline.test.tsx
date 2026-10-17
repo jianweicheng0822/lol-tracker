@@ -26,12 +26,18 @@ describe("LpSparkline", () => {
     expect(container.innerHTML).toBe("");
   });
 
-  it("shows 'No LP data' when fewer than 2 data points", async () => {
-    vi.mocked(fetchLpHistory).mockResolvedValue([makeLpSnapshot()]);
+  it("shows the current rank and when tracking started with a single data point", async () => {
+    vi.mocked(fetchLpHistory).mockResolvedValue([makeLpSnapshot({ tier: "GOLD", rankDivision: "II", leaguePoints: 45 })]);
     render(<LpSparkline puuid="test" onClick={vi.fn()} />);
-    await waitFor(() => {
-      expect(screen.getByText("No LP data")).toBeInTheDocument();
-    });
+    expect(await screen.findByText(/Tracking started .*A line appears once their LP changes/)).toBeInTheDocument();
+    expect(screen.getByText("Gold II")).toBeInTheDocument();
+    expect(screen.getByText("45 LP")).toBeInTheDocument();
+  });
+
+  it("says no LP is recorded yet when there is none", async () => {
+    vi.mocked(fetchLpHistory).mockResolvedValue([]);
+    render(<LpSparkline puuid="test" onClick={vi.fn()} />);
+    expect(await screen.findByText("No LP recorded yet")).toBeInTheDocument();
   });
 
   it("renders LP History title and chart with 2+ data points", async () => {
@@ -74,7 +80,7 @@ describe("LpSparkline", () => {
     vi.mocked(fetchLpHistory).mockRejectedValue(new Error("fail"));
     render(<LpSparkline puuid="test" onClick={vi.fn()} />);
     await waitFor(() => {
-      expect(screen.getByText("No LP data")).toBeInTheDocument();
+      expect(screen.getByText("No LP recorded yet")).toBeInTheDocument();
     });
   });
 });

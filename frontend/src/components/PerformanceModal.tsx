@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
+  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer,
 } from "recharts";
 import { fetchLpHistory } from "../api";
-import { toAbsoluteLp, TIER_COLORS, LP_TIME_RANGES, pickDefaultRange, filterByRange, countInRange, hasDataBeyond } from "../utils/lp";
+import { toAbsoluteLp, TIER_COLORS, LP_TIME_RANGES, pickDefaultRange, filterByRange, countInRange, hasDataBeyond, lpAxis, formatRank, formatShortDate, timeTicks, startedDay } from "../utils/lp";
 import type { LpTimeRange } from "../utils/lp";
 import { COLORS } from "../utils/colors";
 import type { LpSnapshot } from "../types";
@@ -51,31 +51,40 @@ export default function PerformanceModal({ puuid, onClose }: Props) {
   }, [onClose]);
 
   const filteredLpData = filterByRange(lpData, lpRange);
-  const lpChartData = filteredLpData.map((s) => {
-    const d = new Date(s.capturedAt);
-    return {
-      date: `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`,
-      fullDate: `${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}/${d.getFullYear()}`,
-      lp: toAbsoluteLp(s.tier, s.rankDivision, s.leaguePoints),
-      tier: s.tier.toUpperCase(),
-      label: `${s.tier.charAt(0)}${s.tier.slice(1).toLowerCase()} ${s.rankDivision} ${s.leaguePoints}LP`,
-    };
-  });
+  const lpChartData = filteredLpData.map((s) => ({
+    // Plotted on a time scale, so several snapshots in a day don't repeat the date and gaps show
+    t: s.capturedAt,
+    fullDate: new Date(s.capturedAt).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" }),
+    lp: toAbsoluteLp(s.tier, s.rankDivision, s.leaguePoints),
+    tier: s.tier.toUpperCase(),
+    label: `${formatRank(s.tier, s.rankDivision)} ${s.leaguePoints.toLocaleString()} LP`,
+  }));
+  const yAxis = lpChartData.length > 0 ? lpAxis(lpChartData.map((d) => d.lp)) : null;
+
+  // Summary over the selected range
+  const latest = lpData[lpData.length - 1];
+  const first = lpChartData[0];
+  const last = lpChartData[lpChartData.length - 1];
+  const change = first && last ? last.lp - first.lp : 0;
+  const peak = lpChartData.reduce<(typeof lpChartData)[number] | null>((best, d) => (!best || d.lp > best.lp ? d : best), null);
+
+  // Only offer ranges that show something the shorter one doesn't
+  const ranges = LP_TIME_RANGES.filter((r, idx) =>
+    countInRange(lpData, r) >= 2 && (idx === 0 || hasDataBeyond(lpData, LP_TIME_RANGES[idx - 1], r)));
+  const trackingSince = lpData.length > 0 ? lpData[0].capturedAt : null;
+  // When the range reaches back to the first snapshot, "Last 30 days" would overstate it
+  const changeLabel = trackingSince && first?.t === trackingSince
+    ? `Since ${formatShortDate(trackingSince)}`
+    : `Last ${lpRange} days`;
 
   const tooltipStyle = { background: COLORS.pageBg, border: `1px solid ${COLORS.cardBorder}`, borderRadius: 3, fontSize: 12, color: COLORS.textPrimary };
 
-  const tierTicks = [0, 400, 800, 1200, 1600, 2000, 2400, 2800];
-  const tierNames: Record<number, string> = {
-    0: "Iron", 400: "Bronze", 800: "Silver", 1200: "Gold",
-    1600: "Plat", 2000: "Emerald", 2400: "Diamond", 2800: "Master",
-  };
+  // Only the latest point gets a dot; the rest show on hover, so dense history stays readable
   const renderLpDot = (props: { cx?: number; cy?: number; index?: number }) => {
     const { cx, cy, index } = props;
-    if (cx == null || cy == null || index == null) return null;
-    const point = lpChartData[index];
-    if (!point) return null;
-    const color = TIER_COLORS[point.tier] ?? "#C89B3C";
-    return <circle cx={cx} cy={cy} r={4} fill={color} stroke={COLORS.pageBg} strokeWidth={1} />;
+    if (cx == null || cy == null || index !== lpChartData.length - 1) return <g key={index} />;
+    const color = TIER_COLORS[lpChartData[index].tier] ?? COLORS.gold;
+    return <circle key={index} cx={cx} cy={cy} r={4} fill={color} stroke={COLORS.pageBg} strokeWidth={1.5} />;
   };
 
   /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -118,68 +127,119 @@ export default function PerformanceModal({ puuid, onClose }: Props) {
             ))}
           </div>
 
-          {/* Time range pills */}
-          {!loading && lpChartData.length > 1 && (
+          {/* Time range pills: hidden when only one range has data */}
+          {!loading && ranges.length > 1 && (
             <div style={styles.rangePills}>
-              {LP_TIME_RANGES.map((r, idx) => {
-                const tooFew = countInRange(lpData, r) < 2;
-                const prevRange = idx > 0 ? LP_TIME_RANGES[idx - 1] : 0;
-                const noExtra = idx > 0 && !tooFew && !hasDataBeyond(lpData, prevRange, r);
-                const disabled = tooFew || noExtra;
-                const tooltip = tooFew
-                  ? "Not enough data"
-                  : noExtra
-                    ? `No additional data beyond ${prevRange}D`
-                    : undefined;
-                return (
-                  <button
-                    key={r}
-                    disabled={disabled}
-                    onClick={() => setLpRange(r)}
-                    title={tooltip}
-                    style={{
-                      ...styles.rangePill,
-                      background: lpRange === r ? "#C89B3C" : "transparent",
-                      color: lpRange === r ? COLORS.pageBg : disabled ? "#3C3C41" : COLORS.textTertiary,
-                      cursor: disabled ? "default" : "pointer",
-                    }}
-                  >
-                    {r}D
-                  </button>
-                );
-              })}
+              {ranges.map((r) => (
+                <button
+                  key={r}
+                  onClick={() => setLpRange(r)}
+                  style={{
+                    ...styles.rangePill,
+                    background: lpRange === r ? COLORS.gold : "transparent",
+                    color: lpRange === r ? COLORS.pageBg : COLORS.textTertiary,
+                  }}
+                >
+                  {r}D
+                </button>
+              ))}
             </div>
           )}
         </div>
+
+        {!loading && latest && (
+          <div style={styles.summary}>
+            <div>
+              <div style={styles.summaryLabel}>Current</div>
+              <div style={{ ...styles.summaryValue, color: TIER_COLORS[latest.tier.toUpperCase()] ?? COLORS.gold }}>
+                {formatRank(latest.tier, latest.rankDivision)} <span style={styles.summaryLp}>{latest.leaguePoints.toLocaleString()} LP</span>
+              </div>
+            </div>
+            {lpChartData.length > 1 && (
+              <>
+                <div>
+                  <div style={styles.summaryLabel}>{changeLabel}</div>
+                  <div style={{ ...styles.summaryValue, color: change > 0 ? COLORS.teal : change < 0 ? COLORS.loss : COLORS.textSecondary }}>
+                    {change > 0 ? "+" : ""}{change.toLocaleString()} LP
+                  </div>
+                </div>
+                {peak && (
+                  <div>
+                    <div style={styles.summaryLabel}>Peak</div>
+                    <div style={styles.summaryValue}>{peak.label}</div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        )}
 
         <div style={styles.chartArea}>
           {loading && <div style={styles.placeholder}>Loading LP data...</div>}
 
           {!loading && lpData.length === 0 && (
-            <div style={styles.placeholder}>No LP data for {QUEUE_OPTIONS.find((q) => q.id === queue)?.label}.</div>
+            <div style={styles.placeholder}>No {QUEUE_OPTIONS.find((q) => q.id === queue)?.label} LP recorded yet.</div>
           )}
 
           {!loading && lpData.length > 0 && lpChartData.length <= 1 && (
-            <div style={styles.placeholder}>Not enough LP data for chart</div>
+            <div style={styles.placeholder}>
+              Tracking started {trackingSince ? startedDay(trackingSince) : "recently"}. A line appears once their LP changes.
+            </div>
           )}
 
           {!loading && lpChartData.length > 1 && (
             <ResponsiveContainer width="100%" height={300}>
-              <LineChart data={lpChartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke={COLORS.divider} />
-                <XAxis dataKey="date" tick={{ fill: COLORS.textDim, fontSize: 10 }} />
-                <YAxis
-                  ticks={tierTicks}
-                  tickFormatter={(v: number) => tierNames[v] ?? ""}
+              <AreaChart data={lpChartData}>
+                <defs>
+                  <linearGradient id="lpFill" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor={COLORS.gold} stopOpacity={0.28} />
+                    <stop offset="100%" stopColor={COLORS.gold} stopOpacity={0} />
+                  </linearGradient>
+                </defs>
+                <CartesianGrid vertical={false} stroke={COLORS.divider} />
+                <XAxis
+                  dataKey="t"
+                  type="number"
+                  scale="time"
+                  domain={["dataMin", "dataMax"]}
+                  ticks={lpChartData.length > 1 ? timeTicks(lpChartData[0].t, lpChartData[lpChartData.length - 1].t) : undefined}
+                  tickFormatter={formatShortDate}
+                  axisLine={false}
+                  tickLine={false}
                   tick={{ fill: COLORS.textDim, fontSize: 10 }}
-                  domain={["dataMin - 100", "dataMax + 100"]}
+                />
+                <YAxis
+                  ticks={yAxis?.ticks}
+                  tickFormatter={yAxis?.format}
+                  domain={yAxis?.domain}
+                  width={72}
+                  axisLine={false}
+                  tickLine={false}
+                  tick={{ fill: COLORS.textDim, fontSize: 10 }}
                 />
                 <Tooltip content={renderLpTooltip} />
-                <Line type="monotone" dataKey="lp" stroke="#C89B3C" strokeWidth={2} dot={renderLpDot} />
-              </LineChart>
+                <Area
+                  type="linear"
+                  dataKey="lp"
+                  stroke={COLORS.gold}
+                  strokeWidth={2}
+                  fill="url(#lpFill)"
+                  dot={renderLpDot}
+                  activeDot={{ r: 5, fill: COLORS.gold, stroke: COLORS.pageBg, strokeWidth: 1.5 }}
+                />
+              </AreaChart>
             </ResponsiveContainer>
           )}
         </div>
+
+        {!loading && trackingSince && (
+          <div
+            style={styles.caption}
+            title="LP is recorded whenever it changes, starting from the first time a player is looked up on LoL Tracker."
+          >
+            Tracking since {new Date(trackingSince).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })} &#9432;
+          </div>
+        )}
       </div>
     </div>
   );
@@ -257,6 +317,35 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 11,
     fontWeight: 600,
     transition: "background 0.15s, color 0.15s",
+  },
+  summary: {
+    display: "flex",
+    flexWrap: "wrap",
+    gap: "12px 40px",
+    marginBottom: 12,
+  },
+  summaryLabel: {
+    fontSize: 11,
+    textTransform: "uppercase",
+    letterSpacing: 1,
+    color: COLORS.textDim,
+    marginBottom: 2,
+  },
+  summaryValue: {
+    fontSize: 15,
+    fontWeight: 700,
+    color: COLORS.textPrimary,
+  },
+  summaryLp: {
+    color: COLORS.textPrimary,
+  },
+  caption: {
+    marginTop: 8,
+    cursor: "help",
+    width: "fit-content",
+    fontSize: 12,
+    color: COLORS.textDim,
+    lineHeight: 1.5,
   },
   placeholder: {
     textAlign: "center",

@@ -125,3 +125,68 @@ export function tierIconUrl(tier: string): string {
   const ext = tier.toUpperCase() === "EMERALD" ? "svg" : "png";
   return `${TIER_ICON_BASE}/${tier.toLowerCase()}.${ext}`;
 }
+
+const APEX_BASE = 2800;
+const DIVISIONS = ["IV", "III", "II", "I"];
+const TIER_ORDER = ["IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "EMERALD", "DIAMOND"];
+
+/** "Diamond II" below Master, just "Grandmaster" for apex tiers. */
+export function formatRank(tier: string, rank: string): string {
+  const t = tier.charAt(0) + tier.slice(1).toLowerCase();
+  return ["MASTER", "GRANDMASTER", "CHALLENGER"].includes(tier.toUpperCase()) ? t : `${t} ${rank}`;
+}
+
+/** "today", "yesterday" or "on Sep 17", for "Tracking started …". */
+export function startedDay(timestamp: number): string {
+  const day = (t: number) => { const d = new Date(t); return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime(); };
+  const days = Math.round((day(Date.now()) - day(timestamp)) / 86_400_000);
+  if (days <= 0) return "today";
+  if (days === 1) return "yesterday";
+  return `on ${formatShortDate(timestamp)}`;
+}
+
+/** "Sep 17" for chart axes and captions. */
+export function formatShortDate(timestamp: number): string {
+  return new Date(timestamp).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+}
+
+/**
+ * Y axis for an LP chart over absolute LP values (see {@link toAbsoluteLp}).
+ * Master and above have no divisions, so the axis counts LP ("1,200 LP"); below that it marks
+ * divisions ("Gold II"), or only tiers when the range is too wide for every division to fit.
+ */
+export function lpAxis(values: number[]): { domain: [number, number]; ticks: number[]; format: (v: number) => string } {
+  const min = Math.min(...values);
+  const max = Math.max(...values);
+
+  if (min >= APEX_BASE) {
+    // Fit the data closely, then label round numbers inside it (about 4)
+    const pad = Math.max((max - min) * 0.12, 15);
+    const lo = Math.floor(min - pad);
+    const hi = Math.ceil(max + pad);
+    const step = [10, 25, 50, 100, 200, 250, 500, 1000].find((s) => (hi - lo) / s <= 4) ?? 1000;
+    const ticks: number[] = [];
+    // Round numbers in LP above Master, not in absolute LP
+    for (let v = APEX_BASE + Math.ceil((lo - APEX_BASE) / step) * step; v <= hi; v += step) ticks.push(v);
+    return { domain: [lo, hi], ticks, format: (v) => `${(v - APEX_BASE).toLocaleString()} LP` };
+  }
+
+  const lo = Math.floor((min - 50) / 100) * 100;
+  const hi = Math.ceil((max + 50) / 100) * 100;
+  const divisions = (hi - lo) / 100;
+  const step = divisions > 8 ? 400 : divisions > 4 ? 200 : 100;
+  const ticks: number[] = [];
+  for (let v = Math.ceil(lo / step) * step; v <= hi; v += step) ticks.push(v);
+  const format = (v: number) => {
+    if (v >= APEX_BASE) return `${(v - APEX_BASE).toLocaleString()} LP`;
+    const tier = TIER_ORDER[Math.floor(v / 400)] ?? "IRON";
+    return step === 400 ? formatRank(tier, "").trim() : formatRank(tier, DIVISIONS[Math.floor((v % 400) / 100)]);
+  };
+  return { domain: [lo, hi], ticks, format };
+}
+
+/** `count` evenly spaced timestamps from `start` to `end`, for a time axis that shouldn't label every point. */
+export function timeTicks(start: number, end: number, count = 5): number[] {
+  if (end <= start) return [start];
+  return Array.from({ length: count }, (_, i) => Math.round(start + ((end - start) * i) / (count - 1)));
+}

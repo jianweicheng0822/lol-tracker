@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { fetchLpHistory } from "../../api";
-import { toAbsoluteLp, TIER_COLORS, pickDefaultRange, filterByRange } from "../../utils/lp";
+import { toAbsoluteLp, TIER_COLORS, pickDefaultRange, filterByRange, startedDay } from "../../utils/lp";
 import { COLORS } from "../../utils/colors";
 import type { LpSnapshot } from "../../types";
 
@@ -39,6 +39,8 @@ function formatDate(timestamp: number): string {
 
 export default function LpSparkline({ puuid, onClick }: Props) {
   const [data, setData] = useState<DataPoint[]>([]);
+  // The whole history, for the "tracking started" note when there isn't enough to draw a line
+  const [history, setHistory] = useState<LpSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -64,6 +66,7 @@ export default function LpSparkline({ puuid, onClick }: Props) {
           };
         });
         setData(points);
+        setHistory(all);
       })
       .catch(() => {})
       .finally(() => { if (!cancelled) setLoading(false); });
@@ -72,12 +75,25 @@ export default function LpSparkline({ puuid, onClick }: Props) {
 
   if (loading) return null;
   if (data.length < 2) {
+    const last = history[history.length - 1];
     return (
       <div style={styles.card}>
         <div style={styles.titleRow}>
           <div style={styles.title}>LP History</div>
         </div>
-        <div style={styles.empty}>No LP data</div>
+        {last ? (
+          <>
+            <div style={styles.infoRow}>
+              <span style={{ ...styles.infoTier, color: TIER_COLORS[last.tier.toUpperCase()] ?? "#C89B3C" }}>{formatRank(last.tier, last.rankDivision)}</span>
+              <span style={styles.infoLp}>{last.leaguePoints} LP</span>
+            </div>
+            <div style={styles.empty}>
+              Tracking started {startedDay(history[0].capturedAt)}. A line appears once their LP changes.
+            </div>
+          </>
+        ) : (
+          <div style={styles.empty}>No LP recorded yet</div>
+        )}
       </div>
     );
   }
@@ -219,6 +235,7 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 12,
     color: COLORS.textDim,
     padding: "8px 0",
+    lineHeight: 1.5,
   },
   viewFull: {
     background: "none",

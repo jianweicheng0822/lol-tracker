@@ -45,7 +45,7 @@ function describeScope(count: number | undefined, queueId: number | undefined, c
 }
 
 /**
- * Render the Champions tab content with a 2-column grid of champion stat cards.
+ * Render the Champions tab content as a grid of champion stat cards (two columns on desktop, one on phones).
  * Fetch data on mount and display loading/empty states as needed.
  *
  * @param props - The player's PUUID for fetching champion-specific stats.
@@ -247,7 +247,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   grid: {
     display: "grid",
-    gridTemplateColumns: "1fr 1fr",
+    // Two columns on desktop, one on a phone (two side by side overflowed the screen there)
+    gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 420px), 1fr))",
     gap: 12,
   },
   card: {
@@ -259,6 +260,8 @@ const styles: Record<string, React.CSSProperties> = {
   statsRow: {
     display: "flex",
     justifyContent: "space-around",
+    // Keeps adjacent numbers (e.g. damage and CS) from running together when space is tight
+    gap: 8,
   },
   statLabel: {
     fontSize: 9,

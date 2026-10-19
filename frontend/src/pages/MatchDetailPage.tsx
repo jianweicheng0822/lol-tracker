@@ -21,6 +21,7 @@ import {
 } from "../utils/ddragon";
 import { ScoreboardTeamTable, ArenaScoreboard } from "../components/ScoreboardTable";
 import { COLORS } from "../utils/colors";
+import { teamsWithPlayerFirst } from "../utils/scoreboard";
 import AppHeader from "../components/AppHeader";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
@@ -112,7 +113,8 @@ export default function MatchDetailPage() {
                   region={region}
                 />
               ) : (
-                match.teams.map((team) => {
+                // The player whose page this came from sees their own team first, as in the match list
+                teamsWithPlayerFirst(match, puuid).map((team) => {
                   const teamPlayers = match.participants.filter((p) => p.teamId === team.teamId);
                   return (
                     <ScoreboardTeamTable

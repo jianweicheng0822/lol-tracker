@@ -87,6 +87,17 @@ describe("MatchDetailPage", () => {
     });
   });
 
+  it("lists the player's own team first", async () => {
+    // The player (p1, from ?puuid=) is on team 100; put team 200 first in the data
+    const match = makeMatchDetail();
+    match.teams = [...match.teams].reverse();
+    vi.mocked(fetchMatchDetail).mockResolvedValue(match);
+    render(<MatchDetailPage />);
+    await waitFor(() => {
+      expect(screen.getAllByTestId("team-table").map((t) => t.textContent)).toEqual(["Win", "Loss"]);
+    });
+  });
+
   it("wraps the scoreboard in its own horizontal scroll area", async () => {
     vi.mocked(fetchMatchDetail).mockResolvedValue(makeMatchDetail({ queueId: 420 }));
     render(<MatchDetailPage />);

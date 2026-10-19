@@ -29,6 +29,7 @@ import {
 import { ScoreboardTeamTable, ArenaScoreboard } from "./ScoreboardTable";
 import { kdaColor as getKdaColor, COLORS } from "../utils/colors";
 import AiChatModal from "./AiChatModal";
+import { teamsWithPlayerFirst } from "../utils/scoreboard";
 
 
 type MatchListProps = {
@@ -359,12 +360,7 @@ function InlineScoreboard({
     );
   }
 
-  const myTeamId = match.participants.find((p) => p.puuid === puuid)?.teamId;
-  const sortedTeams = [...match.teams].sort((a, b) => {
-    if (a.teamId === myTeamId) return -1;
-    if (b.teamId === myTeamId) return 1;
-    return 0;
-  });
+  const sortedTeams = teamsWithPlayerFirst(match, puuid);
 
   return (
     <div style={{ padding: "12px 0 4px" }}>

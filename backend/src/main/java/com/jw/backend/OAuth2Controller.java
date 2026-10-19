@@ -5,11 +5,16 @@ import com.jw.backend.security.JwtUtil;
 import com.jw.backend.security.OAuth2Properties;
 import com.jw.backend.service.OAuth2Service;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseCookie;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.time.Duration;
 import java.util.Map;
 import java.util.Set;
 
@@ -18,6 +23,15 @@ import java.util.Set;
 public class OAuth2Controller {
 
     private static final Set<String> SUPPORTED_PROVIDERS = Set.of("google", "discord");
+
+    /**
+     * Ties a sign-in to the browser that started it. Without it, someone could start a sign-in
+     * with their own account and send the callback link to a victim, who would end up logged in
+     * as the attacker (login CSRF). Lax still sends it on the provider's top-level redirect back.
+     */
+    static final String STATE_COOKIE = "oauth_state";
+    private static final String STATE_COOKIE_PATH = "/api/oauth2";
+    private static final Duration STATE_COOKIE_TTL = Duration.ofMinutes(5);
 
     private final OAuth2Service oAuth2Service;
     private final JwtUtil jwtUtil;
@@ -50,6 +64,7 @@ public class OAuth2Controller {
 
         return ResponseEntity.status(HttpStatus.FOUND)
             .location(URI.create(authUrl))
+            .header(HttpHeaders.SET_COOKIE, stateCookie(state, STATE_COOKIE_TTL, request).toString())
             .build();
     }
 
@@ -58,6 +73,7 @@ public class OAuth2Controller {
             @PathVariable String provider,
             @RequestParam(required = false) String code,
             @RequestParam(required = false) String state,
+            @CookieValue(name = STATE_COOKIE, required = false) String cookieState,
             HttpServletRequest request) {
 
         String normalizedProvider = provider.toLowerCase();
@@ -69,8 +85,11 @@ public class OAuth2Controller {
             return ResponseEntity.badRequest().body(Map.of("error", "Missing code or state parameter"));
         }
 
-        if (!oAuth2Service.validateAndConsumeState(state)) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Invalid or expired state"));
+        // The state must come back to the browser that started the sign-in, and be one we issued
+        if (!sameState(state, cookieState) || !oAuth2Service.validateAndConsumeState(state)) {
+            return ResponseEntity.badRequest()
+                .header(HttpHeaders.SET_COOKIE, stateCookie("", Duration.ZERO, request).toString())
+                .body(Map.of("error", "Invalid or expired state"));
         }
 
         try {
@@ -85,6 +104,7 @@ public class OAuth2Controller {
             String redirectUrl = oAuth2Properties.getFrontendUrl() + "/oauth-callback#token=" + jwt;
             return ResponseEntity.status(HttpStatus.FOUND)
                 .location(URI.create(redirectUrl))
+                .header(HttpHeaders.SET_COOKIE, stateCookie("", Duration.ZERO, request).toString())
                 .build();
         } catch (Exception e) {
             String errorRedirect = oAuth2Properties.getFrontendUrl() + "/oauth-callback?error=auth_failed";
@@ -100,6 +120,21 @@ public class OAuth2Controller {
             "google", oAuth2Service.isProviderConfigured("google"),
             "discord", oAuth2Service.isProviderConfigured("discord")
         ));
+    }
+
+    private static ResponseCookie stateCookie(String value, Duration maxAge, HttpServletRequest request) {
+        return ResponseCookie.from(STATE_COOKIE, value)
+            .httpOnly(true)
+            .secure(request.isSecure())
+            .sameSite("Lax")
+            .path(STATE_COOKIE_PATH)
+            .maxAge(maxAge)
+            .build();
+    }
+
+    private static boolean sameState(String state, String cookieState) {
+        return cookieState != null && MessageDigest.isEqual(
+            state.getBytes(StandardCharsets.UTF_8), cookieState.getBytes(StandardCharsets.UTF_8));
     }
 
     private String buildCallbackUrl(HttpServletRequest request, String provider) {

@@ -5,6 +5,7 @@ import com.jw.backend.repository.AppUserRepository;
 import com.jw.backend.security.JwtUtil;
 import com.jw.backend.security.OAuth2Properties;
 import com.jw.backend.service.OAuth2Service;
+import jakarta.servlet.http.Cookie;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +17,8 @@ import org.springframework.test.web.servlet.MockMvc;
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -53,7 +56,11 @@ class OAuth2ControllerTest {
 
         mockMvc.perform(get("/api/oauth2/google/authorize"))
             .andExpect(status().isFound())
-            .andExpect(header().string("Location", containsString("accounts.google.com")));
+            .andExpect(header().string("Location", containsString("accounts.google.com")))
+            .andExpect(header().string("Set-Cookie", containsString("oauth_state=test-state")))
+            .andExpect(header().string("Set-Cookie", containsString("HttpOnly")))
+            .andExpect(header().string("Set-Cookie", containsString("SameSite=Lax")))
+            .andExpect(header().string("Set-Cookie", containsString("Path=/api/oauth2")));
     }
 
     @Test
@@ -104,7 +111,8 @@ class OAuth2ControllerTest {
 
         mockMvc.perform(get("/api/oauth2/google/callback")
                 .param("code", "some-code")
-                .param("state", "bad-state"))
+                .param("state", "bad-state")
+                .cookie(new Cookie("oauth_state", "bad-state")))
             .andExpect(status().isBadRequest())
             .andExpect(jsonPath("$.error").value("Invalid or expired state"));
     }
@@ -125,9 +133,32 @@ class OAuth2ControllerTest {
 
         mockMvc.perform(get("/api/oauth2/google/callback")
                 .param("code", "auth-code")
-                .param("state", "valid-state"))
+                .param("state", "valid-state")
+                .cookie(new Cookie("oauth_state", "valid-state")))
             .andExpect(status().isFound())
-            .andExpect(header().string("Location", "http://localhost:5173/oauth-callback#token=jwt-token-123"));
+            .andExpect(header().string("Location", "http://localhost:5173/oauth-callback#token=jwt-token-123"))
+            // The one-time cookie is cleared
+            .andExpect(header().string("Set-Cookie", containsString("Max-Age=0")));
+    }
+
+    @Test
+    void callback_fromABrowserThatDidNotStartTheSignIn_isRejected() throws Exception {
+        // An attacker's valid state, sent to a victim whose browser has no matching cookie
+        mockMvc.perform(get("/api/oauth2/google/callback")
+                .param("code", "attacker-code")
+                .param("state", "attacker-state"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error").value("Invalid or expired state"));
+
+        mockMvc.perform(get("/api/oauth2/google/callback")
+                .param("code", "attacker-code")
+                .param("state", "attacker-state")
+                .cookie(new Cookie("oauth_state", "victims-own-state")))
+            .andExpect(status().isBadRequest());
+
+        // Rejected before the state or code is used
+        verify(oAuth2Service, never()).validateAndConsumeState(anyString());
+        verify(oAuth2Service, never()).exchangeCodeForToken(anyString(), anyString(), anyString());
     }
 
     @Test

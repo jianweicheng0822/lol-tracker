@@ -139,4 +139,12 @@ class LeaderboardControllerTest {
 
         verify(leaderboardService).getLeaderboard("challenger", "RANKED_SOLO_5x5", RiotRegion.NA, 2, 10);
     }
+
+    /** Verify that an unknown queue is rejected. */
+    @Test
+    void getLeaderboard_invalidQueue_returnsBadRequest() throws Exception {
+        mockMvc.perform(get("/api/leaderboard").param("queue", "bogus"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Invalid queue. Allowed: RANKED_SOLO_5x5, RANKED_FLEX_SR"));
+    }
 }

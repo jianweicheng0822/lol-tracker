@@ -172,4 +172,14 @@ class SummonerControllerTest {
             )
             .andExpect(status().isBadRequest());
     }
+
+    /** Verify that an empty name or tag is a 400 without calling Riot. */
+    @Test
+    void getSummoner_blankNameOrTag_returnsBadRequest() throws Exception {
+        mockMvc.perform(get("/api/summoner").param("gameName", " ").param("tag", "NA1").param("region", "NA"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(get("/api/summoner").param("gameName", "Faker").param("tag", "").param("region", "NA"))
+                .andExpect(status().isBadRequest());
+        verify(riotApiService, never()).getAccountByRiotId(anyString(), anyString(), any());
+    }
 }

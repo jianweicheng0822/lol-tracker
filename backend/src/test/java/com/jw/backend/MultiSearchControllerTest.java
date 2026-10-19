@@ -121,4 +121,26 @@ class MultiSearchControllerTest {
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message").exists());
     }
+
+    /** Verify that a null entry in the player list is an invalid name, not a server error. */
+    @Test
+    void multiSearch_nullPlayer_returnsBadRequest() throws Exception {
+        mockMvc.perform(post("/api/multi-search")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"players\":[null],\"region\":\"NA\"}"))
+                .andExpect(status().isBadRequest());
+    }
+
+    /** Verify that a body that isn't the expected JSON is a 400, not a server error. */
+    @Test
+    void multiSearch_malformedBody_returnsBadRequest() throws Exception {
+        mockMvc.perform(post("/api/multi-search")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("not json"))
+                .andExpect(status().isBadRequest());
+        mockMvc.perform(post("/api/multi-search")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("{\"players\":\"a#b\",\"region\":\"NA\"}"))
+                .andExpect(status().isBadRequest());
+    }
 }

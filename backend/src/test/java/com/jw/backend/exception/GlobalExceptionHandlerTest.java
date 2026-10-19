@@ -42,17 +42,17 @@ public class GlobalExceptionHandlerTest {
         assertTrue(response.getBody().message().contains("not found"));
     }
 
-    /** Verify that a 401 Unauthorized error returns an API key related message. */
+    /** Verify that Riot rejecting our key is reported as unavailable, without key details. */
     @Test
-    void handleClientError_whenUnauthorized_returnsApiKeyMessage() {
+    void handleClientError_whenUnauthorized_returnsUnavailable() {
         HttpClientErrorException exception = HttpClientErrorException.create(
                 HttpStatus.UNAUTHORIZED, "Unauthorized", HttpHeaders.EMPTY, null, null
         );
 
         ResponseEntity<ApiErrorResponse> response = handler.handleClientError(exception, fakeRequest);
 
-        assertEquals(401, response.getStatusCode().value());
-        assertTrue(response.getBody().message().contains("API key"));
+        assertEquals(503, response.getStatusCode().value());
+        assertFalse(response.getBody().message().contains("API key"));
     }
 
     /** Verify that a 429 Too Many Requests error returns a rate limit message. */

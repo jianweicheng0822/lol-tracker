@@ -256,4 +256,36 @@ class MatchControllerTest {
             )
             .andExpect(status().isBadRequest());
     }
+
+    /** Verify that a malformed match ID is rejected before any Riot call. */
+    @Test
+    void getMatchDetail_invalidMatchId_returnsBadRequest() throws Exception {
+        for (String id : new String[]{"garbage", "../../summoner", "NA1_", "NA1_12a"}) {
+            mockMvc.perform(
+                    get("/api/matches/full-detail")
+                        .param("matchId", id)
+                        .param("region", "NA")
+                )
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.message").value("Invalid match ID"));
+        }
+        verify(riotApiService, never()).getMatchDetail(anyString(), any());
+    }
+
+    /** Verify that a request for many summaries is capped at one page (each costs a Riot call). */
+    @Test
+    void getMatchSummaries_capsCountAt20() throws Exception {
+        when(riotApiService.getRecentMatchSummaries("test-puuid", RiotRegion.NA, 20, 0, null))
+            .thenReturn(List.of());
+
+        mockMvc.perform(
+                get("/api/matches/summary")
+                    .param("puuid", "test-puuid")
+                    .param("region", "NA")
+                    .param("count", "99999")
+            )
+            .andExpect(status().isOk());
+
+        verify(riotApiService).getRecentMatchSummaries("test-puuid", RiotRegion.NA, 20, 0, null);
+    }
 }

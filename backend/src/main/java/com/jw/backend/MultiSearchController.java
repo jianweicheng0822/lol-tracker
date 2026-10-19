@@ -39,7 +39,7 @@ public class MultiSearchController {
 
         List<String[]> nameTagPairs = new ArrayList<>();
         for (String player : request.players()) {
-            String trimmed = player.trim();
+            String trimmed = player == null ? "" : player.trim();
             int hashIndex = trimmed.lastIndexOf('#');
             if (hashIndex < 1 || hashIndex == trimmed.length() - 1) {
                 return ResponseEntity.badRequest().body(Map.of("message", "Invalid format: '" + trimmed + "'. Expected Name#Tag"));

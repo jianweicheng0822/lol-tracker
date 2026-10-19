@@ -14,7 +14,8 @@ import org.springframework.web.bind.annotation.GetMapping;
  * <p>In production, the React SPA bundle is served from Spring Boot's static resources.
  * Without these forwarding rules, direct navigation or page refresh on a client-side route
  * would result in a 404. The regex pattern {@code [^\\.]*} excludes paths containing a dot,
- * ensuring static assets (JS, CSS, images) are served normally.</p>
+ * ensuring static assets (JS, CSS, images) are served normally. Paths under /api/ are never
+ * forwarded, so an unknown API path gets a JSON 404 instead of the app's HTML.</p>
  */
 @Controller
 public class SpaForwardingController {
@@ -34,7 +35,7 @@ public class SpaForwardingController {
      *
      * @return forward directive to index.html
      */
-    @GetMapping(value = "/{path1:[^\\.]*}/{path2:[^\\.]*}")
+    @GetMapping(value = "/{path1:(?!api$)[^\\.]*}/{path2:[^\\.]*}")
     public String forwardNested2() {
         return "forward:/index.html";
     }
@@ -44,7 +45,7 @@ public class SpaForwardingController {
      *
      * @return forward directive to index.html
      */
-    @GetMapping(value = "/{p1:[^\\.]*}/{p2:[^\\.]*}/{p3:[^\\.]*}")
+    @GetMapping(value = "/{p1:(?!api$)[^\\.]*}/{p2:[^\\.]*}/{p3:[^\\.]*}")
     public String forwardNested3() {
         return "forward:/index.html";
     }
@@ -54,7 +55,7 @@ public class SpaForwardingController {
      *
      * @return forward directive to index.html
      */
-    @GetMapping(value = "/{p1:[^\\.]*}/{p2:[^\\.]*}/{p3:[^\\.]*}/{p4:[^\\.]*}")
+    @GetMapping(value = "/{p1:(?!api$)[^\\.]*}/{p2:[^\\.]*}/{p3:[^\\.]*}/{p4:[^\\.]*}")
     public String forwardNested4() {
         return "forward:/index.html";
     }

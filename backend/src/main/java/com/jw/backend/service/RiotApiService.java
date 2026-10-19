@@ -16,6 +16,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.springframework.web.util.DefaultUriBuilderFactory;
 
 /**
  * Riot Games API client with Redis-backed response caching.
@@ -61,8 +62,13 @@ public class RiotApiService {
     }
 
     private RestClient getClient(String baseUrl) {
-        return clientCache.computeIfAbsent(baseUrl, url ->
-                RestClient.builder().baseUrl(url).build());
+        return clientCache.computeIfAbsent(baseUrl, url -> {
+            // VALUES_ONLY percent-encodes "/" inside URI variables too. The default leaves it, so a
+            // name or match ID like "../../x" could reach a different Riot endpoint with our key.
+            DefaultUriBuilderFactory uris = new DefaultUriBuilderFactory(url);
+            uris.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.VALUES_ONLY);
+            return RestClient.builder().uriBuilderFactory(uris).build();
+        });
     }
 
     /** Account-v1 reverse lookup by PUUID. ~24h TTL (randomized, see accountByPuuidTtlMs). */

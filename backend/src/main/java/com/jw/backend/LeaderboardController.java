@@ -19,6 +19,7 @@ import java.util.Set;
 public class LeaderboardController {
 
     private static final Set<String> ALLOWED_TIERS = Set.of("challenger", "grandmaster", "master");
+    private static final Set<String> ALLOWED_QUEUES = Set.of("RANKED_SOLO_5x5", "RANKED_FLEX_SR");
 
     private final LeaderboardService leaderboardService;
 
@@ -37,6 +38,10 @@ public class LeaderboardController {
         if (!LeaderboardService.LEADERBOARD_REGIONS.contains(region)) {
             return ResponseEntity.badRequest().body(
                     java.util.Map.of("message", "Leaderboard is available for NA, EUW, and KR"));
+        }
+        if (!ALLOWED_QUEUES.contains(queue)) {
+            return ResponseEntity.badRequest().body(
+                    java.util.Map.of("message", "Invalid queue. Allowed: RANKED_SOLO_5x5, RANKED_FLEX_SR"));
         }
         String normalizedTier = tier.toLowerCase();
         if (!ALLOWED_TIERS.contains(normalizedTier)) {

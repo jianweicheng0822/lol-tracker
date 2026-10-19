@@ -10,7 +10,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jw.backend.region.RiotRegion;
 import com.jw.backend.service.MatchHistoryService;
 import com.jw.backend.service.RiotApiService;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import com.jw.backend.dto.MatchSummaryDto;
 import com.jw.backend.dto.MatchDetailDto;
 
@@ -78,6 +80,7 @@ public class MatchController {
             @RequestParam String matchId,
             @RequestParam RiotRegion region
     ) {
+        requireMatchId(matchId);
         String detailJson = riotApiService.getMatchDetail(matchId, region);
         return riotApiService.extractFullMatchDetail(detailJson, matchId);
     }
@@ -94,8 +97,16 @@ public class MatchController {
             @RequestParam String matchId,
             @RequestParam RiotRegion region
     ) {
+        requireMatchId(matchId);
         String detailJson = riotApiService.getMatchDetail(matchId, region);
         return riotApiService.extractFullMatchDetail(detailJson, matchId);
+    }
+
+    /** Riot match IDs look like NA1_5564442668: reject anything else before spending a Riot call. */
+    private static void requireMatchId(String matchId) {
+        if (!matchId.matches("[A-Za-z0-9]{1,10}_\\d{1,20}")) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid match ID");
+        }
     }
 
     /**
@@ -118,7 +129,8 @@ public class MatchController {
             @RequestParam(defaultValue = "0") int start,
             @RequestParam(required = false) Integer queue
     ) {
-        count = Math.max(1, Math.min(count, 100));
+        // Each summary is a Riot match-detail call, so one request may ask for a page (20), not 100
+        count = Math.max(1, Math.min(count, 20));
         start = Math.max(0, start);
         if (queue != null && queue <= 0) queue = null;
 

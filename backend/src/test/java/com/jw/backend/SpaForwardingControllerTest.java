@@ -61,4 +61,20 @@ class SpaForwardingControllerTest {
             .andExpect(status().isOk())
             .andExpect(forwardedUrl("/index.html"));
     }
+
+    /** Verify that an unknown /api/ path is not answered with the app's HTML. */
+    @Test
+    void apiPaths_areNotForwarded() throws Exception {
+        mockMvc.perform(get("/api/nope"))
+            .andExpect(status().isNotFound());
+        mockMvc.perform(get("/api/a/b"))
+            .andExpect(status().isNotFound());
+    }
+
+    /** Verify that a path merely starting with "api" is still an app route. */
+    @Test
+    void pathStartingWithApi_isForwarded() throws Exception {
+        mockMvc.perform(get("/apiary/x"))
+            .andExpect(forwardedUrl("/index.html"));
+    }
 }

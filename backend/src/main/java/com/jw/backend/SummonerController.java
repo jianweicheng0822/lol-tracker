@@ -12,7 +12,9 @@ import com.jw.backend.region.RiotRegion;
 import com.jw.backend.service.LpTrackingService;
 import com.jw.backend.service.PlayerTrackingService;
 import com.jw.backend.service.RiotApiService;
+import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.HttpServerErrorException;
 
@@ -66,6 +68,9 @@ public class SummonerController {
             @RequestParam String tag,
             @RequestParam RiotRegion region
     ) {
+        if (gameName.isBlank() || tag.isBlank()) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "gameName and tag must not be empty");
+        }
         try {
             String accountJson = riotApiService.getAccountByRiotId(gameName, tag, region);
             return enrichAccount(accountJson, region);

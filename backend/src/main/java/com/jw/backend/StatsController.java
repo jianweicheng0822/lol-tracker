@@ -45,7 +45,8 @@ public class StatsController {
             @RequestParam RiotRegion region,
             @RequestParam(defaultValue = "10") int count
     ) {
-        count = Math.max(1, Math.min(count, 100));
+        // Each match counted is a Riot match-detail call; the page uses 20
+        count = Math.max(1, Math.min(count, 20));
         return statsService.calculateStats(puuid, region, count);
     }
 }

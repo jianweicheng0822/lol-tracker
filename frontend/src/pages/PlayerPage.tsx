@@ -27,6 +27,70 @@ import { computeStreak, computeClimbStatus } from "../utils/playerInsights";
 import { COLORS } from "../utils/colors";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
+const MATCH_PAGE_SIZE = 20;
+
+type PlayerData = {
+  account: Account;
+  tier: number;
+  matches: MatchSummary[];
+  stats: PlayerStats;
+  ranked: RankedEntry[];
+  isFav: boolean;
+  liveGame: LiveGame | null;
+};
+
+/**
+ * Fetches everything the player page shows, in parallel where possible. Touches no React state,
+ * so the page applies the result in a .then() callback.
+ *
+ * @param recordSearch - Save the player to search history (not on a refresh, which already did).
+ */
+async function fetchPlayerData(
+  region: string,
+  player: { puuid: string } | { gameName: string; tag: string },
+  recordSearch: boolean,
+): Promise<PlayerData> {
+  const [account, tierData] = await Promise.all([
+    "puuid" in player
+      ? fetchAccountByPuuid(player.puuid, region)
+      : fetchAccount(player.gameName, player.tag, region),
+    fetchTier().catch(() => ({ tier: 0 })),
+  ]);
+
+  // Save the canonical gameName/tagLine to search history
+  if (recordSearch) {
+    try {
+      if (getAuthToken()) {
+        addSearchHistory(account.gameName, account.tagLine, region).catch(() => {});
+      } else {
+        addLocalEntry({ region, gameName: account.gameName, tagLine: account.tagLine, searchedAt: Date.now() });
+      }
+    } catch {
+      // ignore search history errors
+    }
+  }
+
+  // Fetch matches first so their details populate the Redis cache,
+  // then stats can reuse the cached match data instead of re-fetching.
+  const [matchData, rankedData, isFav, liveGame] = await Promise.all([
+    fetchMatchSummaries(account.puuid, region, MATCH_PAGE_SIZE),
+    fetchRanked(account.puuid, region).catch((e) => { console.error("Ranked fetch failed:", e); return []; }),
+    getAuthToken() ? checkIsFavorite(account.puuid) : Promise.resolve(false),
+    fetchLiveGame(account.puuid, region).catch(() => null),
+  ]);
+  const stats = await fetchStats(account.puuid, region, MATCH_PAGE_SIZE);
+
+  return {
+    account,
+    tier: tierData.tier,
+    matches: Array.isArray(matchData) ? matchData : [],
+    stats,
+    ranked: Array.isArray(rankedData) ? rankedData : [],
+    isFav,
+    liveGame: liveGame || null,
+  };
+}
+
 export default function PlayerPage() {
   // Extract player identifiers from the URL route params
   // Supports both /player/:region/:gameName/:tag and /player/puuid/:region/:puuid
@@ -62,110 +126,53 @@ export default function PlayerPage() {
   // Riot ID in the tab: from the loaded account, or from the URL while it loads
   useDocumentTitle(account ? `${account.gameName}#${account.tagLine}` : gameName && tag ? `${gameName}#${tag}` : null);
 
-  /**
-   * Fetches all player data in parallel. Called on mount and on manual refresh.
-   * A silent refresh keeps the current data on screen (no full-page loading state) and only
-   * swaps it out once the new data arrives; if it fails, the old data stays.
-   */
-  const load = useCallback(async (cancelled = { current: false }, silent = false) => {
-    if (!region || (!puuidParam && (!gameName || !tag))) return;
-
-    if (silent) {
-      setIsRefreshing(true);
-    } else {
-      setStatus("loading");
-      setErrorMsg("");
-      setNotFound(false);
-      setAccount(null);
-      setMatches([]);
-      setStats(null);
-      setRanked([]);
-      setIsFav(false);
-      setLiveGame(null);
-      setHasMore(true);
-    }
-
-    try {
-      const [acc, tierData] = await Promise.all([
-        puuidParam
-          ? fetchAccountByPuuid(puuidParam, region)
-          : fetchAccount(gameName!, tag!, region),
-        fetchTier().catch(() => ({ tier: 0 })),
-      ]);
-      if (cancelled.current) return;
-      setAccount(acc);
-      setTier(tierData.tier);
-
-      // Save canonical gameName/tagLine to search history (already done if this is a refresh)
-      if (!silent) {
-        try {
-          if (getAuthToken()) {
-            addSearchHistory(acc.gameName, acc.tagLine, region).catch(() => {});
-          } else {
-            addLocalEntry({ region, gameName: acc.gameName, tagLine: acc.tagLine, searchedAt: Date.now() });
-          }
-        } catch {
-          // ignore search history errors
-        }
-      }
-
-      const matchCount = 20;
-      // Fetch matches first so their details populate the Redis cache,
-      // then stats can reuse the cached match data instead of re-fetching.
-      const [matchData, rankedData, favStatus, liveGameData] = await Promise.all([
-        fetchMatchSummaries(acc.puuid, region, matchCount),
-        fetchRanked(acc.puuid, region).catch((e) => { console.error("Ranked fetch failed:", e); return []; }),
-        getAuthToken() ? checkIsFavorite(acc.puuid) : Promise.resolve(false),
-        fetchLiveGame(acc.puuid, region).catch(() => null),
-      ]);
-
-      if (cancelled.current) return;
-
-      const statsData = await fetchStats(acc.puuid, region, 20);
-
-      if (cancelled.current) return;
-      const matchList = Array.isArray(matchData) ? matchData : [];
-      setMatches(matchList);
-      setHasMore(matchList.length >= 20);
-      setStats(statsData);
-      setRanked(Array.isArray(rankedData) ? rankedData : []);
-      setIsFav(favStatus);
-      setLiveGame(liveGameData || null);
-      setStatus("done");
-      setLastUpdated(Date.now());
-    } catch (e: unknown) {
-      if (cancelled.current) return;
-      if (silent) {
-        // Keep showing what we had rather than replacing the page with an error
-        setToastMsg("Couldn't refresh. Showing the previous data.");
-      } else {
-        setStatus("error");
-        setNotFound(e instanceof PlayerNotFoundError);
-        setErrorMsg(e instanceof Error ? e.message : "Something went wrong.");
-      }
-    } finally {
-      if (silent) setIsRefreshing(false);
-    }
+  /** Fetches this page's player, or null when the URL doesn't name one. */
+  const fetchCurrent = useCallback((recordSearch: boolean) => {
+    if (!region || (!puuidParam && (!gameName || !tag))) return null;
+    return fetchPlayerData(region, puuidParam ? { puuid: puuidParam } : { gameName: gameName!, tag: tag! }, recordSearch);
   }, [region, gameName, tag, puuidParam]);
 
+  const applyData = useCallback((d: PlayerData) => {
+    setAccount(d.account);
+    setTier(d.tier);
+    setMatches(d.matches);
+    setHasMore(d.matches.length >= MATCH_PAGE_SIZE);
+    setStats(d.stats);
+    setRanked(d.ranked);
+    setIsFav(d.isFav);
+    setLiveGame(d.liveGame);
+    setStatus("done");
+    setLastUpdated(Date.now());
+  }, []);
+
+  const applyError = useCallback((e: unknown) => {
+    setStatus("error");
+    setNotFound(e instanceof PlayerNotFoundError);
+    setErrorMsg(e instanceof Error ? e.message : "Something went wrong.");
+  }, []);
+
+  // State is only set once the requests come back. Opening another player remounts the page
+  // (see App.tsx), so each player starts from fresh state.
   useEffect(() => {
-    const cancelled = { current: false };
-    load(cancelled);
-    return () => { cancelled.current = true; };
-  }, [load]);
+    let cancelled = false;
+    fetchCurrent(true)?.then(
+      (d) => { if (!cancelled) applyData(d); },
+      (e) => { if (!cancelled) applyError(e); },
+    );
+    return () => { cancelled = true; };
+  }, [fetchCurrent, applyData, applyError]);
 
   // Logging in or out (from the header, the favorite prompt, or another tab) changes what this
   // page may show: PRO features depend on the tier and the star on the favorite status.
   const { isLoggedIn } = useAuth();
+  // Logged out, nothing is PRO or starred; derived here rather than reset in the effect below
+  const shownTier = isLoggedIn ? tier : 0;
+  const shownIsFav = isLoggedIn && isFav;
   const prevLoggedIn = useRef(isLoggedIn);
   useEffect(() => {
     if (prevLoggedIn.current === isLoggedIn) return;
     prevLoggedIn.current = isLoggedIn;
-    if (!isLoggedIn) {
-      setTier(0);
-      setIsFav(false);
-      return;
-    }
+    if (!isLoggedIn) return;
     fetchTier().then((d) => setTier(d.tier)).catch(() => setTier(0));
     if (account) checkIsFavorite(account.puuid).then(setIsFav).catch(() => {});
   }, [isLoggedIn, account]);
@@ -178,9 +185,28 @@ export default function PlayerPage() {
 
   /** Refreshes in place when the refresh button is clicked in ProfileHeader. */
   const handleRefresh = () => {
-    if (isRefreshing) return;
+    const request = fetchCurrent(false);
+    if (isRefreshing || !request) return;
+    setIsRefreshing(true);
     setRefreshToken((t) => t + 1);
-    load(undefined, true);
+    request
+      .then(applyData, () => setToastMsg("Couldn't refresh. Showing the previous data."))
+      .finally(() => setIsRefreshing(false));
+  };
+
+  /** Starts over after a failed load, showing the loading state again. */
+  const handleRetry = () => {
+    setStatus("loading");
+    setErrorMsg("");
+    setNotFound(false);
+    setAccount(null);
+    setMatches([]);
+    setStats(null);
+    setRanked([]);
+    setIsFav(false);
+    setLiveGame(null);
+    setHasMore(true);
+    fetchCurrent(true)?.then(applyData, applyError);
   };
 
   /** Re-checks live game status when the user clicks "Check Again". */
@@ -228,7 +254,7 @@ export default function PlayerPage() {
       return;
     }
     try {
-      if (isFav) {
+      if (shownIsFav) {
         await removeFavorite(account.puuid);
         setIsFav(false);
         setToastMsg("Removed from favorites");
@@ -246,7 +272,7 @@ export default function PlayerPage() {
         return;
       }
       console.error("Failed to toggle favorite:", e);
-      setToastMsg(isFav ? "Couldn't remove favorite. Please try again." : "Couldn't add favorite. Please try again.");
+      setToastMsg(shownIsFav ? "Couldn't remove favorite. Please try again." : "Couldn't add favorite. Please try again.");
     }
   };
 
@@ -327,7 +353,7 @@ export default function PlayerPage() {
         {status === "error" && !notFound && (
           <div style={styles.errorBox} role="alert">
             <div><strong>Couldn't load this player.</strong> {errorMsg}</div>
-            <button style={styles.retryBtn} onClick={() => load()}>Retry</button>
+            <button style={styles.retryBtn} onClick={handleRetry}>Retry</button>
           </div>
         )}
 
@@ -336,7 +362,7 @@ export default function PlayerPage() {
             <ProfileHeader
               account={account}
               region={region!}
-              isFav={isFav}
+              isFav={shownIsFav}
               onToggleFavorite={toggleFavorite}
               onRefresh={handleRefresh}
               isRefreshing={isRefreshing}
@@ -367,7 +393,7 @@ export default function PlayerPage() {
                 onLoadMore={loadMore}
                 isLoadingMore={isLoadingMore}
                 hasMore={hasMore}
-                tier={tier}
+                tier={shownTier}
                 onTabChange={setTab}
                 onShowAuth={() => setShowAuthModal(true)}
                 onTierChange={setTier}

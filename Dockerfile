@@ -41,7 +41,7 @@ RUN mvn -o package -DskipTests
 # =============================================================
 # Stage 3: Minimal runtime image
 # =============================================================
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 
 WORKDIR /app
 

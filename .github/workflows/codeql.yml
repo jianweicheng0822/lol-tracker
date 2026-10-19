@@ -25,7 +25,7 @@ jobs:
         # build-mode none: analyze the source directly, no Maven/npm build needed
         language: [java-kotlin, javascript-typescript, actions]
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - uses: github/codeql-action/init@v4
         with:

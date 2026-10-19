@@ -1,0 +1,39 @@
+name: CodeQL
+
+# Static security analysis of the backend (Java), frontend (TypeScript) and these workflows.
+# Results show up under the repository's Security > Code scanning tab.
+on:
+  push:
+    branches: [master]
+  pull_request:
+    branches: [master]
+  schedule:
+    # Weekly, so new CodeQL queries also check code that hasn't changed
+    - cron: "23 6 * * 1"
+
+jobs:
+  analyze:
+    name: Analyze (${{ matrix.language }})
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+      contents: read
+      actions: read
+    strategy:
+      fail-fast: false
+      matrix:
+        # build-mode none: analyze the source directly, no Maven/npm build needed
+        language: [java-kotlin, javascript-typescript, actions]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: github/codeql-action/init@v4
+        with:
+          languages: ${{ matrix.language }}
+          build-mode: none
+          # Extra security and quality queries beyond the default set
+          queries: security-extended
+
+      - uses: github/codeql-action/analyze@v4
+        with:
+          category: "/language:${{ matrix.language }}"

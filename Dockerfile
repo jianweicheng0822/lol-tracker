@@ -13,7 +13,7 @@ RUN npm run build
 # =============================================================
 # Stage 2: Build the Spring Boot backend (with frontend baked in)
 # =============================================================
-FROM maven:3.9-eclipse-temurin-25 AS backend-build
+FROM maven:3.9-eclipse-temurin-26 AS backend-build
 
 WORKDIR /app/backend
 # Retry flaky downloads (and give up on stuck ones) instead of failing or hanging the whole deploy

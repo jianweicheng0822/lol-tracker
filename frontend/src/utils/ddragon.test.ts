@@ -16,6 +16,7 @@ import {
   queueLabel,
   isArenaQueue,
   isRankedQueue,
+  isCommunityDragonUrl,
 } from "./ddragon";
 
 describe("ddragonBase", () => {
@@ -191,5 +192,14 @@ describe("timeAgo", () => {
     expect(timeAgo(new Date(2026, 4, 20, 12).getTime())).toBe("May 20");
     expect(timeAgo(new Date(2025, 11, 3, 12).getTime())).toBe("Dec 3, 2025");
     vi.useRealTimers();
+  });
+});
+
+describe("isCommunityDragonUrl", () => {
+  it("matches the CommunityDragon host only, not a lookalike", () => {
+    expect(isCommunityDragonUrl("https://raw.communitydragon.org/latest/x.png")).toBe(true);
+    expect(isCommunityDragonUrl("https://ddragon.leagueoflegends.com/cdn/img/x.png")).toBe(false);
+    expect(isCommunityDragonUrl("https://evil.example/raw.communitydragon.org/x.png")).toBe(false);
+    expect(isCommunityDragonUrl("not a url")).toBe(false);
   });
 });

@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.*;
 import com.jw.backend.region.RiotRegion;
+import com.jw.backend.util.LogSanitizer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -232,7 +233,7 @@ public class RiotApiService {
         try {
             return redisTemplate.opsForValue().get(key);
         } catch (Exception e) {
-            log.warn("Redis GET failed for key [{}], treating as cache miss", key, e);
+            log.warn("Redis GET failed for key [{}], treating as cache miss", LogSanitizer.clean(key), e);
             return null;
         }
     }
@@ -241,7 +242,7 @@ public class RiotApiService {
         try {
             redisTemplate.opsForValue().set(key, value, Duration.ofMillis(ttlMs));
         } catch (Exception e) {
-            log.warn("Redis SET failed for key [{}], response will not be cached", key, e);
+            log.warn("Redis SET failed for key [{}], response will not be cached", LogSanitizer.clean(key), e);
         }
     }
 

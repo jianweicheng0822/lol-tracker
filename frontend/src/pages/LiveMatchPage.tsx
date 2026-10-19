@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import type { LiveGame, LiveGameParticipant } from "../types";
 import type { Champion } from "../utils/champion";
 import { fetchAccount, fetchLiveGame } from "../api";
-import { useDdragonVersion, ddragonBase, championIconFallbackUrl, hideOnError, QUEUE_NAMES } from "../utils/ddragon";
+import { useDdragonVersion, ddragonBase, championIconFallbackUrl, isCommunityDragonUrl, hideOnError, QUEUE_NAMES } from "../utils/ddragon";
 import { loadChampionMap } from "../utils/champion";
 import { COLORS, winRateColor } from "../utils/colors";
 import { TIER_COLORS } from "../utils/lp";
@@ -172,7 +172,7 @@ function TeamColumn({
               style={styles.champIcon}
               onError={(e) => {
                 const img = e.target as HTMLImageElement;
-                if (!img.src.includes("communitydragon.org")) {
+                if (!isCommunityDragonUrl(img.src)) {
                   img.src = championIconFallbackUrl(p.championId);
                 } else {
                   img.style.display = "none";

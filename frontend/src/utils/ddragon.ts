@@ -114,6 +114,15 @@ export const championIconUrl = (name: string, base: string) =>
 export const championIconFallbackUrl = (numericId: number) =>
   `https://raw.communitydragon.org/latest/plugins/rcp-be-lol-game-data/global/default/v1/champion-icons/${numericId}.png`;
 
+/** True when an image already points at CommunityDragon (the fallback CDN), so we don't retry it. */
+export function isCommunityDragonUrl(src: string): boolean {
+  try {
+    return new URL(src).hostname === "raw.communitydragon.org";
+  } catch {
+    return false;
+  }
+}
+
 /**
  * onError handler for champion icon <img> elements that falls back to Community Dragon.
  * If the Community Dragon URL also fails, the image is hidden.
@@ -124,7 +133,7 @@ export const championIconFallbackUrl = (numericId: number) =>
 export const championIconOnError = (champDdKey: string, numericId?: number) => (e: React.SyntheticEvent<HTMLImageElement>) => {
   const img = e.target as HTMLImageElement;
   const id = numericId ?? getChampionNumericId(champDdKey);
-  if (!img.src.includes("communitydragon.org")) {
+  if (!isCommunityDragonUrl(img.src)) {
     if (id != null) {
       img.src = championIconFallbackUrl(id);
     } else {

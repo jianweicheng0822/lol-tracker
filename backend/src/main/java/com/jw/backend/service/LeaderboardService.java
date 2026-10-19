@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jw.backend.dto.LeaderboardEntryDto;
 import com.jw.backend.region.RiotRegion;
+import com.jw.backend.util.LogSanitizer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -92,7 +93,7 @@ public class LeaderboardService {
         String cacheKey = tier + ":" + queue + ":" + region.name() + ":" + page + ":" + size;
         CachedPage cached = pageCache.get(cacheKey);
         if (cached != null && !cached.isExpired()) {
-            log.debug("Leaderboard cache hit for {}", cacheKey);
+            log.debug("Leaderboard cache hit for {}", LogSanitizer.clean(cacheKey));
             return cached.page();
         }
         // Evict expired entries lazily

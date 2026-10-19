@@ -6,6 +6,7 @@
 package com.jw.backend.exception;
 
 import com.jw.backend.dto.ApiErrorResponse;
+import com.jw.backend.util.LogSanitizer;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -152,7 +153,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiErrorResponse> handleUnknown(Exception ex, HttpServletRequest req) {
-        log.error("Unhandled exception on {} {}", req.getMethod(), req.getRequestURI(), ex);
+        log.error("Unhandled exception on {} {}", req.getMethod(), LogSanitizer.clean(req.getRequestURI()), ex);
         ApiErrorResponse body = new ApiErrorResponse(
                 Instant.now(),
                 500,

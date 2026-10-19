@@ -184,12 +184,13 @@ jobs:
             docker rm -f "$NEW" 2>/dev/null || true   # leftover from a failed deploy
             echo "Deploying $NEW (current: ${OLD:-none})"
 
-            # Two app containers run side by side for a moment. If memory is too tight for that, stop the
-            # old one first (a short outage, like before) rather than risk running out of memory.
+            # Two app containers run side by side for about 20s. The server has ~1GB of RAM, so the
+            # overlap leans on swap: a bit slower for those seconds, but no outage. Only if RAM and swap
+            # together are too tight is the old one stopped first (a short outage) to avoid running out.
             free -m
-            AVAIL_MB=$(awk '/MemAvailable/ {print int($2/1024)}' /proc/meminfo)
-            if [ -n "$OLD" ] && [ "$AVAIL_MB" -lt 700 ]; then
-              echo "Only ${AVAIL_MB}MB available: stopping $OLD before starting $NEW"
+            AVAIL_MB=$(awk '/MemAvailable|SwapFree/ {kb += $2} END {print int(kb/1024)}' /proc/meminfo)
+            if [ -n "$OLD" ] && [ "$AVAIL_MB" -lt 600 ]; then
+              echo "Only ${AVAIL_MB}MB of memory and swap available: stopping $OLD before starting $NEW"
               docker stop "$OLD" && docker rm "$OLD"
               OLD=""
             fi

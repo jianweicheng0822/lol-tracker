@@ -17,6 +17,8 @@ import java.util.Optional;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
@@ -100,7 +102,7 @@ class AuthControllerTest {
                             {"username": "newuser", "password": "short"}
                             """))
                 .andExpect(status().isBadRequest())
-                .andExpect(jsonPath("$.error").value("Password must be between 8 and 128 characters"));
+                .andExpect(jsonPath("$.error").value(AuthController.PASSWORD_RULE));
     }
 
     @Test
@@ -173,5 +175,53 @@ class AuthControllerTest {
                             """))
                 .andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.error").exists());
+    }
+
+    /** A password over BCrypt's 72 bytes is a 400 (BCrypt itself would throw, giving a 500). */
+    @Test
+    void register_withPasswordOver72Bytes_returns400() throws Exception {
+        for (String password : new String[]{"x".repeat(73), "密".repeat(25)}) {
+            mockMvc.perform(post("/api/auth/register")
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content("{\"username\": \"newuser\", \"password\": \"" + password + "\"}"))
+                    .andExpect(status().isBadRequest())
+                    .andExpect(jsonPath("$.error").value(AuthController.PASSWORD_RULE));
+        }
+        verify(passwordEncoder, never()).encode(anyString());
+    }
+
+    /** Spaces around a username are dropped, so " newuser " is the account "newuser". */
+    @Test
+    void register_trimsUsername() throws Exception {
+        when(appUserRepository.findByUsername("newuser")).thenReturn(Optional.empty());
+        when(passwordEncoder.encode("password123")).thenReturn("hashed");
+        when(appUserRepository.save(any(AppUser.class))).thenAnswer(inv -> inv.getArgument(0));
+        when(jwtUtil.generateToken("newuser")).thenReturn("jwt-token");
+
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {"username": "  newuser ", "password": "password123"}
+                            """))
+                .andExpect(status().isCreated());
+        verify(jwtUtil).generateToken("newuser");
+    }
+
+    /** Logging in with spaces around the name finds the trimmed account. */
+    @Test
+    void login_withSpacesAroundUsername_findsTrimmedAccount() throws Exception {
+        AppUser user = new AppUser("newuser", "hashed", true);
+        when(appUserRepository.findByUsername(" newuser ")).thenReturn(Optional.empty());
+        when(appUserRepository.findByUsername("newuser")).thenReturn(Optional.of(user));
+        when(passwordEncoder.matches("password123", "hashed")).thenReturn(true);
+        when(jwtUtil.generateToken("newuser")).thenReturn("jwt-token");
+
+        mockMvc.perform(post("/api/auth/login")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {"username": " newuser ", "password": "password123"}
+                            """))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.token").value("jwt-token"));
     }
 }

@@ -108,4 +108,12 @@ class FavoritePlayerServiceTest {
         when(repository.existsByUserAndPuuid(testUser, "puuid")).thenReturn(false);
         assertFalse(service.isFavorite(testUser, "puuid"));
     }
+
+    /** Verify that the favorites count comes from the repository. */
+    @Test
+    void countFavorites_delegatesToRepository() {
+        when(repository.countByUser(testUser)).thenReturn(3L);
+
+        assertEquals(3L, service.countFavorites(testUser));
+    }
 }

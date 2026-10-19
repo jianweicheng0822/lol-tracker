@@ -167,15 +167,40 @@ describe("PlayerPage favorites", () => {
     expect(await screen.findByText("Favorite")).toBeInTheDocument();
   });
 
-  it("shows an error toast when adding a favorite fails", async () => {
+  it("shows an error toast when adding a favorite fails on the network", async () => {
     vi.mocked(api.getAuthToken).mockReturnValue("token");
-    vi.mocked(api.addFavorite).mockRejectedValue(new Error("Server error"));
+    vi.mocked(api.addFavorite).mockRejectedValue(new TypeError("Failed to fetch"));
     const user = userEvent.setup();
     renderPage();
     await user.click(await screen.findByText("Favorite"));
 
     expect(await screen.findByTestId("toast")).toHaveTextContent("Couldn't add favorite");
     expect(screen.getByText("Favorite")).toBeInTheDocument();
+  });
+
+  it("shows the server's reason when it refuses a favorite", async () => {
+    vi.mocked(api.getAuthToken).mockReturnValue("token");
+    vi.mocked(api.addFavorite).mockRejectedValue(new Error("You can save up to 20 favorites. Remove one to add another."));
+    const user = userEvent.setup();
+    renderPage();
+    await user.click(await screen.findByText("Favorite"));
+
+    expect(await screen.findByTestId("toast")).toHaveTextContent("You can save up to 20 favorites");
+  });
+
+  it("ignores a second click while the first favorite request is in flight", async () => {
+    vi.mocked(api.getAuthToken).mockReturnValue("token");
+    let finish: (v: unknown) => void = () => {};
+    vi.mocked(api.addFavorite).mockReturnValue(new Promise((r) => { finish = r; }));
+    const user = userEvent.setup();
+    renderPage();
+    const button = await screen.findByText("Favorite");
+    await user.click(button);
+    await user.click(button);
+    finish({});
+
+    expect(await screen.findByText("Favorited")).toBeInTheDocument();
+    expect(api.addFavorite).toHaveBeenCalledTimes(1);
   });
 
   it("clears an expired session and prompts login on 401", async () => {

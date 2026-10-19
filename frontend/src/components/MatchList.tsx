@@ -619,7 +619,8 @@ export default function MatchList({ matches, region, puuid, onLoadMore, isLoadin
                   <div
                     style={{
                       display: "flex",
-                      gap: 7,
+                      flexWrap: "wrap",
+                      gap: "2px 7px",
                       fontSize: 10,
                       color: COLORS.textDim,
                       alignItems: "center",

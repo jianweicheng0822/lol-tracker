@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.Optional;
 
@@ -61,6 +62,10 @@ public class AuthController {
      * @param servletRequest HTTP request for extracting client IP
      * @return 201 with JWT token on success, 400 for invalid input, or 409 if username exists
      */
+    static final int MAX_PASSWORD_BYTES = 72;
+    static final String PASSWORD_RULE =
+            "Password must be 8 to 72 characters (letters outside English count as 2 to 4)";
+
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody AuthRequest request, HttpServletRequest servletRequest) {
         rateLimitService.checkRateLimit(servletRequest.getRemoteAddr(), 0);
@@ -70,20 +75,23 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("error", "Username and password are required"));
         }
 
-        if (request.username().length() > 50) {
+        // Stored trimmed, so " bob" and "bob" are the same account
+        String username = request.username().trim();
+        if (username.length() > 50) {
             return ResponseEntity.badRequest().body(Map.of("error", "Username must be 50 characters or fewer"));
         }
 
-        if (request.password().length() < 8 || request.password().length() > 128) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Password must be between 8 and 128 characters"));
+        // BCrypt only takes 72 bytes (longer throws), and non-English letters are 2-4 bytes each
+        if (request.password().length() < 8 || request.password().getBytes(StandardCharsets.UTF_8).length > MAX_PASSWORD_BYTES) {
+            return ResponseEntity.badRequest().body(Map.of("error", PASSWORD_RULE));
         }
 
-        if (appUserRepository.findByUsername(request.username()).isPresent()) {
+        if (appUserRepository.findByUsername(username).isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(Map.of("error", "Username already taken"));
         }
 
-        AppUser user = new AppUser(request.username(), passwordEncoder.encode(request.password()), true);
+        AppUser user = new AppUser(username, passwordEncoder.encode(request.password()), true);
         appUserRepository.save(user);
 
         String token = jwtUtil.generateToken(user.getUsername());
@@ -106,7 +114,9 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("error", "Username and password are required"));
         }
 
-        Optional<AppUser> optUser = appUserRepository.findByUsername(request.username());
+        // Exact name first (accounts made before names were trimmed), then the trimmed name
+        Optional<AppUser> optUser = appUserRepository.findByUsername(request.username())
+                .or(() -> appUserRepository.findByUsername(request.username().trim()));
         if (optUser.isEmpty() || !passwordEncoder.matches(request.password(), optUser.get().getPassword())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body(Map.of("error", "Invalid username or password"));

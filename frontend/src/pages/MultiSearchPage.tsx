@@ -222,7 +222,8 @@ const styles: Record<string, React.CSSProperties> = {
   },
   grid: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))",
+    // min(): on a phone narrower than 340px a card takes the full width instead of overflowing
+    gridTemplateColumns: "repeat(auto-fill, minmax(min(100%, 340px), 1fr))",
     gap: 14,
     marginTop: 24,
   },

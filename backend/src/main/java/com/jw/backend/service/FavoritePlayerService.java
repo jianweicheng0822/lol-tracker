@@ -50,6 +50,14 @@ public class FavoritePlayerService {
      * @param region   the Riot platform region
      * @return the saved entity, or null if the player already exists in the user's favorites
      */
+    /** Each favorite loads its recent games on the home page (Riot calls), so the list is capped. */
+    public static final int MAX_FAVORITES = 20;
+
+    /** Number of players the user has saved. */
+    public long countFavorites(AppUser user) {
+        return repository.countByUser(user);
+    }
+
     public FavoritePlayer addFavorite(AppUser user, String puuid, String gameName, String tagLine, String region) {
         if (repository.existsByUserAndPuuid(user, puuid)) {
             return null;

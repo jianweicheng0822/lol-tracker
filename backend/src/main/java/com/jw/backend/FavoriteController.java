@@ -9,6 +9,7 @@ import com.jw.backend.entity.AppUser;
 import com.jw.backend.entity.FavoritePlayer;
 import com.jw.backend.repository.AppUserRepository;
 import com.jw.backend.service.FavoritePlayerService;
+import com.jw.backend.util.PlayerFields;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -62,10 +63,22 @@ public class FavoriteController {
             ));
         }
 
+        String invalid = PlayerFields.invalidPuuid(puuid);
+        if (invalid == null) invalid = PlayerFields.invalidRiotId(gameName, tagLine, region);
+        if (invalid != null) {
+            return ResponseEntity.badRequest().body(Map.of("error", invalid));
+        }
+
+        if (!favoriteService.isFavorite(user, puuid) && favoriteService.countFavorites(user) >= FavoritePlayerService.MAX_FAVORITES) {
+            return ResponseEntity.badRequest().body(Map.of(
+                "error", "You can save up to " + FavoritePlayerService.MAX_FAVORITES + " favorites. Remove one to add another."
+            ));
+        }
+
         FavoritePlayer saved = favoriteService.addFavorite(user, puuid, gameName, tagLine, region);
 
         if (saved == null) {
-            return ResponseEntity.badRequest().body(Map.of(
+            return ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of(
                 "error", "Player is already in favorites"
             ));
         }

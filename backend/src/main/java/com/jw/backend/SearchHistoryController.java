@@ -3,6 +3,7 @@ package com.jw.backend;
 import com.jw.backend.entity.AppUser;
 import com.jw.backend.repository.AppUserRepository;
 import com.jw.backend.service.SearchHistoryService;
+import com.jw.backend.util.PlayerFields;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -47,6 +48,11 @@ public class SearchHistoryController {
             return ResponseEntity.badRequest().body(Map.of(
                 "error", "Missing required fields: gameName, tagLine, region"
             ));
+        }
+
+        String invalid = PlayerFields.invalidRiotId(gameName, tagLine, region);
+        if (invalid != null) {
+            return ResponseEntity.badRequest().body(Map.of("error", invalid));
         }
 
         searchHistoryService.addEntry(user, gameName, tagLine, region);

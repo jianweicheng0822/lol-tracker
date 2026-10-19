@@ -231,4 +231,14 @@ class GlobalExceptionHandlerFullTest {
         assertEquals(400, response.getStatusCode().value());
         assertEquals("Invalid match ID", response.getBody().message());
     }
+
+    /** Verify that a refused database write (e.g. a duplicate from a double click) is a 409. */
+    @Test
+    void handleConflict_returns409() {
+        var ex = new org.springframework.dao.DataIntegrityViolationException("duplicate key");
+
+        ResponseEntity<ApiErrorResponse> response = handler.handleConflict(ex, fakeRequest);
+
+        assertEquals(409, response.getStatusCode().value());
+    }
 }

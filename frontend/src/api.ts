@@ -344,6 +344,8 @@ export async function addFavorite(puuid: string, gameName: string, tagLine: stri
     body: JSON.stringify({ puuid, gameName, tagLine, region }),
   }));
   if (res.status === 401) throw new AuthRequiredError(await readErrorMessage(res));
+  // Already saved (another tab, or a second click): that's what the caller wanted
+  if (res.status === 409) return null;
   if (!res.ok) throw new Error(await readErrorMessage(res));
   return res.json();
 }

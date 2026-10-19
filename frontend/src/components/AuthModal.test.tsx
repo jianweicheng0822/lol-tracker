@@ -97,6 +97,31 @@ describe("AuthModal", () => {
     expect(api.register).not.toHaveBeenCalled();
   });
 
+  it("rejects a password over 72 bytes before submitting a registration", async () => {
+    const user = userEvent.setup();
+    render(<AuthModal onSuccess={onSuccess} onClose={onClose} />);
+    await user.click(screen.getByText("Register"));
+    await user.type(screen.getByPlaceholderText("Username"), "newuser");
+    // 25 Chinese characters are 75 bytes
+    await user.type(screen.getByPlaceholderText("Password"), "密".repeat(25));
+    await user.click(screen.getByRole("button", { name: "Register" }));
+
+    expect(screen.getByText(/Password is too long/)).toBeInTheDocument();
+    expect(api.register).not.toHaveBeenCalled();
+  });
+
+  it("sends the username without surrounding spaces", async () => {
+    vi.mocked(api.register).mockResolvedValue(undefined as never);
+    const user = userEvent.setup();
+    render(<AuthModal onSuccess={onSuccess} onClose={onClose} />);
+    await user.click(screen.getByText("Register"));
+    await user.type(screen.getByPlaceholderText("Username"), "  newuser ");
+    await user.type(screen.getByPlaceholderText("Password"), "password123");
+    await user.click(screen.getByRole("button", { name: "Register" }));
+
+    expect(api.register).toHaveBeenCalledWith("newuser", "password123");
+  });
+
   it("rejects a username over 50 characters before submitting a registration", async () => {
     const user = userEvent.setup();
     render(<AuthModal onSuccess={onSuccess} onClose={onClose} />);

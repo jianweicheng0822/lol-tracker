@@ -386,6 +386,11 @@ describe("addFavorite", () => {
     expect(err.message).toBe("Authentication required");
   });
 
+  it("treats an already-saved favorite (409) as done", async () => {
+    mockFetch.mockResolvedValue({ ok: false, status: 409, headers: new Headers() });
+    await expect(addFavorite("p1", "Faker", "KR1", "KR")).resolves.toBeNull();
+  });
+
   it("logs out when the server rejects the stored token", async () => {
     store["lol_tracker_jwt"] = "expired-token";
     mockUnauthorized();

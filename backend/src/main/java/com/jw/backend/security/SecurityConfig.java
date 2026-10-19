@@ -60,6 +60,12 @@ public class SecurityConfig {
         http
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))
             .csrf(csrf -> csrf.disable())
+            // nginx adds these on every response (nginx.conf); Spring adding them too sent each
+            // twice ("X-Frame-Options: DENY, DENY"), which browsers may treat as invalid
+            .headers(headers -> headers
+                .frameOptions(frame -> frame.disable())
+                .contentTypeOptions(nosniff -> nosniff.disable())
+                .httpStrictTransportSecurity(hsts -> hsts.disable()))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> auth.anyRequest().permitAll())
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);

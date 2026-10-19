@@ -165,6 +165,7 @@ const styles: Record<string, React.CSSProperties> = {
     color: COLORS.gold,
     border: "none",
     padding: "2px 4px",
+    minHeight: 24, // comfortable tap target
     cursor: "pointer",
     fontWeight: 600,
     fontSize: 13,

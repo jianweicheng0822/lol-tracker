@@ -256,7 +256,8 @@ const styles: Record<string, React.CSSProperties> = {
   rankLine: {
     display: "flex",
     alignItems: "center",
-    gap: 8,
+    flexWrap: "wrap",
+    gap: "2px 8px",
     fontSize: 13,
   },
   tierIcon: {

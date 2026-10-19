@@ -134,4 +134,20 @@ class SearchHistoryControllerTest {
 
         verify(searchHistoryService, times(1)).clearHistory(testUser);
     }
+
+    /** An unknown region or an oversized name is a 400, not a failed database insert. */
+    @Test
+    void addEntry_withInvalidFields_returnsBadRequest() throws Exception {
+        String[] bodies = {
+            "{\"gameName\":\"Faker\",\"tagLine\":\"KR1\",\"region\":\"NOT_A_REGION\"}",
+            "{\"gameName\":\"" + "a".repeat(300) + "\",\"tagLine\":\"KR1\",\"region\":\"KR\"}",
+        };
+        for (String body : bodies) {
+            mockMvc.perform(post("/api/search-history")
+                    .principal(() -> "testuser")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(body))
+                .andExpect(status().isBadRequest());
+        }
+    }
 }

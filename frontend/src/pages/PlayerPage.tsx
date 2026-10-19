@@ -112,6 +112,7 @@ export default function PlayerPage() {
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const favoriteAfterLogin = useRef(false);
+  const favoriteBusy = useRef(false);
 
   const navigate = useNavigate();
   const [status, setStatus] = useState<"loading" | "error" | "done">("loading");
@@ -253,6 +254,9 @@ export default function PlayerPage() {
       promptLoginToFavorite();
       return;
     }
+    // Ignore clicks while a toggle is in flight: a second one would act on the stale state
+    if (favoriteBusy.current) return;
+    favoriteBusy.current = true;
     try {
       if (shownIsFav) {
         await removeFavorite(account.puuid);
@@ -272,7 +276,11 @@ export default function PlayerPage() {
         return;
       }
       console.error("Failed to toggle favorite:", e);
-      setToastMsg(shownIsFav ? "Couldn't remove favorite. Please try again." : "Couldn't add favorite. Please try again.");
+      // A server message (e.g. the favorites limit) says what to do; a network failure doesn't
+      const serverMsg = e instanceof Error && !(e instanceof TypeError) ? e.message : null;
+      setToastMsg(serverMsg ?? (shownIsFav ? "Couldn't remove favorite. Please try again." : "Couldn't add favorite. Please try again."));
+    } finally {
+      favoriteBusy.current = false;
     }
   };
 

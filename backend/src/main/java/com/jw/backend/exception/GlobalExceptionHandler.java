@@ -8,6 +8,7 @@ package com.jw.backend.exception;
 import com.jw.backend.dto.ApiErrorResponse;
 import com.jw.backend.util.LogSanitizer;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -186,6 +187,28 @@ public class GlobalExceptionHandler {
                 req.getRequestURI()
         );
         return ResponseEntity.status(status).headers(error.getHeaders()).body(body);
+    }
+
+    /**
+     * Handle a write the database refused, usually the same row inserted twice at once (a
+     * double click): the request conflicts with what's already stored.
+     *
+     * @param ex  the constraint violation
+     * @param req the originating HTTP request
+     * @return 409 response
+     */
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ApiErrorResponse> handleConflict(DataIntegrityViolationException ex, HttpServletRequest req) {
+        log.warn("Database refused a write on {} {}: {}", req.getMethod(), LogSanitizer.clean(req.getRequestURI()),
+                LogSanitizer.clean(ex.getMostSpecificCause().getMessage()));
+        ApiErrorResponse body = new ApiErrorResponse(
+                Instant.now(),
+                409,
+                "Conflict",
+                "This conflicts with data that's already saved. Refresh and try again.",
+                req.getRequestURI()
+        );
+        return ResponseEntity.status(409).body(body);
     }
 
     /**

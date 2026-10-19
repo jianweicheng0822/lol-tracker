@@ -25,5 +25,7 @@ public interface FavoritePlayerRepository extends JpaRepository<FavoritePlayer, 
 
     boolean existsByUserAndPuuid(AppUser user, String puuid);
 
+    long countByUser(AppUser user);
+
     void deleteByUserAndPuuid(AppUser user, String puuid);
 }

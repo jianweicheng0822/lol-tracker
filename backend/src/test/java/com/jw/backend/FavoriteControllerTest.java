@@ -118,9 +118,9 @@ class FavoriteControllerTest {
             .andExpect(jsonPath("$.gameName").value("Faker"));
     }
 
-    /** Verify that adding a duplicate favorite returns HTTP 400 with an error message. */
+    /** Verify that adding a duplicate favorite returns HTTP 409 with an error message. */
     @Test
-    void addFavorite_whenAlreadyExists_returnsBadRequest() throws Exception {
+    void addFavorite_whenAlreadyExists_returnsConflict() throws Exception {
         when(favoriteService.addFavorite(eq(testUser), anyString(), anyString(), anyString(), anyString()))
             .thenReturn(null);
 
@@ -137,7 +137,7 @@ class FavoriteControllerTest {
                 .principal(() -> "testuser")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(requestBody))
-            .andExpect(status().isBadRequest())
+            .andExpect(status().isConflict())
             .andExpect(jsonPath("$.error").value("Player is already in favorites"));
     }
 
@@ -229,5 +229,37 @@ class FavoriteControllerTest {
 
         verify(favoriteService, times(1))
             .addFavorite(testUser, "test-puuid", "TestPlayer", "TAG", "NA");
+    }
+
+    /** Verify that bad field values are a 400 before anything is saved. */
+    @Test
+    void addFavorite_withInvalidFields_returnsBadRequest() throws Exception {
+        String[] bodies = {
+            "{\"puuid\":\"../x\",\"gameName\":\"Faker\",\"tagLine\":\"KR1\",\"region\":\"KR\"}",
+            "{\"puuid\":\"p1\",\"gameName\":\"" + "a".repeat(300) + "\",\"tagLine\":\"KR1\",\"region\":\"KR\"}",
+            "{\"puuid\":\"p1\",\"gameName\":\"Faker\",\"tagLine\":\"KR1\",\"region\":\"MOON\"}",
+        };
+        for (String body : bodies) {
+            mockMvc.perform(post("/api/favorites")
+                    .principal(() -> "testuser")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .content(body))
+                .andExpect(status().isBadRequest());
+        }
+        verify(favoriteService, never()).addFavorite(any(), anyString(), anyString(), anyString(), anyString());
+    }
+
+    /** Verify that a full favorites list refuses another player. */
+    @Test
+    void addFavorite_whenListIsFull_returnsBadRequest() throws Exception {
+        when(favoriteService.countFavorites(testUser)).thenReturn((long) FavoritePlayerService.MAX_FAVORITES);
+
+        mockMvc.perform(post("/api/favorites")
+                .principal(() -> "testuser")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"puuid\":\"p1\",\"gameName\":\"Faker\",\"tagLine\":\"KR1\",\"region\":\"KR\"}"))
+            .andExpect(status().isBadRequest())
+            .andExpect(jsonPath("$.error").value("You can save up to 20 favorites. Remove one to add another."));
+        verify(favoriteService, never()).addFavorite(any(), anyString(), anyString(), anyString(), anyString());
     }
 }

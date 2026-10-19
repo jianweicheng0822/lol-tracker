@@ -10,6 +10,8 @@ type Props = {
 
 // Must match the backend's checks in AuthController.register
 const PASSWORD_MIN = 8;
+/** BCrypt's limit on the backend; letters outside English take 2-4 bytes each. */
+const PASSWORD_MAX_BYTES = 72;
 const USERNAME_MAX = 50;
 
 export default function AuthModal({ onSuccess, onClose }: Props) {
@@ -44,14 +46,18 @@ export default function AuthModal({ onSuccess, onClose }: Props) {
         setError(`Password must be at least ${PASSWORD_MIN} characters.`);
         return;
       }
+      if (new TextEncoder().encode(password).length > PASSWORD_MAX_BYTES) {
+        setError("Password is too long: at most 72 characters (letters outside English count as 2 to 4).");
+        return;
+      }
     }
     setError("");
     setLoading(true);
     try {
       if (mode === "login") {
-        await login(username, password);
+        await login(username.trim(), password);
       } else {
-        await register(username, password);
+        await register(username.trim(), password);
       }
       onSuccess();
       onClose();

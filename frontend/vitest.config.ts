@@ -7,5 +7,7 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     setupFiles: ["./src/test/setup.ts"],
+    // Room for the 5s async waits in setup.ts
+    testTimeout: 15000,
   },
 });

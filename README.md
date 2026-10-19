@@ -17,13 +17,14 @@ A full-stack League of Legends stats site with AI match coaching: search any pla
 
 **Live:** [https://loltracker.lol](https://loltracker.lol)
 
-![Demo: searching a player, opening their profile, expanding a match scoreboard, then browsing the leaderboard](screenshots/demo.gif)
+![Demo: searching a Challenger player, their LP progression chart, an expanded match scoreboard, per-champion stats, then the leaderboard](screenshots/demo.gif)
 
 ## Engineering highlights
 
 - **Zero-downtime deploys on a single 1 GB server.** Each release starts next to the running one (blue/green) and nginx switches over only once it's healthy; if it never gets healthy, the old version keeps serving. Measured during a deploy: 0 failed requests out of 279. → [Deployment](#deployment)
 - **893 automated tests gate every deploy.** 509 frontend unit tests, 352 backend unit and 12 integration tests (real PostgreSQL via Testcontainers), and 20 Playwright end-to-end runs on desktop and phone. Smoke tests then check the live site after each release. → [Testing](#testing)
 - **Security-reviewed.** OAuth sign-in hardened against login CSRF, per-visitor rate limits behind Cloudflare, Stripe webhook signature checks, and CodeQL scanning with 0 open alerts. → [Security](#security)
+- **Accessible.** Checked with axe-core (0 violations on every page); every control works from the keyboard, and the layout holds down to a 320px-wide phone.
 - **Fast despite a rate-limited data source.** Riot API responses are cached in Redis, leaderboards are prefetched in the background within the API key's limits, and player data is recorded over time to build LP history that Riot doesn't provide.
 - **Streaming AI coaching and real payments.** Match analysis streams from OpenAI over Server-Sent Events; PRO subscriptions run through Stripe Checkout and webhooks.
 
@@ -163,11 +164,11 @@ The tests were checked to fail when the feature they cover is broken.
 
 | Area | Count | Examples |
 |------|------:|----------|
-| Components | 230 | MatchList, ScoreboardTable, FavoritesList, PerformanceModal, ProfileHeader, OverviewTab, ChampionsTab |
-| Utilities | 99 | `playerInsights`, `trends`, LP conversion and chart axes, URL helpers |
-| Pages and routing | 93 | HomePage, PlayerPage, MatchDetailPage, LeaderboardPage, MultiSearchPage |
-| API client | 49 | Token handling, login/register, error parsing |
-| Hooks | 21 | `useAuth`, `useBodyScrollLock`, `useIsMobile`, `useTabNavigation`, `useDocumentTitle` |
+| Components | 232 | MatchList, ScoreboardTable, FavoritesList, PerformanceModal, ProfileHeader, OverviewTab, ChampionsTab |
+| Utilities | 101 | `playerInsights`, `trends`, LP conversion and chart axes, URL helpers |
+| Pages and routing | 98 | HomePage, PlayerPage, MatchDetailPage, LeaderboardPage, MultiSearchPage |
+| API client | 53 | Token handling, login/register, error parsing |
+| Hooks | 25 | `useAuth`, `useBodyScrollLock`, `useIsMobile`, `useTabNavigation`, `useDocumentTitle` |
 
 </details>
 
@@ -192,7 +193,7 @@ The backend was reviewed by hand, and CodeQL scans the Java, TypeScript and work
 
 | Risk | How it's handled |
 |------|------------------|
-| Stolen or forged logins | Passwords hashed with BCrypt; JWTs signed with HS256 (32+ byte secret required) and valid for 24 hours |
+| Stolen or forged logins | Passwords hashed with BCrypt (limited to 72 bytes, BCrypt's maximum, so longer ones are rejected instead of silently cut short); JWTs signed with HS256 (32+ byte secret required) and valid for 24 hours |
 | Reading or changing another user's data | Every favorites, search-history and subscription query is scoped to the logged-in user |
 | Login CSRF through Google/Discord sign-in | The sign-in `state` is single-use, expires after 5 minutes, and must match an HttpOnly, SameSite=Lax cookie set in the browser that started the sign-in |
 | Account takeover through OAuth | Only provider-verified emails are used to link accounts |
@@ -203,6 +204,7 @@ The backend was reviewed by hand, and CodeQL scans the Java, TypeScript and work
 | Spoofed visitor IPs | The real IP is read from Cloudflare's `CF-Connecting-IP`, and only trusted on requests from Cloudflare's own address ranges |
 | Running the server out of memory via sign-in | Pending sign-ins are capped at 10,000 and expired ones are cleared every minute |
 | Cross-site scripting, clickjacking | React escapes rendered content; CSP, HSTS, `X-Frame-Options: DENY`, `nosniff` and a strict referrer policy are set by nginx |
+| Malicious input | Riot IDs and other values are percent-encoded before they go into Riot API paths, so `../` can't reach a different endpoint; IDs, names and counts are validated, and malformed requests get a 4xx error instead of a 500 |
 | SQL injection, forged log entries | Parameterized JPQL only; line breaks are removed from request values before they're logged |
 | Vulnerable or compromised dependencies | Dependabot updates npm, Maven, Docker and Actions weekly; third-party Actions are pinned to commit hashes; workflows get a read-only token by default; `npm audit` reports 0 issues |
 
@@ -471,7 +473,7 @@ lol-tracker/
 │   │   ├── entity/             # JPA entities (AppUser, MatchRecord, etc.)
 │   │   ├── dto/                # Immutable records for API transport
 │   │   ├── region/             # Riot region routing/platform mappings
-│   │   ├── util/               # LogSanitizer
+│   │   ├── util/               # LogSanitizer, PlayerFields (input validation)
 │   │   └── exception/          # Global exception handler + custom exceptions
 │   ├── src/main/resources/
 │   │   ├── application.properties
@@ -491,14 +493,6 @@ lol-tracker/
         └── pages/              # Route-level page components
 ```
 
-## Code Documentation
-
-All source files follow a consistent documentation standard:
-
-- **Backend (Java):** Javadoc with `@file`, `@description`, `@module` headers. All public methods have `@param`, `@returns`, and `@throws` annotations where applicable.
-- **Frontend (TypeScript):** JSDoc with the same file header convention. Exported functions and components include parameter and return descriptions.
-- **Style:** Imperative mood, concise descriptions focused on intent and business logic rather than restating code.
-
 ## License
 
 This project is for educational purposes.
@@ -506,3 +500,5 @@ This project is for educational purposes.
 ---
 
 Built with the [Riot Games API](https://developer.riotgames.com), [OpenAI API](https://platform.openai.com), and [Stripe](https://stripe.com)
+
+LoL Tracker isn't endorsed by Riot Games and doesn't reflect the views or opinions of Riot Games or anyone officially involved in producing or managing Riot Games properties. Riot Games, and all associated properties are trademarks or registered trademarks of Riot Games, Inc.

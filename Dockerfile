@@ -1,7 +1,7 @@
 # =============================================================
 # Stage 1: Build the React frontend
 # =============================================================
-FROM node:20-alpine AS frontend-build
+FROM node:24-alpine AS frontend-build
 
 WORKDIR /app/frontend
 COPY frontend/package.json frontend/package-lock.json ./
@@ -13,7 +13,7 @@ RUN npm run build
 # =============================================================
 # Stage 2: Build the Spring Boot backend (with frontend baked in)
 # =============================================================
-FROM maven:3.9-eclipse-temurin-21 AS backend-build
+FROM maven:3.9-eclipse-temurin-25 AS backend-build
 
 WORKDIR /app/backend
 # Retry flaky downloads (and give up on stuck ones) instead of failing or hanging the whole deploy
@@ -41,7 +41,7 @@ RUN mvn -o package -DskipTests
 # =============================================================
 # Stage 3: Minimal runtime image
 # =============================================================
-FROM eclipse-temurin:21-jre-alpine
+FROM eclipse-temurin:25-jre-alpine
 
 WORKDIR /app
 

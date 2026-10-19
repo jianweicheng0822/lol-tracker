@@ -29,7 +29,7 @@ A full-stack League of Legends stats site with AI match coaching: search any pla
 
 <table>
   <tr>
-    <td align="center"><b>Home</b></td>
+    <td align="center"><b>Home (logged in, with favorites)</b></td>
     <td align="center"><b>Overview</b></td>
   </tr>
   <tr>
@@ -54,6 +54,14 @@ A full-stack League of Legends stats site with AI match coaching: search any pla
       <img src="screenshots/login.png" alt="Login" width="220" />
       <img src="screenshots/pro-upgrade.png" alt="PRO Upgrade" width="200" />
     </td>
+  </tr>
+  <tr>
+    <td align="center"><b>LP Progression</b></td>
+    <td align="center"><b>Match Page</b></td>
+  </tr>
+  <tr>
+    <td><img src="screenshots/performance.png" alt="LP Progression" width="480" /></td>
+    <td><img src="screenshots/match-page.png" alt="Match Page" width="480" /></td>
   </tr>
   <tr>
     <td align="center"><b>Champions</b></td>

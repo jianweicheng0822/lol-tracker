@@ -159,6 +159,12 @@ const styles: Record<string, React.CSSProperties> = {
     color: COLORS.textPrimary,
     textDecoration: "none",
     flexShrink: 0,
+    // 44px-tall touch target; the negative margins keep the layout and the text's look unchanged
+    display: "inline-flex",
+    alignItems: "center",
+    minHeight: 44,
+    padding: "0 6px",
+    margin: "-12px -6px",
   },
   search: {
     // Takes the free space; wraps onto its own line on narrow screens

@@ -131,7 +131,7 @@ The React app is built into the Spring Boot image and served by it, so one conta
 | End-to-end | 20 | Playwright | 10 user journeys, each on desktop and phone |
 | Smoke | 3 | Playwright | The live site, right after each deploy |
 
-Everything except the smoke tests runs in CI on every pull request and push, and backend coverage must stay at 70% or more (JaCoCo).
+Everything except the smoke tests runs in CI on every pull request and push. Backend line coverage must stay at 70% or more (JaCoCo; currently 74%). The Codecov badge reads a few points lower because it also counts the two Stripe controllers, which the JaCoCo rule leaves out.
 
 **End-to-end tests** (`frontend/e2e`) run the production build in Chromium. The API is served from fixtures and every request outside the app is blocked, so the tests are deterministic and never depend on Riot. They cover:
 

@@ -41,6 +41,10 @@ public class OAuth2Controller {
         }
 
         String state = oAuth2Service.generateState();
+        if (state == null) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(Map.of("error", "Too many sign-ins in progress. Please try again in a minute."));
+        }
         String callbackUrl = buildCallbackUrl(request, normalizedProvider);
         String authUrl = oAuth2Service.buildAuthorizationUrl(normalizedProvider, state, callbackUrl);
 
@@ -76,7 +80,9 @@ public class OAuth2Controller {
             AppUser user = oAuth2Service.findOrCreateUser(normalizedProvider, userInfo);
             String jwt = jwtUtil.generateToken(user.getUsername());
 
-            String redirectUrl = oAuth2Properties.getFrontendUrl() + "/oauth-callback?token=" + jwt;
+            // In the fragment, not the query: browsers never send fragments to the server, so the
+            // token stays out of nginx access logs (the frontend also drops it from history)
+            String redirectUrl = oAuth2Properties.getFrontendUrl() + "/oauth-callback#token=" + jwt;
             return ResponseEntity.status(HttpStatus.FOUND)
                 .location(URI.create(redirectUrl))
                 .build();

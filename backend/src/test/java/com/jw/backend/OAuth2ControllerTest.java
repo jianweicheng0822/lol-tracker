@@ -57,6 +57,16 @@ class OAuth2ControllerTest {
     }
 
     @Test
+    void authorize_whenTooManySignInsPending_returns503() throws Exception {
+        when(oAuth2Service.isProviderConfigured("google")).thenReturn(true);
+        when(oAuth2Service.generateState()).thenReturn(null);
+
+        mockMvc.perform(get("/api/oauth2/google/authorize"))
+            .andExpect(status().isServiceUnavailable())
+            .andExpect(jsonPath("$.error").value("Too many sign-ins in progress. Please try again in a minute."));
+    }
+
+    @Test
     void authorize_withUnsupportedProvider_returns400() throws Exception {
         mockMvc.perform(get("/api/oauth2/github/authorize"))
             .andExpect(status().isBadRequest())
@@ -117,7 +127,7 @@ class OAuth2ControllerTest {
                 .param("code", "auth-code")
                 .param("state", "valid-state"))
             .andExpect(status().isFound())
-            .andExpect(header().string("Location", "http://localhost:5173/oauth-callback?token=jwt-token-123"));
+            .andExpect(header().string("Location", "http://localhost:5173/oauth-callback#token=jwt-token-123"));
     }
 
     @Test

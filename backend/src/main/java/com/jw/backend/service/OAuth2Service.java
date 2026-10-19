@@ -6,6 +6,7 @@ import com.jw.backend.repository.AppUserRepository;
 import com.jw.backend.repository.OAuthAccountRepository;
 import com.jw.backend.security.OAuth2Properties;
 import org.springframework.http.*;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
@@ -31,6 +32,12 @@ public class OAuth2Service {
     // In-memory state store with expiry (state -> timestamp)
     private final ConcurrentHashMap<String, Long> stateStore = new ConcurrentHashMap<>();
     private static final long STATE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+    /**
+     * Anyone can start a sign-in without logging in, so the store is capped: without a cap,
+     * repeatedly opening /authorize would grow it until the server ran out of memory.
+     * Package-private so tests can lower it.
+     */
+    int maxPendingStates = 10_000;
 
     @Autowired
     public OAuth2Service(OAuth2Properties properties,
@@ -53,10 +60,34 @@ public class OAuth2Service {
         this.restTemplate = restTemplate;
     }
 
+    /**
+     * Create a one-time state for a sign-in attempt.
+     *
+     * @return the state, or null when too many sign-ins are pending (the caller should ask the
+     *         user to try again shortly)
+     */
     public String generateState() {
+        if (stateStore.size() >= maxPendingStates) {
+            evictExpiredStates(System.currentTimeMillis());
+            if (stateStore.size() >= maxPendingStates) return null;
+        }
         String state = UUID.randomUUID().toString();
         stateStore.put(state, System.currentTimeMillis());
         return state;
+    }
+
+    /** Drop sign-in states nobody came back for, so abandoned attempts don't pile up. */
+    @Scheduled(fixedRate = 60_000)
+    void evictExpiredStates() {
+        evictExpiredStates(System.currentTimeMillis());
+    }
+
+    void evictExpiredStates(long now) {
+        stateStore.values().removeIf(createdAt -> now - createdAt >= STATE_TTL_MS);
+    }
+
+    int pendingStateCount() {
+        return stateStore.size();
     }
 
     public boolean validateAndConsumeState(String state) {

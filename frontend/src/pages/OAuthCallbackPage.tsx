@@ -1,13 +1,16 @@
 import { useEffect } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { setAuthToken } from "../api";
 import { COLORS } from "../utils/colors";
 
 export default function OAuthCallbackPage() {
   const [searchParams] = useSearchParams();
+  const { hash } = useLocation();
   const navigate = useNavigate();
 
-  const token = searchParams.get("token");
+  // The backend puts the token in the fragment (#token=…) so it never reaches server logs;
+  // navigating away with replace also keeps it out of the browser history
+  const token = new URLSearchParams(hash.replace(/^#/, "")).get("token");
   const errorParam = searchParams.get("error");
 
   useEffect(() => {

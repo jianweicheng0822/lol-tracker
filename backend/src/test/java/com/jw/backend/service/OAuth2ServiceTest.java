@@ -146,6 +146,30 @@ class OAuth2ServiceTest {
     }
 
     @Test
+    void expiredStates_areEvicted() {
+        String state = service.generateState();
+        service.evictExpiredStates(System.currentTimeMillis() + 5 * 60 * 1000);
+        assertEquals(0, service.pendingStateCount());
+        assertFalse(service.validateAndConsumeState(state));
+    }
+
+    @Test
+    void freshStates_surviveEviction() {
+        String state = service.generateState();
+        service.evictExpiredStates(System.currentTimeMillis());
+        assertTrue(service.validateAndConsumeState(state));
+    }
+
+    @Test
+    void generateState_whenStoreIsFull_returnsNull() {
+        service.maxPendingStates = 3;
+        for (int i = 0; i < 3; i++) assertNotNull(service.generateState());
+
+        assertNull(service.generateState());
+        assertEquals(3, service.pendingStateCount());
+    }
+
+    @Test
     void validateState_invalidState_returnsFalse() {
         assertFalse(service.validateAndConsumeState("nonexistent-state"));
     }

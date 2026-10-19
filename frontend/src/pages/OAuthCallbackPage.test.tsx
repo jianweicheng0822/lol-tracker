@@ -5,10 +5,12 @@ import OAuthCallbackPage from "./OAuthCallbackPage";
 
 const mockNavigate = vi.fn();
 let mockSearchParams = new URLSearchParams();
+let mockHash = "";
 
 vi.mock("react-router-dom", () => ({
   useNavigate: () => mockNavigate,
   useSearchParams: () => [mockSearchParams],
+  useLocation: () => ({ hash: mockHash }),
 }));
 
 const mockSetAuthToken = vi.fn();
@@ -22,14 +24,23 @@ describe("OAuthCallbackPage", () => {
     mockNavigate.mockReset();
     mockSetAuthToken.mockReset();
     mockSearchParams = new URLSearchParams();
+    mockHash = "";
   });
 
-  it("stores token and redirects to home on success", () => {
-    mockSearchParams = new URLSearchParams("token=jwt-abc-123");
+  it("stores the token from the URL fragment and redirects home, replacing the history entry", () => {
+    mockHash = "#token=jwt-abc-123";
     render(<OAuthCallbackPage />);
 
     expect(mockSetAuthToken).toHaveBeenCalledWith("jwt-abc-123");
     expect(mockNavigate).toHaveBeenCalledWith("/", { replace: true });
+  });
+
+  it("ignores a token in the query string", () => {
+    mockSearchParams = new URLSearchParams("token=jwt-abc-123");
+    render(<OAuthCallbackPage />);
+
+    expect(mockSetAuthToken).not.toHaveBeenCalled();
+    expect(screen.getByText("No authentication token received.")).toBeInTheDocument();
   });
 
   it("shows error when error param is present", () => {

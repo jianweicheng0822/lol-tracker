@@ -13,7 +13,9 @@ test("home page loads with the search box", async ({ page }) => {
 
 test("leaderboard lists players, and a player's page loads their matches", async ({ page }) => {
   await page.goto("/leaderboard");
-  const firstRow = page.locator("tbody tr").first();
+  // A loaded row, not a loading placeholder (right after a deploy the cache is cold and the
+  // placeholders show for a while; clicking one does nothing)
+  const firstRow = page.locator("tbody tr", { hasText: "LP" }).first();
   await expect(firstRow).toBeVisible();
 
   await firstRow.click();

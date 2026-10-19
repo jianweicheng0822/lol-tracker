@@ -1,6 +1,8 @@
 # LoL Tracker
 
-![Java](https://img.shields.io/badge/Java_21-ED8B00?style=flat&logo=openjdk&logoColor=white)
+[![CI/CD](https://github.com/jianweicheng0822/lol-tracker/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/jianweicheng0822/lol-tracker/actions/workflows/ci-cd.yml)
+[![CodeQL](https://github.com/jianweicheng0822/lol-tracker/actions/workflows/codeql.yml/badge.svg)](https://github.com/jianweicheng0822/lol-tracker/actions/workflows/codeql.yml)
+![Java](https://img.shields.io/badge/Java_25-ED8B00?style=flat&logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-6DB33F?style=flat&logo=spring-boot&logoColor=white)
 ![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
@@ -8,6 +10,7 @@
 ![Redis](https://img.shields.io/badge/Redis-DC382D?style=flat&logo=redis&logoColor=white)
 ![Docker](https://img.shields.io/badge/Docker-2496ED?style=flat&logo=docker&logoColor=white)
 ![AWS](https://img.shields.io/badge/AWS_EC2-FF9900?style=flat&logo=amazonec2&logoColor=white)
+![Playwright](https://img.shields.io/badge/Playwright-2EAD33?style=flat&logo=playwright&logoColor=white)
 [![codecov](https://codecov.io/gh/jianweicheng0822/lol-tracker/graph/badge.svg)](https://codecov.io/gh/jianweicheng0822/lol-tracker)
 
 Full-stack League of Legends analytics dashboard with AI-powered match coaching. Search any player by Riot ID, explore ranked stats, match history, champion performance, and LP trends — all in a dark-themed UI with real-time AI analysis.
@@ -60,11 +63,13 @@ Full-stack League of Legends analytics dashboard with AI-powered match coaching.
 
 ## Features
 
-**Player Dashboard** — Tabbed profile (Overview, Champions) with URL-driven navigation, ranked badges, win/loss streaks, and persistent favorites. A shared header with search and navigation on every page, and layouts that work down to phone width
+**Player Dashboard** — Tabbed profile (Overview, Champions) with URL-driven navigation, ranked badges, win/loss streaks, and persistent favorites. Readable, shareable URLs (`/player/NA/Name/Tag`), a shared header with search and navigation on every page, and layouts that work down to phone width
 
-**Match History** — Match cards with champion icons, KDA, items, runes, and summoner spells. Expandable inline scoreboards with full 10-player stats. Arena mode support with augment icons. Cross-navigation between player profiles
+**Favorites** — Logged-in users see their saved players on the home page as a League-client-style avatar row: profile icon, rank crest, full rank name, and the last 5 ranked games. Removing one can be undone for a few seconds
 
-**Performance Analytics** — LP progression chart, rolling win rate trend, KDA and damage trends with moving average overlays, per-champion stats grid
+**Match History** — Match cards with champion icons, KDA, items, runes, and summoner spells. Expandable inline scoreboards with full 10-player stats. Arena mode support with augment icons. Each match has its own shareable page ("Open match page" / "Copy link"). Cross-navigation between player profiles
+
+**Performance Analytics** — LP progression chart with current rank, LP change and peak over the selected range (LP-scaled axis for Master+, division labels below), rolling win rate trend, KDA and damage trends with moving average overlays, per-champion stats grid
 
 **Leaderboard** — Regional leaderboards for Challenger, Grandmaster, and Master tiers. Click any player to jump directly to their profile
 
@@ -74,7 +79,7 @@ Full-stack League of Legends analytics dashboard with AI-powered match coaching.
 
 **AI Match Analysis** — Click the sparkle button on any match to open a chat modal. Streaming responses via SSE for real-time coaching. System prompt constructed server-side from structured match data
 
-**JWT Authentication** — Stateless authentication with Bearer tokens. Register/login endpoints return JWTs. Anonymous users have full access to all features except AI coaching
+**Authentication** — Username/password (BCrypt) or Google/Discord sign-in (OAuth2). Stateless JWT Bearer tokens. Anonymous users have full access to all features except AI coaching and favorites
 
 **Subscription Tiers** — FREE/PRO system via Stripe. All users get full match history and unlimited API access. PRO adds AI match coaching ($4.99/mo via Stripe Checkout)
 
@@ -120,7 +125,7 @@ graph TB
 ### Backend
 | Technology | Purpose |
 |------------|---------|
-| Java 21 / Spring Boot | Web framework and REST API |
+| Java 25 (LTS) / Spring Boot 3.5 | Web framework and REST API (code targets Java 21) |
 | Spring Security + JWT | Stateless authentication (jjwt) |
 | Spring Data JPA | Database access (repositories) |
 | PostgreSQL | Production relational database |
@@ -141,6 +146,19 @@ graph TB
 | Recharts | Trend charts |
 | Vitest | Unit and component test runner |
 | React Testing Library | Component rendering and interaction testing |
+| Playwright | End-to-end tests in a real browser (desktop and phone) |
+
+### Infrastructure & DevOps
+| Technology | Purpose |
+|------------|---------|
+| Docker | Multi-stage image (Node 24 build, Maven + Java 25 build, Java 25 JRE runtime, non-root user) |
+| GitHub Actions | CI/CD: lint, tests, E2E, build, deploy, post-deploy smoke tests |
+| GitHub Container Registry | Image registry |
+| AWS EC2 | Single-instance host (app, PostgreSQL, Redis, nginx in Docker) |
+| nginx | Reverse proxy, security headers, per-visitor API rate limiting, zero-downtime switchover |
+| Cloudflare | TLS, CDN, bot protection |
+| CodeQL | Static security analysis of Java, TypeScript and the workflows |
+| Dependabot | Weekly dependency updates (npm, Maven, Docker, Actions) |
 
 ### External APIs
 - **[Riot Games API](https://developer.riotgames.com)** — Account, match, ranked, summoner, and live game (spectator) data
@@ -168,8 +186,9 @@ docker compose up --build
 ## Manual Setup
 
 ### Prerequisites
-- Java 21+
-- Node.js 20+
+- Java 21+ (production and CI use Java 25)
+- Node.js 20.19+ (production and CI use Node 24)
+- Docker (for the backend integration tests)
 - PostgreSQL 16+
 - [Riot API Key](https://developer.riotgames.com)
 - [OpenAI API Key](https://platform.openai.com/api-keys)
@@ -230,6 +249,9 @@ Interactive Swagger UI is available at `/swagger-ui.html` when the app is runnin
 |--------|--------|----------|-------------|
 | Auth | POST | `/api/auth/register` | Register new user, returns JWT |
 | | POST | `/api/auth/login` | Login, returns JWT |
+| OAuth2 | GET | `/api/oauth2/{provider}/authorize` | Start Google/Discord sign-in (sets the state cookie, redirects) |
+| | GET | `/api/oauth2/{provider}/callback` | Provider callback; redirects to the app with a JWT |
+| | GET | `/api/oauth2/providers` | Which sign-in providers are configured |
 | Summoner | GET | `/api/summoner` | Resolve Riot ID to account |
 | | GET | `/api/summoner/by-puuid` | Resolve PUUID to account |
 | Matches | GET | `/api/matches/recent` | Recent match IDs |
@@ -242,6 +264,10 @@ Interactive Swagger UI is available at `/swagger-ui.html` when the app is runnin
 | | POST | `/api/favorites` | Add a player to favorites |
 | | DELETE | `/api/favorites/{puuid}` | Remove a favorite |
 | | GET | `/api/favorites/check/{puuid}` | Check if player is favorited |
+| Search History | GET | `/api/search-history` | Recent searches of the logged-in user |
+| | POST | `/api/search-history` | Record a search |
+| | DELETE | `/api/search-history` | Remove one entry |
+| | DELETE | `/api/search-history/all` | Clear history |
 | Trends | GET | `/api/trends/champions` | Per-champion aggregated stats |
 | | GET | `/api/trends/matches` | Per-match trend data points |
 | | GET | `/api/trends/lp` | LP progression history |
@@ -276,7 +302,7 @@ cd backend
 
 | Suite | Count | Database | Docker required |
 |-------|-------|----------|-----------------|
-| Unit tests | 278 | None (mocked) | No |
+| Unit tests | 326 | None (mocked) | No |
 | Integration tests | 12 | PostgreSQL (Testcontainers) | Yes |
 
 Unit tests use `@WebMvcTest` with MockMvc and mocked service layers — no database is involved. Integration tests use Testcontainers to spin up a real PostgreSQL container and run Flyway migrations, validating the full stack end-to-end.
@@ -294,17 +320,41 @@ npm run test:watch
 
 # Run with coverage report
 npm run test:coverage
+
+# End-to-end tests (build first; the tests serve dist/)
+npm run build
+npx playwright install chromium   # once
+npm run test:e2e
 ```
 
 | Suite | Count | Description |
 |-------|-------|-------------|
-| Utility tests | 63 | `playerInsights`, `trends`, `lp` conversion |
-| Component tests | 184 | MatchList, ScoreboardTable, ProfileHeader, RankSummary, OverviewTab, ChampionsTab, etc. |
-| Hook tests | 9 | `useIsMobile`, `useTabNavigation` |
-| API module tests | 41 | Token management, login/register, error parsing |
-| Page tests | 59 | HomePage, MatchDetailPage, LeaderboardPage, MultiSearchPage rendering and state |
+| Component tests | 230 | MatchList, ScoreboardTable, FavoritesList, PerformanceModal, ProfileHeader, OverviewTab, ChampionsTab, etc. |
+| Utility tests | 99 | `playerInsights`, `trends`, LP conversion and chart axes, URL helpers |
+| Page and routing tests | 93 | HomePage, PlayerPage, MatchDetailPage, LeaderboardPage, MultiSearchPage, route remounting |
+| API module tests | 49 | Token management, login/register, error parsing |
+| Hook tests | 21 | `useAuth`, `useBodyScrollLock`, `useIsMobile`, `useTabNavigation`, `useDocumentTitle` |
+| **Unit total** | **492** | |
+| End-to-end (Playwright) | 20 | 10 scenarios, each on desktop and phone viewports |
+| Smoke (Playwright, live site) | 3 | Run against production after every deploy |
 
 Frontend tests use Vitest with jsdom and React Testing Library. Components are tested for rendering, user interaction, form validation, and navigation. API tests mock `fetch` and `localStorage` to verify request construction and token handling.
+
+**End-to-end tests** (`frontend/e2e`) run the production build in Chromium with Playwright. The backend API is served from fixtures and every request outside the app is blocked, so runs are deterministic and never depend on Riot. They cover the main user journeys: search → player page → expand a match → its own page and back, pasting a Riot ID, the not-found card with other regions, switching between players, leaderboard paging kept in the URL, favorites with undo, the 404 page, and no sideways scrolling on phones. They were checked to fail when the feature they cover is broken.
+
+**Smoke tests** (`frontend/smoke`) run against the live site right after each deploy: the backend answers, the home page loads, and a leaderboard player's page shows their matches with real data.
+
+## Security
+
+The backend was reviewed by hand and is scanned by CodeQL on every push (`security-extended` queries, 0 open alerts; false positives are dismissed with a written reason).
+
+- **Authentication:** BCrypt password hashing; HS256 JWTs with a required 32+ byte secret and 24h expiry. Every favorites, search-history and subscription query is scoped to the logged-in user.
+- **OAuth2 (Google/Discord):** only verified emails are trusted for account linking; the `state` is single-use, expires after 5 minutes, and is bound to the browser that started the sign-in with an HttpOnly, SameSite=Lax cookie (prevents login CSRF); the pending-state store is capped and cleaned up; the token is handed to the frontend in the URL fragment, so it never reaches server logs.
+- **Payments:** PRO is granted only by Stripe webhooks with a verified signature.
+- **Rate limiting:** nginx limits the API to 10 requests/second per visitor (bursts of 50), and login/register to 5 attempts a minute, keyed on the real client IP taken from Cloudflare's header and trusted only from Cloudflare's address ranges.
+- **Headers:** CSP, HSTS, `X-Frame-Options: DENY`, `nosniff`, and a strict referrer policy. The CSP keeps `'unsafe-inline'` for scripts only because Cloudflare's bot detection injects an inline script; the app itself ships none (see `nginx.conf`).
+- **Input handling:** parameterized JPQL only; Riot API URLs built from URI templates; request-derived values have line breaks stripped before logging; generic error bodies.
+- **Supply chain:** Dependabot keeps npm, Maven, Docker and Actions dependencies current; third-party Actions are pinned to commit hashes; workflows run with a read-only token by default; `npm audit` reports 0 vulnerabilities.
 
 ## Database
 
@@ -345,21 +395,46 @@ docker run -p 8080:8080 \
   lol-tracker
 ```
 
-### AWS EC2
+### AWS EC2 (CI/CD)
 
-Automated via GitHub Actions (`.github/workflows/ci-cd.yml`):
-- **On PR to `master`** — runs lint, build, and tests
-- **On push to `master`** — builds Docker image, pushes to GHCR, deploys to EC2 via SSH
+Automated via GitHub Actions (`.github/workflows/ci-cd.yml`). Every pull request and every push to `master` runs:
 
-Production requires a PostgreSQL instance and a Redis instance (Docker containers on EC2, or managed services like RDS/ElastiCache).
+1. **Frontend:** lint, 492 unit tests, production build, 20 Playwright end-to-end tests
+2. **Backend:** 326 unit tests and 12 Testcontainers integration tests (`./mvnw verify`, coverage to Codecov)
+3. **CodeQL:** security analysis of Java, TypeScript and the workflows (`.github/workflows/codeql.yml`)
+
+A push to `master` that passes then:
+
+4. **Builds** the Docker image and pushes it to GHCR
+5. **Deploys** to EC2 over SSH with **zero downtime** (blue/green, below)
+6. **Smoke-tests** the live site with Playwright
+
+#### Zero-downtime deploys
+
+The app runs as one of two containers, `lol-tracker-blue` or `lol-tracker-green`, behind nginx. A deploy:
+
+1. Pulls the new image while the current version keeps serving
+2. Starts the new version in the other slot, next to the old one
+3. Waits until it answers its health check. **If it never does, it is removed and the old version keeps serving**
+4. Validates the new nginx config in a throwaway container, then points nginx at the new version with a graceful `nginx -s reload` (in-flight requests finish on the old one)
+5. Stops the old version
+
+The instance has about 1 GB of RAM, so the two JVMs overlap for ~20 seconds on swap; if memory and swap together are ever too tight, the deploy stops the old version first instead. Measured during a deploy: 0 failed requests out of 279, slowest response 0.41 s. Deploys are serialized, so two pushes can't overlap.
+
+Production runs PostgreSQL and Redis as Docker containers on the same instance (managed services like RDS/ElastiCache would work too).
 
 ## Project Structure
 
 ```
 lol-tracker/
+├── .github/
+│   ├── workflows/ci-cd.yml     # Tests, E2E, build, blue/green deploy, smoke tests
+│   ├── workflows/codeql.yml    # CodeQL security scanning
+│   └── dependabot.yml          # Weekly dependency updates
 ├── docker-compose.yml          # Local dev: PostgreSQL + Redis + app
 ├── .env.example                # Env var template
 ├── Dockerfile                  # Multi-stage build
+├── nginx.conf                  # Production nginx: real client IP, rate limits, security headers
 ├── backend/
 │   ├── src/main/java/com/jw/backend/
 │   │   ├── *Controller.java    # REST endpoints (Javadoc on all public methods)
@@ -380,10 +455,12 @@ lol-tracker/
 │       ├── java/.../integration/  # Testcontainers integration tests
 │       └── resources/             # Test config (Flyway disabled, mocked keys)
 └── frontend/
+    ├── e2e/                    # Playwright end-to-end tests (mocked API)
+    ├── smoke/                  # Playwright smoke tests against the live site
     └── src/
         ├── api.ts              # JWT token management + API client
         ├── types.ts            # Shared TypeScript interfaces
-        ├── hooks/              # Custom React hooks (useTabNavigation)
+        ├── hooks/              # Custom React hooks (useAuth, useTabNavigation, ...)
         ├── utils/              # DDragon helpers, LP conversion, trend math
         ├── components/         # Reusable UI components (JSDoc documented)
         └── pages/              # Route-level page components

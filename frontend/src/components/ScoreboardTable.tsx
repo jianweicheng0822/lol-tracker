@@ -190,13 +190,13 @@ function ArenaPlayerRow({
     >
       <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
         <div style={{ position: "relative", flexShrink: 0 }}>
-          <img src={championIconUrl(p.championName, imgBase)} width={32} height={32} style={{ borderRadius: "50%" }} onError={championIconOnError(p.championName)} />
+          <img src={championIconUrl(p.championName, imgBase)} alt={p.championName} width={32} height={32} style={{ borderRadius: "50%" }} onError={championIconOnError(p.championName)} />
           <div style={{ position: "absolute", bottom: -2, right: -2, background: COLORS.pageBg, fontSize: 9, padding: "0 3px", borderRadius: 4, fontWeight: 700 }}>{p.championLevel}</div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <div style={{ display: "flex", gap: 3 }}>
-            <img src={spellIconUrl(p.summoner1Id, imgBase, spellMap)} width={14} height={14} style={{ borderRadius: 2 }} onError={hideOnError} />
-            <img src={spellIconUrl(p.summoner2Id, imgBase, spellMap)} width={14} height={14} style={{ borderRadius: 2 }} onError={hideOnError} />
+            <img alt="" src={spellIconUrl(p.summoner1Id, imgBase, spellMap)} width={14} height={14} style={{ borderRadius: 2 }} onError={hideOnError} />
+            <img alt="" src={spellIconUrl(p.summoner2Id, imgBase, spellMap)} width={14} height={14} style={{ borderRadius: 2 }} onError={hideOnError} />
           </div>
           <PlayerName
             name={p.summonerName}
@@ -236,7 +236,7 @@ function ArenaPlayerRow({
       <div style={{ display: "flex", gap: 2, justifyContent: "center" }}>
         {p.items.map((itemId, i) => (
           <div key={i} style={{ width: 22, height: 22, borderRadius: 3, overflow: "hidden", background: "rgba(0,0,0,0.4)" }}>
-            {itemId > 0 && <img src={itemIconUrl(itemId, imgBase)} width={22} height={22} onError={hideOnError} />}
+            {itemId > 0 && <img alt="" src={itemIconUrl(itemId, imgBase)} width={22} height={22} onError={hideOnError} />}
           </div>
         ))}
       </div>
@@ -315,15 +315,15 @@ export function ScoreboardTeamTable({
           >
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <div style={{ position: "relative", flexShrink: 0 }}>
-                <img src={championIconUrl(p.championName, imgBase)} width={32} height={32} style={{ borderRadius: "50%" }} onError={championIconOnError(p.championName)} />
+                <img src={championIconUrl(p.championName, imgBase)} alt={p.championName} width={32} height={32} style={{ borderRadius: "50%" }} onError={championIconOnError(p.championName)} />
                 <div style={{ position: "absolute", bottom: -2, right: -2, background: COLORS.pageBg, fontSize: 9, padding: "0 3px", borderRadius: 4, fontWeight: 700 }}>{p.championLevel}</div>
               </div>
               <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                 <div style={{ display: "flex", gap: 3 }}>
-                  <img src={spellIconUrl(p.summoner1Id, imgBase, spellMap)} width={14} height={14} style={{ borderRadius: 2 }} onError={hideOnError} />
-                  <img src={spellIconUrl(p.summoner2Id, imgBase, spellMap)} width={14} height={14} style={{ borderRadius: 2 }} onError={hideOnError} />
-                  {p.primaryRuneId > 0 && <img src={keystoneIconUrl(p.primaryRuneId, keystoneMap)} width={14} height={14} style={{ borderRadius: 2 }} onError={hideOnError} />}
-                  {p.secondaryRuneStyleId > 0 && <img src={runeStyleIconUrl(p.secondaryRuneStyleId)} width={14} height={14} style={{ borderRadius: 2 }} onError={hideOnError} />}
+                  <img alt="" src={spellIconUrl(p.summoner1Id, imgBase, spellMap)} width={14} height={14} style={{ borderRadius: 2 }} onError={hideOnError} />
+                  <img alt="" src={spellIconUrl(p.summoner2Id, imgBase, spellMap)} width={14} height={14} style={{ borderRadius: 2 }} onError={hideOnError} />
+                  {p.primaryRuneId > 0 && <img alt="" src={keystoneIconUrl(p.primaryRuneId, keystoneMap)} width={14} height={14} style={{ borderRadius: 2 }} onError={hideOnError} />}
+                  {p.secondaryRuneStyleId > 0 && <img alt="" src={runeStyleIconUrl(p.secondaryRuneStyleId)} width={14} height={14} style={{ borderRadius: 2 }} onError={hideOnError} />}
                 </div>
                 <PlayerName
                   name={p.summonerName}
@@ -366,7 +366,7 @@ export function ScoreboardTeamTable({
             <div style={{ display: "flex", gap: 2, justifyContent: "center" }}>
               {p.items.map((itemId, i) => (
                 <div key={i} style={{ width: 22, height: 22, borderRadius: 3, overflow: "hidden", background: "rgba(0,0,0,0.4)" }}>
-                  {itemId > 0 && <img src={itemIconUrl(itemId, imgBase)} width={22} height={22} onError={hideOnError} />}
+                  {itemId > 0 && <img alt="" src={itemIconUrl(itemId, imgBase)} width={22} height={22} onError={hideOnError} />}
                 </div>
               ))}
             </div>

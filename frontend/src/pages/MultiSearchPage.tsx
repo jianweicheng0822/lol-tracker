@@ -84,6 +84,7 @@ export default function MultiSearchPage() {
 
           <div style={styles.controls}>
             <select
+              aria-label="Region"
               style={styles.select}
               value={region}
               onChange={(e) => setRegion(e.target.value as Region)}

@@ -129,6 +129,7 @@ function ItemIcon({ itemId, imgBase }: { itemId: number; imgBase: string }) {
       {itemId > 0 && (
         <img
           src={itemIconUrl(itemId, imgBase)}
+          alt=""
           style={{ width: "100%", height: "100%", display: "block" }}
           onError={hideOnError}
         />
@@ -396,7 +397,8 @@ export default function MatchList({ matches, region, puuid, onLoadMore, isLoadin
 
   return (
     <div>
-      <h3 style={{ marginBottom: 12 }}>Recent Matches</h3>
+      {/* h2 under the player-name h1, styled as before (body font, h3 size) */}
+      <h2 style={{ marginBottom: 12, fontSize: "1.17em", fontFamily: "inherit", letterSpacing: "normal" }}>Recent Matches</h2>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
         {matches.map((m) => {
@@ -455,6 +457,7 @@ export default function MatchList({ matches, region, puuid, onLoadMore, isLoadin
                   <div style={{ position: "relative" }}>
                     <img
                       src={championIconUrl(m.championName, imgBase)}
+                      alt={m.championName}
                       width={44}
                       height={44}
                       style={{ borderRadius: "50%", border: `2px solid ${winColor}55`, display: "block" }}
@@ -498,6 +501,7 @@ export default function MatchList({ matches, region, puuid, onLoadMore, isLoadin
                        >
                           <img
                             src={augmentIcons[augId] || ""}
+                            alt=""
                             width={22}
                             height={22}
                             style={{ filter: "saturate(1.4)" }}
@@ -511,6 +515,7 @@ export default function MatchList({ matches, region, puuid, onLoadMore, isLoadin
                       <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
                         <img
                           src={spellIconUrl(m.summoner1Id, imgBase, spellMap)}
+                          alt=""
                           width={20}
                           height={20}
                           style={{ borderRadius: 3, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)" }}
@@ -518,6 +523,7 @@ export default function MatchList({ matches, region, puuid, onLoadMore, isLoadin
                         />
                         <img
                           src={spellIconUrl(m.summoner2Id, imgBase, spellMap)}
+                          alt=""
                           width={20}
                           height={20}
                           style={{ borderRadius: 3, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)" }}
@@ -528,6 +534,7 @@ export default function MatchList({ matches, region, puuid, onLoadMore, isLoadin
                         {m.primaryRuneId > 0 && (
                           <img
                             src={keystoneIconUrl(m.primaryRuneId, keystoneMap)}
+                            alt=""
                             width={20}
                             height={20}
                             style={{ borderRadius: 3, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)" }}
@@ -537,6 +544,7 @@ export default function MatchList({ matches, region, puuid, onLoadMore, isLoadin
                         {m.secondaryRuneStyleId > 0 && (
                           <img
                             src={runeStyleIconUrl(m.secondaryRuneStyleId)}
+                            alt=""
                             width={20}
                             height={20}
                             style={{ borderRadius: 3, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(0,0,0,0.3)" }}

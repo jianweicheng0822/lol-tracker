@@ -41,10 +41,10 @@ export default function ProfileHeader({
         />
         <div>
           {/* Body font, not the Cinzel used for headings: it is all caps and would change how the Riot ID reads */}
-          <h2 style={{ margin: 0, fontSize: "clamp(22px, 6vw, 28px)", overflowWrap: "anywhere", fontFamily: "inherit", letterSpacing: "normal" }}>
+          <h1 style={{ margin: 0, fontSize: "clamp(22px, 6vw, 28px)", overflowWrap: "anywhere", fontFamily: "inherit", letterSpacing: "normal" }}>
             {account.gameName}
             <span style={{ color: COLORS.textDim, fontWeight: 400 }}> #{account.tagLine}</span>
-          </h2>
+          </h1>
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginTop: 4 }}>
             <span style={{ fontSize: 13, opacity: 0.5 }}>{region}</span>
             {streak && streak.count >= 2 && (

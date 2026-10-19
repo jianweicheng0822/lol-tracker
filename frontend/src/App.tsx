@@ -25,7 +25,8 @@ function KeyedPlayerPage() {
 
 export default function App() {
   return (
-    <Routes>
+    <main>
+      <Routes>
       <Route path="/" element={<HomePage />} />
       <Route path="/player/:region/:gameName/:tag" element={<KeyedPlayerPage />} />
       <Route path="/player/puuid/:region/:puuid" element={<KeyedPlayerPage />} />
@@ -37,6 +38,7 @@ export default function App() {
       <Route path="/checkout/cancel" element={<CheckoutCancelPage />} />
       <Route path="/oauth-callback" element={<OAuthCallbackPage />} />
       <Route path="*" element={<NotFoundPage />} />
-    </Routes>
+      </Routes>
+    </main>
   );
 }

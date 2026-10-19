@@ -130,6 +130,7 @@ export default function ChampionsTab({ puuid, refreshToken = 0 }: Props) {
                 <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
                   <img
                     src={championIconUrl(c.championName, imgBase)}
+                    alt=""
                     width={40}
                     height={40}
                     style={{ borderRadius: "50%", flexShrink: 0 }}

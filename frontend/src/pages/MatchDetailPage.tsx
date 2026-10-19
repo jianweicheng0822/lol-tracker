@@ -88,7 +88,7 @@ export default function MatchDetailPage() {
             {/* Match header */}
             <div style={{ ...styles.header, borderLeftColor: myWin ? "#0AC8B9" : "#E84057" }}>
               <div>
-                <span style={{ fontSize: 20, fontWeight: 700 }}>{queueName}</span>
+                <h1 style={{ display: "inline", margin: 0, fontSize: 20, fontWeight: 700, fontFamily: "inherit", letterSpacing: "normal" }}>{queueName}</h1>
                 <span style={{ fontSize: 14, color: COLORS.textTertiary, marginLeft: 12 }}>
                   {formatDuration(match.gameDurationSec)}
                 </span>
@@ -104,7 +104,7 @@ export default function MatchDetailPage() {
             </div>
 
             {/* Scoreboard: scrolls sideways on its own when wider than the page */}
-            <div style={{ overflowX: "auto" }} data-testid="scoreboard-scroll">
+            <div style={{ overflowX: "auto" }} data-testid="scoreboard-scroll" tabIndex={0} role="region" aria-label="Scoreboard">
               {isArenaQueue(match.queueId) ? (
                 <ArenaScoreboard
                   participants={match.participants}

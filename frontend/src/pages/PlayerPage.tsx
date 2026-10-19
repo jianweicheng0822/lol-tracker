@@ -328,13 +328,13 @@ export default function PlayerPage() {
 
         {status === "error" && notFound && (
           <div style={styles.notFoundBox} role="status">
-            <h2 style={styles.notFoundTitle}>
+            <h1 style={styles.notFoundTitle}>
               {puuidParam ? (
                 <>This player wasn't found in {region}</>
               ) : (
                 <>No player named <span style={{ color: COLORS.gold }}>{gameName}#{tag}</span> found in {region}</>
               )}
-            </h2>
+            </h1>
             <p style={styles.notFoundText}>
               Riot IDs belong to one server, so the region has to match. Also check the spelling; the tag
               is the part after # (e.g. NA1).

@@ -62,7 +62,7 @@ export default function MultiSearchCard({ player, region }: { player: MultiSearc
       <div style={styles.header}>
         <img
           src={`${base}/profileicon/${player.profileIconId}.png`}
-          alt="icon"
+          alt=""
           style={styles.icon}
           onError={hideOnError}
         />

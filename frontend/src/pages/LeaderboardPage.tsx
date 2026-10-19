@@ -145,8 +145,9 @@ export default function LeaderboardPage() {
 
       <div style={styles.controls}>
         <div style={styles.controlGroup}>
-          <label style={styles.controlLabel}>Region</label>
+          <label htmlFor="lb-region" style={styles.controlLabel}>Region</label>
           <select
+            id="lb-region"
             value={region}
             onChange={(e) => changeRegion(e.target.value as Region)}
             style={styles.select}
@@ -160,8 +161,9 @@ export default function LeaderboardPage() {
         </div>
 
         <div style={styles.controlGroup}>
-          <label style={styles.controlLabel}>Queue</label>
+          <label htmlFor="lb-queue" style={styles.controlLabel}>Queue</label>
           <select
+            id="lb-queue"
             value={queue}
             onChange={(e) => changeQueue(e.target.value as Queue)}
             style={styles.select}
@@ -192,7 +194,7 @@ export default function LeaderboardPage() {
             >
               <img
                 src={tierIconUrl(t)}
-                alt={t}
+                alt=""
                 style={styles.tabIcon}
                 onError={(e) => {
                   (e.target as HTMLImageElement).style.display = "none";

@@ -81,6 +81,7 @@ export default function StatsBar({ stats, matches }: StatsBarProps) {
             <>
               <img
                 src={championIconUrl(mainChamp.name, imgBase)}
+                alt=""
                 width={28}
                 height={28}
                 style={{ borderRadius: "50%", flexShrink: 0 }}

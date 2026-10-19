@@ -131,6 +131,7 @@ function ChampRow({ champ, imgBase, name }: { champ: ChampPerf; imgBase: string;
     >
       <img
         src={championIconUrl(champ.championName, imgBase)}
+        alt=""
         width={28}
         height={28}
         style={{ borderRadius: "50%", flexShrink: 0 }}

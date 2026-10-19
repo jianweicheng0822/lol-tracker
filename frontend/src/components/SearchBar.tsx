@@ -201,6 +201,7 @@ export default function SearchBar({ compact, initialRegion, initialGameName, ini
   return (
     <div ref={wrapperRef} className="search-bar" style={{ position: "relative", display: "flex", gap, alignItems: "center", width: "100%", maxWidth: maxW }}>
       <select
+        aria-label="Region"
         className="gold-input"
         style={{ ...styles.select, padding: inputPadding, fontSize: inputFontSize }}
         value={region}

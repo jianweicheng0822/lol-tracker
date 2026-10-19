@@ -458,7 +458,8 @@ export async function fetchLiveGame(puuid: string, region: string) {
     `${BASE}/api/live-game?puuid=${encodeURIComponent(puuid)}&region=${region}`,
     fetchOpts()
   );
-  if (res.status === 404) return null;
+  // 204: not in a game (older backends answered 404)
+  if (res.status === 204 || res.status === 404) return null;
   if (!res.ok) throw new Error(await readErrorMessage(res));
   return res.json();
 }

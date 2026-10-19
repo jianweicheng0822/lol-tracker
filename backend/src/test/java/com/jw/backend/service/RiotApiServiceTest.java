@@ -468,6 +468,24 @@ class RiotApiServiceTest {
 
     // -- Redis cache delegation --
     @Test
+    void getActiveGame_cachedNotInGame_returnsNullWithoutCallingRiot() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get("spectator:na1:p1")).thenReturn("");
+
+        assertNull(riotApiService.getActiveGame("p1", RiotRegion.NA));
+        // Served from the cache: nothing else was read or written
+        verify(valueOperations, never()).set(anyString(), anyString(), any(Duration.class));
+    }
+
+    @Test
+    void getActiveGame_cachedGame_returnsIt() {
+        when(redisTemplate.opsForValue()).thenReturn(valueOperations);
+        when(valueOperations.get("spectator:na1:p1")).thenReturn("{\"gameId\":1}");
+
+        assertEquals("{\"gameId\":1}", riotApiService.getActiveGame("p1", RiotRegion.NA));
+    }
+
+    @Test
     void cache_getCached_delegatesToRedis() throws Exception {
         when(redisTemplate.opsForValue()).thenReturn(valueOperations);
         when(valueOperations.get("test-key")).thenReturn("test-value");

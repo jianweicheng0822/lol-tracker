@@ -425,18 +425,25 @@ public class RiotApiService {
         return result;
     }
 
+    /** Cached in place of a game when the player isn't in one, so that answer is cached too. */
+    private static final String NOT_IN_GAME = "";
+    private static final long ACTIVE_GAME_TTL_MS = 30_000;
+    private static final long NOT_IN_GAME_TTL_MS = 60_000;
+
     /**
-     * Spectator-v5 active game lookup. 30s TTL — game state changes rapidly.
-     * Returns null if the player is not currently in a game (Riot returns 404).
+     * Spectator-v5 active game lookup. 30s TTL for a game in progress (state changes quickly),
+     * 60s for "not in a game", which is the usual answer: without caching it, every profile view
+     * spent a Riot call on it.
+     *
+     * @return the game JSON, or null if the player isn't in a game, or if Riot is rate limiting
+     *         us (the status is unknown then; the page offers "Check Again")
      */
     public String getActiveGame(String puuid, RiotRegion region) {
-        long ttlMs = 30_000;
-
         String baseUrl = "https://" + region.platform() + ".api.riotgames.com";
         String cacheKey = "spectator:" + region.platform() + ":" + puuid;
 
         String cached = getCached(cacheKey);
-        if (cached != null) return cached;
+        if (cached != null) return cached.equals(NOT_IN_GAME) ? null : cached;
 
         riotRateLimiter.acquire();
         try {
@@ -446,9 +453,13 @@ public class RiotApiService {
                     .retrieve()
                     .body(String.class);
 
-            putCached(cacheKey, result, ttlMs);
+            putCached(cacheKey, result, ACTIVE_GAME_TTL_MS);
             return result;
         } catch (org.springframework.web.client.HttpClientErrorException.NotFound e) {
+            putCached(cacheKey, NOT_IN_GAME, NOT_IN_GAME_TTL_MS);
+            return null;
+        } catch (org.springframework.web.client.HttpClientErrorException.TooManyRequests e) {
+            log.warn("Riot rate-limited a live game check; reporting no game");
             return null;
         }
     }

@@ -59,14 +59,13 @@ class LiveGameControllerTest {
     }
 
     @Test
-    void getLiveGame_notInGame_returns404() throws Exception {
+    void getLiveGame_notInGame_returns204() throws Exception {
         when(liveGameService.getActiveGame("test-puuid", RiotRegion.NA)).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/live-game")
                         .param("puuid", "test-puuid")
                         .param("region", "NA"))
-                .andExpect(status().isNotFound())
-                .andExpect(jsonPath("$.message").value("Player is not currently in a game"));
+                .andExpect(status().isNoContent());
     }
 
     @Test

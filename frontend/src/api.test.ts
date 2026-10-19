@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import {
+  fetchLiveGame,
   setAuthToken, getAuthToken, login, register, readErrorMessage,
   fetchAccount, fetchAccountByPuuid, fetchMatchSummaries, fetchStats,
   fetchRanked, fetchMatchDetail, fetchFavorites, checkIsFavorite,
@@ -493,5 +494,21 @@ describe("fetchLeaderboard", () => {
   it("throws on failure", async () => {
     mockFail("Error");
     await expect(fetchLeaderboard("NA", "RANKED_SOLO_5x5", "challenger")).rejects.toThrow("Error");
+  });
+});
+
+describe("fetchLiveGame", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("returns the game when the player is in one", async () => {
+    mockOk({ gameId: 1 });
+    expect(await fetchLiveGame("p1", "NA")).toEqual({ gameId: 1 });
+  });
+
+  it("returns null when the player isn't in a game (204, or 404 from older backends)", async () => {
+    mockFetch.mockResolvedValue({ ok: true, status: 204, json: () => Promise.reject(new Error("no body")) });
+    expect(await fetchLiveGame("p1", "NA")).toBeNull();
+    mockFetch.mockResolvedValue({ ok: false, status: 404 });
+    expect(await fetchLiveGame("p1", "NA")).toBeNull();
   });
 });

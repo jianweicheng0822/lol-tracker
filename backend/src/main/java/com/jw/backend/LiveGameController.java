@@ -25,8 +25,10 @@ public class LiveGameController {
             @RequestParam RiotRegion region
     ) {
         Optional<LiveGameDto> result = liveGameService.getActiveGame(puuid, region);
+        // Not being in a game is the normal case, so it's "no content" rather than an error
+        // (a 404 showed up as a failed request in the browser console on every profile)
         if (result.isEmpty()) {
-            return ResponseEntity.status(404).body(Map.of("message", "Player is not currently in a game"));
+            return ResponseEntity.noContent().build();
         }
         return ResponseEntity.ok(result.get());
     }

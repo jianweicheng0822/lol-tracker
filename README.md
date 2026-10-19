@@ -17,10 +17,12 @@ A full-stack League of Legends stats site with AI match coaching: search any pla
 
 **Live:** [https://loltracker.lol](https://loltracker.lol)
 
+![Demo: searching a player, opening their profile, expanding a match scoreboard, then browsing the leaderboard](screenshots/demo.gif)
+
 ## Engineering highlights
 
 - **Zero-downtime deploys on a single 1 GB server.** Each release starts next to the running one (blue/green) and nginx switches over only once it's healthy; if it never gets healthy, the old version keeps serving. Measured during a deploy: 0 failed requests out of 279. → [Deployment](#deployment)
-- **850 automated tests gate every deploy.** 492 frontend unit tests, 326 backend unit and 12 integration tests (real PostgreSQL via Testcontainers), and 20 Playwright end-to-end runs on desktop and phone. Smoke tests then check the live site after each release. → [Testing](#testing)
+- **893 automated tests gate every deploy.** 509 frontend unit tests, 352 backend unit and 12 integration tests (real PostgreSQL via Testcontainers), and 20 Playwright end-to-end runs on desktop and phone. Smoke tests then check the live site after each release. → [Testing](#testing)
 - **Security-reviewed.** OAuth sign-in hardened against login CSRF, per-visitor rate limits behind Cloudflare, Stripe webhook signature checks, and CodeQL scanning with 0 open alerts. → [Security](#security)
 - **Fast despite a rate-limited data source.** Riot API responses are cached in Redis, leaderboards are prefetched in the background within the API key's limits, and player data is recorded over time to build LP history that Riot doesn't provide.
 - **Streaming AI coaching and real payments.** Match analysis streams from OpenAI over Server-Sent Events; PRO subscriptions run through Stripe Checkout and webhooks.
@@ -133,8 +135,8 @@ The React app is built into the Spring Boot image and served by it, so one conta
 
 | Suite | Count | Tool | What it covers |
 |-------|------:|------|----------------|
-| Frontend unit | 492 | Vitest, React Testing Library | Components, pages, hooks, utilities, API client |
-| Backend unit | 326 | JUnit, MockMvc, Mockito | Controllers (`@WebMvcTest` with mocked services) and services (Mockito), no database |
+| Frontend unit | 509 | Vitest, React Testing Library | Components, pages, hooks, utilities, API client |
+| Backend unit | 352 | JUnit, MockMvc, Mockito | Controllers (`@WebMvcTest` with mocked services) and services (Mockito), no database |
 | Backend integration | 12 | Testcontainers | Real PostgreSQL with the Flyway migrations: auth, favorites, subscriptions |
 | End-to-end | 20 | Playwright | 10 user journeys, each on desktop and phone |
 | Smoke | 3 | Playwright | The live site, right after each deploy |

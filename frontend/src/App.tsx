@@ -3,7 +3,8 @@
  * @description Top-level route definitions mapping URL paths to page components.
  * @module frontend.root
  */
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
+import { REGIONS, type Region } from "./types";
 import HomePage from "./pages/HomePage";
 import PlayerPage from "./pages/PlayerPage";
 import MatchDetailPage from "./pages/MatchDetailPage";
@@ -23,17 +24,33 @@ function KeyedPlayerPage() {
   return <PlayerPage key={pathname} />;
 }
 
+/**
+ * Check the :region segment before rendering a page: a lowercase one ("na") redirects to the
+ * canonical uppercase URL, and an unknown one shows the 404 page instead of an API error.
+ */
+function WithRegion({ children }: { children: React.ReactNode }) {
+  const { region = "" } = useParams();
+  const { pathname, search, hash } = useLocation();
+  const upper = region.toUpperCase();
+  if (!REGIONS.includes(upper as Region)) return <NotFoundPage />;
+  if (upper !== region) {
+    const fixed = pathname.replace(`/${region}/`, `/${upper}/`);
+    return <Navigate to={fixed + search + hash} replace />;
+  }
+  return <>{children}</>;
+}
+
 export default function App() {
   return (
     <main>
       <Routes>
       <Route path="/" element={<HomePage />} />
-      <Route path="/player/:region/:gameName/:tag" element={<KeyedPlayerPage />} />
-      <Route path="/player/puuid/:region/:puuid" element={<KeyedPlayerPage />} />
-      <Route path="/match/:region/:matchId" element={<MatchDetailPage />} />
+      <Route path="/player/:region/:gameName/:tag" element={<WithRegion><KeyedPlayerPage /></WithRegion>} />
+      <Route path="/player/puuid/:region/:puuid" element={<WithRegion><KeyedPlayerPage /></WithRegion>} />
+      <Route path="/match/:region/:matchId" element={<WithRegion><MatchDetailPage /></WithRegion>} />
       <Route path="/leaderboard" element={<LeaderboardPage />} />
       <Route path="/multi-search" element={<MultiSearchPage />} />
-      <Route path="/live/:region/:gameName/:tag" element={<LiveMatchPage />} />
+      <Route path="/live/:region/:gameName/:tag" element={<WithRegion><LiveMatchPage /></WithRegion>} />
       <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
       <Route path="/checkout/cancel" element={<CheckoutCancelPage />} />
       <Route path="/oauth-callback" element={<OAuthCallbackPage />} />

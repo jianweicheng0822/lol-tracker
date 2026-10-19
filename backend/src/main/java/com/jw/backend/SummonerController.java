@@ -71,6 +71,12 @@ public class SummonerController {
         if (gameName.isBlank() || tag.isBlank()) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "gameName and tag must not be empty");
         }
+        // Riot IDs never contain slashes, and Riot answers such a path with 403 (which reads as our
+        // key failing), so answer "not found" without asking
+        if (gameName.contains("/") || tag.contains("/") || gameName.contains("\\") || tag.contains("\\")) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    "Riot account not found. Check gameName/tagLine (case/spacing) and region.");
+        }
         try {
             String accountJson = riotApiService.getAccountByRiotId(gameName, tag, region);
             return enrichAccount(accountJson, region);

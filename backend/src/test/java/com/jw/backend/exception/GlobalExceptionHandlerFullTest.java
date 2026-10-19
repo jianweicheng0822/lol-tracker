@@ -63,7 +63,7 @@ class GlobalExceptionHandlerFullTest {
         ResponseEntity<ApiErrorResponse> response = handler.handleClientError(ex, fakeRequest);
 
         assertEquals(400, response.getStatusCode().value());
-        assertTrue(response.getBody().message().contains("Riot API request failed"));
+        assertTrue(response.getBody().message().startsWith("Riot didn't accept this request"));
     }
 
     /** Verify that a 500 server error returns a Riot API server error message. */
@@ -162,6 +162,18 @@ class GlobalExceptionHandlerFullTest {
 
         assertEquals(404, response.getStatusCode().value());
         assertTrue(response.getBody().message().startsWith("Match not found"));
+    }
+
+    /** Verify that an uncommon Riot status gets the generic failure message. */
+    @Test
+    void handleClientError_uncommonStatus_returnsGenericMessage() {
+        HttpClientErrorException ex = HttpClientErrorException.create(
+                HttpStatus.CONFLICT, "Conflict", HttpHeaders.EMPTY, null, null);
+
+        ResponseEntity<ApiErrorResponse> response = handler.handleClientError(ex, fakeRequest);
+
+        assertEquals(409, response.getStatusCode().value());
+        assertTrue(response.getBody().message().contains("Riot API request failed"));
     }
 
     /** Verify that a malformed request body is a 400, not a 500. */

@@ -182,4 +182,12 @@ class SummonerControllerTest {
                 .andExpect(status().isBadRequest());
         verify(riotApiService, never()).getAccountByRiotId(anyString(), anyString(), any());
     }
+
+    /** Verify that a name with a slash is "not found" without calling Riot. */
+    @Test
+    void getSummoner_nameWithSlash_returnsNotFound() throws Exception {
+        mockMvc.perform(get("/api/summoner").param("gameName", "../../etc").param("tag", "NA1").param("region", "NA"))
+                .andExpect(status().isNotFound());
+        verify(riotApiService, never()).getAccountByRiotId(anyString(), anyString(), any());
+    }
 }

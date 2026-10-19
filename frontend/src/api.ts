@@ -22,7 +22,14 @@ const DEFAULT_TIMEOUT_MS = 15_000;
 function fetchWithTimeout(url: string, opts?: RequestInit, timeoutMs = DEFAULT_TIMEOUT_MS): Promise<Response> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
-  return fetch(url, { ...opts, signal: controller.signal }).finally(() => clearTimeout(timer));
+  return fetch(url, { ...opts, signal: controller.signal })
+    .then((res) => {
+      // The server rejected the token we sent (expired or invalid): stop showing the user as logged in
+      const sentToken = new Headers(opts?.headers).has("Authorization");
+      if (res.status === 401 && sentToken && getAuthToken()) setAuthToken(null);
+      return res;
+    })
+    .finally(() => clearTimeout(timer));
 }
 
 /**
@@ -55,14 +62,29 @@ export function getAuthToken(): string | null {
  * @returns The username, or null if the token can't be read.
  */
 export function usernameFromToken(token: string): string | null {
+  const sub = tokenClaims(token)?.sub;
+  return typeof sub === "string" && sub ? sub : null;
+}
+
+/**
+ * Whether a token can still be used: it has a readable payload and, if it carries an expiry
+ * ("exp", seconds), that time hasn't passed. Not a signature check; the backend does that.
+ */
+export function isTokenUsable(token: string, nowMs: number): boolean {
+  const claims = tokenClaims(token);
+  if (!claims) return false;
+  return typeof claims.exp !== "number" || claims.exp * 1000 > nowMs;
+}
+
+function tokenClaims(token: string): Record<string, unknown> | null {
   try {
     const payload = token.split(".")[1];
     if (!payload) return null;
     // base64url -> base64, then decode as UTF-8 so non-ASCII usernames survive
     const base64 = payload.replace(/-/g, "+").replace(/_/g, "/").padEnd(Math.ceil(payload.length / 4) * 4, "=");
     const json = new TextDecoder().decode(Uint8Array.from(atob(base64), (c) => c.charCodeAt(0)));
-    const sub = JSON.parse(json).sub;
-    return typeof sub === "string" && sub ? sub : null;
+    const claims = JSON.parse(json);
+    return claims && typeof claims === "object" ? claims : null;
   } catch {
     return null;
   }

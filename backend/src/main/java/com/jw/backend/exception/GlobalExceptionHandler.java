@@ -68,6 +68,7 @@ public class GlobalExceptionHandler {
                     ? "Match not found. Check the match ID and region."
                     : "Riot account not found. Check gameName/tagLine (case/spacing) and region.";
             case TOO_MANY_REQUESTS -> "Rate limited (429). Please wait a bit and try again.";
+            case BAD_REQUEST -> "Riot didn't accept this request. Check the player or match ID and region.";
             default -> "Riot API request failed: " + status;
         };
 

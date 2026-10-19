@@ -385,6 +385,13 @@ describe("addFavorite", () => {
     expect(err).toBeInstanceOf(AuthRequiredError);
     expect(err.message).toBe("Authentication required");
   });
+
+  it("logs out when the server rejects the stored token", async () => {
+    store["lol_tracker_jwt"] = "expired-token";
+    mockUnauthorized();
+    await addFavorite("p1", "Faker", "KR1", "KR").catch(() => {});
+    expect(store["lol_tracker_jwt"]).toBeUndefined();
+  });
 });
 
 describe("removeFavorite", () => {

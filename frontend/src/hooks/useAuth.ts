@@ -4,7 +4,7 @@
  * @module frontend.hooks
  */
 import { useEffect, useState } from "react";
-import { AUTH_CHANGE_EVENT, TOKEN_KEY, getAuthToken, usernameFromToken } from "../api";
+import { AUTH_CHANGE_EVENT, TOKEN_KEY, getAuthToken, isTokenUsable, usernameFromToken } from "../api";
 
 export type AuthState = {
   isLoggedIn: boolean;
@@ -14,6 +14,11 @@ export type AuthState = {
 
 function readAuth(): AuthState {
   const token = getAuthToken();
+  if (token && !isTokenUsable(token, Date.now())) {
+    // Expired or unreadable: forget it, so pages don't send it and the header offers "Log in"
+    localStorage.removeItem(TOKEN_KEY);
+    return { isLoggedIn: false, username: null };
+  }
   return { isLoggedIn: !!token, username: token ? usernameFromToken(token) : null };
 }
 

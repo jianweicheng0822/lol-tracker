@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach } from "vitest";
 import { renderHook, act } from "@testing-library/react";
 import { useAuth } from "./useAuth";
-import { setAuthToken, usernameFromToken, TOKEN_KEY } from "../api";
+import { setAuthToken, usernameFromToken, isTokenUsable, TOKEN_KEY } from "../api";
 
 /** Unsigned JWT with the given payload; only the payload matters for display. */
 function fakeToken(payload: object): string {
@@ -53,5 +53,36 @@ describe("useAuth", () => {
       window.dispatchEvent(new StorageEvent("storage", { key: TOKEN_KEY }));
     });
     expect(result.current.username).toBe("Caps");
+  });
+});
+
+describe("isTokenUsable", () => {
+  const now = Date.UTC(2026, 9, 19);
+
+  it("accepts a readable token that hasn't expired", () => {
+    expect(isTokenUsable(fakeToken({ sub: "Faker", exp: now / 1000 + 60 }), now)).toBe(true);
+    expect(isTokenUsable(fakeToken({ sub: "Faker" }), now)).toBe(true);
+  });
+
+  it("rejects an expired or unreadable token", () => {
+    expect(isTokenUsable(fakeToken({ sub: "Faker", exp: now / 1000 - 1 }), now)).toBe(false);
+    expect(isTokenUsable("garbage", now)).toBe(false);
+  });
+});
+
+describe("useAuth with a stale token", () => {
+  beforeEach(() => localStorage.clear());
+
+  it("treats an expired token as logged out and forgets it", () => {
+    localStorage.setItem(TOKEN_KEY, fakeToken({ sub: "Faker", exp: 1 }));
+    const { result } = renderHook(() => useAuth());
+    expect(result.current).toEqual({ isLoggedIn: false, username: null });
+    expect(localStorage.getItem(TOKEN_KEY)).toBeNull();
+  });
+
+  it("treats an unreadable token as logged out", () => {
+    localStorage.setItem(TOKEN_KEY, "garbage");
+    const { result } = renderHook(() => useAuth());
+    expect(result.current.isLoggedIn).toBe(false);
   });
 });

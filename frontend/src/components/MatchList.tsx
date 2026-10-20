@@ -83,7 +83,11 @@ function useAugmentIcons(needed: boolean) {
   );
   useEffect(() => {
     if (!needed) return;
-    fetchAugmentIcons().then(setIcons);
+    let cancelled = false;
+    fetchAugmentIcons().then((map) => {
+      if (!cancelled) setIcons(map);
+    });
+    return () => { cancelled = true; };
   }, [needed]);
   return icons;
 }

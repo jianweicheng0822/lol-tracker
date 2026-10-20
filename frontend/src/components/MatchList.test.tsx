@@ -40,7 +40,12 @@ vi.mock("./AiChatModal", () => ({
 }));
 
 describe("MatchList", () => {
-  beforeEach(() => vi.clearAllMocks());
+  beforeEach(() => {
+    vi.clearAllMocks();
+    // Arena cards load augment icons from communitydragon; keep tests off the network
+    vi.stubGlobal("fetch", vi.fn(() => Promise.resolve({ json: () => Promise.resolve([]) })));
+  });
+  afterEach(() => vi.unstubAllGlobals());
 
   it("returns null when matches is empty", () => {
     const { container } = render(<MatchList matches={[]} />);

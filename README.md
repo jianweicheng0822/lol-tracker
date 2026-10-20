@@ -1,8 +1,5 @@
 # LoL Tracker
 
-[![CI/CD](https://github.com/jianweicheng0822/lol-tracker/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/jianweicheng0822/lol-tracker/actions/workflows/ci-cd.yml)
-[![CodeQL](https://github.com/jianweicheng0822/lol-tracker/actions/workflows/codeql.yml/badge.svg)](https://github.com/jianweicheng0822/lol-tracker/actions/workflows/codeql.yml)
-[![codecov](https://codecov.io/gh/jianweicheng0822/lol-tracker/graph/badge.svg)](https://codecov.io/gh/jianweicheng0822/lol-tracker)
 ![Java](https://img.shields.io/badge/Java_25-ED8B00?style=flat&logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-6DB33F?style=flat&logo=spring-boot&logoColor=white)
 ![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black)
@@ -142,7 +139,7 @@ The React app is built into the Spring Boot image and served by it, so one conta
 | End-to-end | 20 | Playwright | 10 user journeys, each on desktop and phone |
 | Smoke | 3 | Playwright | The live site, right after each deploy |
 
-Everything except the smoke tests runs in CI on every pull request and push. Backend line coverage must stay at 70% or more (JaCoCo; currently 74%). The Codecov badge reads a few points lower because it also counts the two Stripe controllers, which the JaCoCo rule leaves out.
+Everything except the smoke tests runs in CI on every pull request and push. Backend line coverage must stay at 70% or more (JaCoCo; currently 74%).
 
 **End-to-end tests** (`frontend/e2e`) run the production build in Chromium. The API is served from fixtures and every request outside the app is blocked, so the tests are deterministic and never depend on Riot. They cover:
 

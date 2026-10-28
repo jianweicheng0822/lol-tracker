@@ -18,8 +18,8 @@ A full-stack League of Legends stats site with AI match coaching: search any pla
 
 ## Engineering highlights
 
-- **Zero-downtime deploys on a single 1 GB server.** Each release starts next to the running one (blue/green) and nginx switches over only once it's healthy; if it never gets healthy, the old version keeps serving. Measured during a deploy: 0 failed requests out of 279. → [Deployment](#deployment)
-- **893 automated tests gate every deploy.** 509 frontend unit tests, 352 backend unit and 12 integration tests (real PostgreSQL via Testcontainers), and 20 Playwright end-to-end runs on desktop and phone. Smoke tests then check the live site after each release. → [Testing](#testing)
+- **Zero-downtime deploys on a single 1 GB server.** Each release starts next to the running one (blue/green) and nginx switches over only once it's healthy; if it never gets healthy, the old version keeps serving. Measured during a deploy: 0 failed requests out of 1,046. → [Deployment](#deployment)
+- **901 automated tests gate every deploy.** 509 frontend unit tests, 360 backend unit and 12 integration tests (real PostgreSQL via Testcontainers), and 20 Playwright end-to-end runs on desktop and phone. Smoke tests then check the live site after each release. → [Testing](#testing)
 - **Security-reviewed.** OAuth sign-in hardened against login CSRF, per-visitor rate limits behind Cloudflare, Stripe webhook signature checks, and CodeQL scanning with 0 open alerts. → [Security](#security)
 - **Accessible.** Checked with axe-core (0 violations on every page); every control works from the keyboard, and the layout holds down to a 320px-wide phone.
 - **Fast despite a rate-limited data source.** Riot API responses are cached in Redis, leaderboards are prefetched in the background within the API key's limits, and player data is recorded over time to build LP history that Riot doesn't provide.
@@ -134,12 +134,12 @@ The React app is built into the Spring Boot image and served by it, so one conta
 | Suite | Count | Tool | What it covers |
 |-------|------:|------|----------------|
 | Frontend unit | 509 | Vitest, React Testing Library | Components, pages, hooks, utilities, API client |
-| Backend unit | 352 | JUnit, MockMvc, Mockito | Controllers (`@WebMvcTest` with mocked services) and services (Mockito), no database |
+| Backend unit | 360 | JUnit, MockMvc, Mockito | Controllers (`@WebMvcTest` with mocked services) and services (Mockito), no database |
 | Backend integration | 12 | Testcontainers | Real PostgreSQL with the Flyway migrations: auth, favorites, subscriptions |
 | End-to-end | 20 | Playwright | 10 user journeys, each on desktop and phone |
 | Smoke | 3 | Playwright | The live site, right after each deploy |
 
-Everything except the smoke tests runs in CI on every pull request and push. Backend line coverage must stay at 70% or more (JaCoCo; currently 74%).
+Everything except the smoke tests runs in CI on every pull request and push. Backend line coverage must stay at 70% or more (JaCoCo; currently 75%).
 
 **End-to-end tests** (`frontend/e2e`) run the production build in Chromium. The API is served from fixtures and every request outside the app is blocked, so the tests are deterministic and never depend on Riot. They cover:
 
@@ -235,7 +235,7 @@ The app runs as one of two containers, `lol-tracker-blue` or `lol-tracker-green`
 4. Checks the new nginx config in a throwaway container, then points nginx at the new version with a graceful reload, so requests in progress finish on the old one
 5. Stops the old version
 
-The server has about 1 GB of RAM, so the two Java processes overlap for ~20 seconds using swap. If memory and swap together are ever too low for that, the deploy stops the old version first instead (a short outage rather than running out of memory). Measured during a deploy: **0 failed requests out of 279**, slowest response 0.41 s.
+The server has about 1 GB of RAM, so the two Java processes overlap for ~20 seconds using swap. If memory and swap together are ever too low for that, the deploy stops the old version first instead (a short outage rather than running out of memory). Measured during a deploy (a probe hitting `/health` 4 times a second): **0 failed requests out of 1,046**, slowest response 0.50 s.
 
 PostgreSQL and Redis run as Docker containers on the same instance (managed services such as RDS and ElastiCache would work too).
 

@@ -27,12 +27,6 @@ public class SubscriptionService {
                 });
     }
 
-    public void upgrade(String username) {
-        AppUser user = getOrCreateUser(username);
-        user.setTier(1);
-        appUserRepository.save(user);
-    }
-
     public int getMaxMatchCount(String username) {
         AppUser user = getOrCreateUser(username);
         return user.getTier() == 1 ? 100 : 20;
@@ -54,16 +48,21 @@ public class SubscriptionService {
         appUserRepository.save(user);
     }
 
-    /** Update subscription status (e.g., past_due, active). */
+    /**
+     * Update subscription status and set the tier to match it. past_due keeps PRO as a grace period
+     * while Stripe retries the payment; unpaid, canceled, incomplete and the like drop to FREE.
+     */
     public void updateSubscriptionStatus(String subscriptionId, String status) {
         Optional<AppUser> opt = appUserRepository.findByStripeSubscriptionId(subscriptionId);
         if (opt.isEmpty()) return;
         AppUser user = opt.get();
         user.setSubscriptionStatus(status);
-        if ("active".equals(status)) {
-            user.setTier(1);
-        }
+        user.setTier(grantsPro(status) ? 1 : 0);
         appUserRepository.save(user);
+    }
+
+    private static boolean grantsPro(String status) {
+        return "active".equals(status) || "trialing".equals(status) || "past_due".equals(status);
     }
 
     /** Cancel subscription: downgrade to FREE. */

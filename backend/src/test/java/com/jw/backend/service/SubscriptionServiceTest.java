@@ -10,6 +10,8 @@ import com.jw.backend.repository.AppUserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -20,8 +22,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 /**
- * Validate the {@link SubscriptionService} for user retrieval/creation, tier upgrades,
- * match count limits, and AI access gating based on subscription tier.
+ * Validate the {@link SubscriptionService} for user retrieval/creation, tier changes from
+ * Stripe subscription status, match count limits, and AI access gating based on subscription tier.
  */
 @ExtendWith(MockitoExtension.class)
 class SubscriptionServiceTest {
@@ -73,17 +75,43 @@ class SubscriptionServiceTest {
         verify(appUserRepository, never()).save(any());
     }
 
-    /** Verify that upgrade sets the user tier to 1 and persists it. */
-    @Test
-    void upgrade_setsTierToOne() {
+    /** Verify that statuses where the subscription is still live keep (or grant) PRO. */
+    @ParameterizedTest
+    @ValueSource(strings = {"active", "trialing", "past_due"})
+    void updateSubscriptionStatus_liveStatus_setsPro(String status) {
         AppUser user = new AppUser();
-        user.setUsername("testuser");
-        when(appUserRepository.findByUsername("testuser")).thenReturn(Optional.of(user));
+        when(appUserRepository.findByStripeSubscriptionId("sub_1")).thenReturn(Optional.of(user));
 
-        subscriptionService.upgrade("testuser");
+        subscriptionService.updateSubscriptionStatus("sub_1", status);
 
         assertEquals(1, user.getTier());
+        assertEquals(status, user.getSubscriptionStatus());
         verify(appUserRepository).save(user);
+    }
+
+    /** Verify that a PRO user whose subscription ends up unpaid or canceled drops to FREE. */
+    @ParameterizedTest
+    @ValueSource(strings = {"unpaid", "canceled", "incomplete", "incomplete_expired", "paused"})
+    void updateSubscriptionStatus_endedStatus_downgradesToFree(String status) {
+        AppUser user = new AppUser();
+        user.setTier(1);
+        when(appUserRepository.findByStripeSubscriptionId("sub_1")).thenReturn(Optional.of(user));
+
+        subscriptionService.updateSubscriptionStatus("sub_1", status);
+
+        assertEquals(0, user.getTier());
+        assertEquals(status, user.getSubscriptionStatus());
+        verify(appUserRepository).save(user);
+    }
+
+    /** Verify that an unknown subscription ID is ignored. */
+    @Test
+    void updateSubscriptionStatus_unknownSubscription_doesNothing() {
+        when(appUserRepository.findByStripeSubscriptionId("sub_missing")).thenReturn(Optional.empty());
+
+        subscriptionService.updateSubscriptionStatus("sub_missing", "active");
+
+        verify(appUserRepository, never()).save(any());
     }
 
     /** Verify that a free-tier user gets a max match count of 20. */

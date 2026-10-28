@@ -22,8 +22,9 @@ A full-stack League of Legends stats site with AI match coaching: search any pla
 - **901 automated tests gate every deploy.** 509 frontend unit tests, 360 backend unit and 12 integration tests (real PostgreSQL via Testcontainers), and 20 Playwright end-to-end runs on desktop and phone. Smoke tests then check the live site after each release. → [Testing](#testing)
 - **Security-reviewed.** OAuth sign-in hardened against login CSRF, per-visitor rate limits behind Cloudflare, Stripe webhook signature checks, and CodeQL scanning with 0 open alerts. → [Security](#security)
 - **Accessible.** Checked with axe-core (0 violations on every page); every control works from the keyboard, and the layout holds down to a 320px-wide phone.
-- **Fast despite a rate-limited data source.** Riot API responses are cached in Redis, leaderboards are prefetched in the background within the API key's limits, and player data is recorded over time to build LP history that Riot doesn't provide.
-- **Streaming AI coaching and real payments.** Match analysis streams from OpenAI over Server-Sent Events; PRO subscriptions run through Stripe Checkout and webhooks.
+- **Fast despite a rate-limited data source.** About 65% of the 14M+ Riot API lookups so far were served from Redis, which takes a 10-match history load from ~700 ms to ~200 ms. A sliding-window limiter keeps calls under Riot's 100-requests-per-2-minutes cap, and leaderboards are prefetched in the background within that budget.
+- **Its own data pipeline.** A scheduled job records matches and LP for tracked players, building the LP history Riot doesn't provide: 140K+ matches and 35K+ LP snapshots for 1,200+ players so far.
+- **Streaming AI coaching behind a PRO tier.** Match analysis streams from OpenAI over Server-Sent Events. PRO is granted only by signature-verified Stripe webhooks (Stripe runs in test mode, so no real charges).
 
 ## Screenshots
 
@@ -95,7 +96,7 @@ A full-stack League of Legends stats site with AI match coaching: search any pla
 
 **Accounts** — Username/password or Google/Discord sign-in. Without an account, everything except AI coaching and favorites is available
 
-**Subscriptions** — FREE and PRO via Stripe. Everything except AI coaching is free; PRO ($4.99/month) adds AI match coaching
+**Subscriptions** — FREE and PRO via Stripe. Everything except AI coaching is free; PRO ($4.99/month) adds AI match coaching. Stripe is in test mode, so checkout takes Stripe's test cards and nothing is actually charged
 
 ## Architecture
 

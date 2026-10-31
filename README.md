@@ -19,7 +19,7 @@ A full-stack League of Legends stats site with AI match coaching: search any pla
 ## Engineering highlights
 
 - **Zero-downtime deploys on a single 1 GB server.** Each release starts next to the running one (blue/green) and nginx switches over only once it's healthy; if it never gets healthy, the old version keeps serving. Measured during a deploy: 0 failed requests out of 1,046. → [Deployment](#deployment)
-- **901 automated tests gate every deploy.** 509 frontend unit tests, 360 backend unit and 12 integration tests (real PostgreSQL via Testcontainers), and 20 Playwright end-to-end runs on desktop and phone. Smoke tests then check the live site after each release. → [Testing](#testing)
+- **909 automated tests gate every deploy.** 509 frontend unit tests, 368 backend unit and 12 integration tests (real PostgreSQL via Testcontainers), and 20 Playwright end-to-end runs on desktop and phone. Smoke tests then check the live site after each release. → [Testing](#testing)
 - **Security-reviewed.** OAuth sign-in hardened against login CSRF, per-visitor rate limits behind Cloudflare, Stripe webhook signature checks, and CodeQL scanning with 0 open alerts. → [Security](#security)
 - **Accessible.** Checked with axe-core (0 violations on every page); every control works from the keyboard, and the layout holds down to a 320px-wide phone.
 - **Fast despite a rate-limited data source.** About 65% of the 14M+ Riot API lookups so far were served from Redis, which takes a 10-match history load from ~700 ms to ~200 ms. A sliding-window limiter keeps calls under Riot's 100-requests-per-2-minutes cap, and leaderboards are prefetched in the background within that budget.
@@ -135,7 +135,7 @@ The React app is built into the Spring Boot image and served by it, so one conta
 | Suite | Count | Tool | What it covers |
 |-------|------:|------|----------------|
 | Frontend unit | 509 | Vitest, React Testing Library | Components, pages, hooks, utilities, API client |
-| Backend unit | 360 | JUnit, MockMvc, Mockito | Controllers (`@WebMvcTest` with mocked services) and services (Mockito), no database |
+| Backend unit | 368 | JUnit, MockMvc, Mockito | Controllers (`@WebMvcTest` with mocked services) and services (Mockito), no database |
 | Backend integration | 12 | Testcontainers | Real PostgreSQL with the Flyway migrations: auth, favorites, subscriptions |
 | End-to-end | 20 | Playwright | 10 user journeys, each on desktop and phone |
 | Smoke | 3 | Playwright | The live site, right after each deploy |
@@ -197,6 +197,7 @@ The backend was reviewed by hand, and CodeQL scans the Java, TypeScript and work
 | Account takeover through OAuth | Only provider-verified emails are used to link accounts |
 | Login tokens leaking into logs | After OAuth sign-in the token is passed in the URL fragment (`#token=`), which browsers never send to the server |
 | Getting PRO without paying | PRO is granted only by Stripe webhooks with a verified signature |
+| Running up the OpenAI bill | PRO is free while Stripe is in test mode, so the AI endpoint is capped on its own: 20 requests per hour per user, 300 per day across the site, and requests are size-checked before they reach OpenAI (at most 20 messages, user messages up to 1,000 characters, only `user`/`assistant` roles so a client can't inject its own system prompt) |
 | Password guessing | The backend allows 5 login or registration attempts per minute per IP |
 | Scripts draining the Riot API quota | nginx allows each visitor 10 API requests per second (bursts of 50) |
 | Spoofed visitor IPs | The real IP is read from Cloudflare's `CF-Connecting-IP`, and only trusted on requests from Cloudflare's own address ranges |
@@ -372,6 +373,7 @@ Create a `backend/.env` file (or set env vars). The backend uses [spring-dotenv]
 | `STRIPE_SECRET_KEY` | No | — | Stripe secret key (required for PRO subscriptions) |
 | `STRIPE_WEBHOOK_SECRET` | No | — | Stripe webhook signing secret |
 | `STRIPE_PRICE_ID` | No | — | Stripe Price ID for the PRO plan |
+| `AI_DAILY_LIMIT` | No | `300` | Maximum AI analysis requests per UTC day across all users |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | No | — | Google OAuth credentials (required for Google sign-in) |
 | `DISCORD_CLIENT_ID` / `DISCORD_CLIENT_SECRET` | No | — | Discord OAuth credentials (required for Discord sign-in) |
 

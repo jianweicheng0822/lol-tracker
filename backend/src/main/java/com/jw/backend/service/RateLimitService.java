@@ -6,9 +6,12 @@
 package com.jw.backend.service;
 
 import com.jw.backend.exception.RateLimitException;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -29,6 +32,13 @@ public class RateLimitService {
 
     private static final int AI_MAX_REQUESTS = 20;
     private static final long AI_WINDOW_MS = 3_600_000;
+
+    // Cap on AI calls across all users per UTC day. PRO is free while Stripe runs in test mode, so
+    // per-user limits alone don't bound the OpenAI bill (anyone can make many PRO accounts).
+    @Value("${ai.daily-limit:300}")
+    private int aiDailyLimit = 300;
+    private LocalDate aiDay = LocalDate.now(ZoneOffset.UTC);
+    private int aiCallsToday = 0;
 
     private final ConcurrentHashMap<String, List<Long>> requestLog = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, List<Long>> aiRequestLog = new ConcurrentHashMap<>();
@@ -78,12 +88,33 @@ public class RateLimitService {
             throw new RateLimitException("AI rate limit exceeded. Limited to " + AI_MAX_REQUESTS + " requests per hour.");
         }
 
+        reserveDailyAiCall();
         timestamps.add(now);
+    }
+
+    /** Count one AI call against the site-wide daily cap. */
+    private synchronized void reserveDailyAiCall() {
+        LocalDate today = LocalDate.now(ZoneOffset.UTC);
+        if (!today.equals(aiDay)) {
+            aiDay = today;
+            aiCallsToday = 0;
+        }
+        if (aiCallsToday >= aiDailyLimit) {
+            throw new RateLimitException("AI analysis has reached its daily limit. Please try again tomorrow.");
+        }
+        aiCallsToday++;
+    }
+
+    void setAiDailyLimit(int aiDailyLimit) {
+        this.aiDailyLimit = aiDailyLimit;
     }
 
     public void reset() {
         requestLog.clear();
         aiRequestLog.clear();
+        synchronized (this) {
+            aiCallsToday = 0;
+        }
     }
 
     @Scheduled(fixedRate = 60000)

@@ -85,6 +85,37 @@ class RateLimitServiceTest {
         assertDoesNotThrow(() -> rateLimitService.checkRateLimit("user1", 0));
     }
 
+    /** The site-wide daily cap applies across different users. */
+    @Test
+    void checkAiRateLimit_dailyCapAppliesAcrossUsers() {
+        rateLimitService.setAiDailyLimit(3);
+        rateLimitService.checkAiRateLimit("user1");
+        rateLimitService.checkAiRateLimit("user2");
+        rateLimitService.checkAiRateLimit("user3");
+        RateLimitException ex = assertThrows(RateLimitException.class,
+                () -> rateLimitService.checkAiRateLimit("user4"));
+        assertTrue(ex.getMessage().contains("daily limit"));
+    }
+
+    /** A request rejected by the per-user limit doesn't use up the daily cap. */
+    @Test
+    void checkAiRateLimit_perUserRejectionDoesNotCountTowardDailyCap() {
+        rateLimitService.setAiDailyLimit(21);
+        for (int i = 0; i < 20; i++) {
+            rateLimitService.checkAiRateLimit("user1");
+        }
+        assertThrows(RateLimitException.class, () -> rateLimitService.checkAiRateLimit("user1"));
+        assertDoesNotThrow(() -> rateLimitService.checkAiRateLimit("user2"));
+    }
+
+    @Test
+    void reset_clearsDailyAiCount() {
+        rateLimitService.setAiDailyLimit(1);
+        rateLimitService.checkAiRateLimit("user1");
+        rateLimitService.reset();
+        assertDoesNotThrow(() -> rateLimitService.checkAiRateLimit("user2"));
+    }
+
     @Test
     void evictStaleEntries_doesNotThrow() {
         rateLimitService.checkRateLimit("user1", 0);

@@ -92,7 +92,8 @@ export default function AiChatModal({ match, onClose }: Props) {
     setIsLoading(true);
     setStreamingContent("");
 
-    const apiMessages: AiChatMessage[] = newMessages.map((m) => ({
+    // The backend caps the conversation it forwards to OpenAI, so send only the recent history
+    const apiMessages: AiChatMessage[] = newMessages.filter((m) => m.content.trim()).slice(-10).map((m) => ({
       role: m.role,
       content: m.content,
     }));
@@ -297,6 +298,7 @@ export default function AiChatModal({ match, onClose }: Props) {
             onChange={(e) => setInput(e.target.value)}
             onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
             placeholder="Ask about this match..."
+            maxLength={1000}
             disabled={isLoading}
             style={{
               flex: 1,

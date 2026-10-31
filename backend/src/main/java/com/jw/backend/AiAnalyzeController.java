@@ -61,11 +61,11 @@ public class AiAnalyzeController {
         if (!subscriptionService.hasAiAccess(username)) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
         }
-        String rateLimitKey = username != null ? username : "anon-" + httpRequest.getRemoteAddr();
-        rateLimitService.checkAiRateLimit(rateLimitKey);
-        if (request.matchData() == null || request.messages() == null) {
+        if (request.validationError() != null) {
             return ResponseEntity.badRequest().build();
         }
+        String rateLimitKey = username != null ? username : "anon-" + httpRequest.getRemoteAddr();
+        rateLimitService.checkAiRateLimit(rateLimitKey);
         return ResponseEntity.ok(aiAnalyzeService.analyze(request));
     }
 
@@ -87,11 +87,12 @@ public class AiAnalyzeController {
         if (!subscriptionService.hasAiAccess(username)) {
             return Flux.just("[Error: AI analysis requires PRO subscription]");
         }
+        String error = request.validationError();
+        if (error != null) {
+            return Flux.just("[Error: " + error + "]");
+        }
         String rateLimitKey = username != null ? username : "anon-" + httpRequest.getRemoteAddr();
         rateLimitService.checkAiRateLimit(rateLimitKey);
-        if (request.matchData() == null || request.messages() == null) {
-            return Flux.just("[Error: matchData and messages are required]");
-        }
         return aiAnalyzeService.analyzeStream(request);
     }
 }

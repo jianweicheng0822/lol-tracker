@@ -33,6 +33,9 @@ public class RateLimitService {
     private static final int AI_MAX_REQUESTS = 20;
     private static final long AI_WINDOW_MS = 3_600_000;
 
+    private static final int FEEDBACK_MAX_REQUESTS = 5;
+    private static final long FEEDBACK_WINDOW_MS = 3_600_000;
+
     // Cap on AI calls across all users per UTC day. PRO is free while Stripe runs in test mode, so
     // per-user limits alone don't bound the OpenAI bill (anyone can make many PRO accounts).
     @Value("${ai.daily-limit:300}")
@@ -42,6 +45,7 @@ public class RateLimitService {
 
     private final ConcurrentHashMap<String, List<Long>> requestLog = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, List<Long>> aiRequestLog = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, List<Long>> feedbackLog = new ConcurrentHashMap<>();
 
     /**
      * Verify the user has not exceeded their rate limit within the current window.
@@ -92,6 +96,22 @@ public class RateLimitService {
         timestamps.add(now);
     }
 
+    /**
+     * Verify a client has not sent more than 5 feedback messages in the past hour.
+     *
+     * @param clientIp the sender's IP address
+     * @throws RateLimitException if the limit is exceeded
+     */
+    public void checkFeedbackRateLimit(String clientIp) {
+        long now = System.currentTimeMillis();
+        List<Long> timestamps = feedbackLog.computeIfAbsent(clientIp, k -> new CopyOnWriteArrayList<>());
+        timestamps.removeIf(t -> t < now - FEEDBACK_WINDOW_MS);
+        if (timestamps.size() >= FEEDBACK_MAX_REQUESTS) {
+            throw new RateLimitException("You've sent a lot of feedback recently. Please try again in an hour.");
+        }
+        timestamps.add(now);
+    }
+
     /** Count one AI call against the site-wide daily cap. */
     private synchronized void reserveDailyAiCall() {
         LocalDate today = LocalDate.now(ZoneOffset.UTC);
@@ -112,6 +132,7 @@ public class RateLimitService {
     public void reset() {
         requestLog.clear();
         aiRequestLog.clear();
+        feedbackLog.clear();
         synchronized (this) {
             aiCallsToday = 0;
         }
@@ -122,6 +143,7 @@ public class RateLimitService {
         long now = System.currentTimeMillis();
         evictFrom(requestLog, now - WINDOW_MS);
         evictFrom(aiRequestLog, now - AI_WINDOW_MS);
+        evictFrom(feedbackLog, now - FEEDBACK_WINDOW_MS);
     }
 
     private void evictFrom(ConcurrentHashMap<String, List<Long>> log, long cutoff) {

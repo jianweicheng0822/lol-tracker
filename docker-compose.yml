@@ -54,6 +54,7 @@ services:
       STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
       STRIPE_PRICE_ID: ${STRIPE_PRICE_ID}
       APP_BASE_URL: ${APP_BASE_URL:-https://loltracker.lol}
+      ADMIN_USERNAMES: ${ADMIN_USERNAMES:-}
 
 volumes:
   pgdata:

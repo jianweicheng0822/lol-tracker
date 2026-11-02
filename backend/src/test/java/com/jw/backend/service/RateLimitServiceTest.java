@@ -122,4 +122,17 @@ class RateLimitServiceTest {
         rateLimitService.checkAiRateLimit("user1");
         assertDoesNotThrow(() -> rateLimitService.evictStaleEntries());
     }
+
+    /** Verify feedback allows five messages per IP per hour, then blocks, per IP. */
+    @Test
+    void checkFeedbackRateLimit_fivePerIp() {
+        for (int i = 0; i < 5; i++) {
+            assertDoesNotThrow(() -> rateLimitService.checkFeedbackRateLimit("1.2.3.4"));
+        }
+        assertThrows(RateLimitException.class, () -> rateLimitService.checkFeedbackRateLimit("1.2.3.4"));
+        assertDoesNotThrow(() -> rateLimitService.checkFeedbackRateLimit("5.6.7.8"));
+
+        rateLimitService.reset();
+        assertDoesNotThrow(() -> rateLimitService.checkFeedbackRateLimit("1.2.3.4"));
+    }
 }

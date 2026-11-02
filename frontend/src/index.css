@@ -87,3 +87,11 @@ h1, h2 {
 @media (hover: none) {
   .fav-avatar__remove { opacity: 1; }
 }
+
+/* Feedback button: brighter on hover; on phones just the icon, so it covers less of the page */
+.feedback-fab { transition: border-color 0.15s, color 0.15s; }
+.feedback-fab:hover, .feedback-fab:focus-visible { border-color: #C89B3C !important; color: #C89B3C !important; }
+@media (max-width: 640px) {
+  .feedback-fab { right: 14px !important; bottom: 14px !important; padding: 12px !important; }
+  .feedback-fab__label { display: none; }
+}

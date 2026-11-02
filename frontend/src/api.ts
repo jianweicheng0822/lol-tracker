@@ -619,3 +619,68 @@ export async function analyzeMatchStream(
 
   return full;
 }
+
+// --- Feedback ---
+
+export type FeedbackType = "bug" | "idea" | "other";
+
+export type FeedbackEntry = {
+  id: number;
+  type: FeedbackType;
+  message: string;
+  email: string | null;
+  username: string | null;
+  pageUrl: string | null;
+  userAgent: string | null;
+  resolved: boolean;
+  createdAt: string;
+};
+
+/**
+ * Send the feedback form. `website` is the hidden honeypot field; people leave it empty.
+ *
+ * @throws Error with a readable message (validation, rate limit) when the server refuses it.
+ */
+export async function submitFeedback(body: {
+  type: FeedbackType;
+  message: string;
+  email: string;
+  pageUrl: string;
+  website: string;
+}): Promise<void> {
+  const res = await fetchWithTimeout(`${BASE}/api/feedback`, fetchOpts({
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  }));
+  if (!res.ok) throw new Error(await readErrorMessage(res));
+}
+
+/** Thrown when the logged-in user isn't an admin (the server answers 404). */
+export class NotAdminError extends Error {
+  constructor() {
+    super("Not found");
+    this.name = "NotAdminError";
+  }
+}
+
+async function adminResponse(res: Response) {
+  if (res.status === 401) throw new AuthRequiredError(await readErrorMessage(res));
+  if (res.status === 404) throw new NotAdminError();
+  if (!res.ok) throw new Error(await readErrorMessage(res));
+  return res.json();
+}
+
+/** The latest feedback, newest first. Admins only. */
+export async function fetchAdminFeedback(): Promise<FeedbackEntry[]> {
+  return adminResponse(await fetchWithTimeout(`${BASE}/api/admin/feedback`, fetchOpts()));
+}
+
+/** Mark a feedback entry handled (or not). Admins only. */
+export async function setFeedbackResolved(id: number, resolved: boolean): Promise<FeedbackEntry> {
+  return adminResponse(await fetchWithTimeout(`${BASE}/api/admin/feedback/${id}`, fetchOpts({
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ resolved }),
+  })));
+}

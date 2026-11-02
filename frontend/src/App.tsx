@@ -14,6 +14,8 @@ import MultiSearchPage from "./pages/MultiSearchPage";
 import LiveMatchPage from "./pages/LiveMatchPage";
 import OAuthCallbackPage from "./pages/OAuthCallbackPage";
 import NotFoundPage from "./pages/NotFoundPage";
+import AdminFeedbackPage from "./pages/AdminFeedbackPage";
+import FeedbackButton from "./components/FeedbackButton";
 
 /**
  * A player page keyed by its path, so opening another player (search, "Try in: EUW", a link on
@@ -54,8 +56,10 @@ export default function App() {
       <Route path="/checkout/success" element={<CheckoutSuccessPage />} />
       <Route path="/checkout/cancel" element={<CheckoutCancelPage />} />
       <Route path="/oauth-callback" element={<OAuthCallbackPage />} />
+      <Route path="/admin/feedback" element={<AdminFeedbackPage />} />
       <Route path="*" element={<NotFoundPage />} />
       </Routes>
+      <FeedbackButton />
     </main>
   );
 }

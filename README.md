@@ -19,7 +19,7 @@ A full-stack League of Legends stats site with AI match coaching: search any pla
 ## Engineering highlights
 
 - **Zero-downtime deploys on a single 1 GB server.** Each release starts next to the running one (blue/green) and nginx switches over only once it's healthy; if it never gets healthy, the old version keeps serving. Measured during a deploy: 0 failed requests out of 1,046. → [Deployment](#deployment)
-- **909 automated tests gate every deploy.** 509 frontend unit tests, 368 backend unit and 12 integration tests (real PostgreSQL via Testcontainers), and 20 Playwright end-to-end runs on desktop and phone. Smoke tests then check the live site after each release. → [Testing](#testing)
+- **952 automated tests gate every deploy.** 521 frontend unit tests, 396 backend unit and 15 integration tests (real PostgreSQL via Testcontainers), and 20 Playwright end-to-end runs on desktop and phone. Smoke tests then check the live site after each release. → [Testing](#testing)
 - **Security-reviewed.** OAuth sign-in hardened against login CSRF, per-visitor rate limits behind Cloudflare, Stripe webhook signature checks, and CodeQL scanning with 0 open alerts. → [Security](#security)
 - **Accessible.** Checked with axe-core (0 violations on every page); every control works from the keyboard, and the layout holds down to a 320px-wide phone.
 - **Fast despite a rate-limited data source.** About 65% of the 14M+ Riot API lookups so far were served from Redis, which takes a 10-match history load from ~700 ms to ~200 ms. A sliding-window limiter keeps calls under Riot's 100-requests-per-2-minutes cap, and leaderboards are prefetched in the background within that budget.
@@ -94,6 +94,8 @@ A full-stack League of Legends stats site with AI match coaching: search any pla
 
 **AI Match Analysis** — Click the sparkle button on a match to chat about it. Answers stream in as they're written (Server-Sent Events); the prompt is built on the server from the match data
 
+**Feedback** — A Feedback button on every page sends bug reports and ideas (with the page they came from) straight to the database. Admins read and resolve them in an inbox reached from the account menu; to everyone else the inbox doesn't exist (404)
+
 **Accounts** — Username/password or Google/Discord sign-in. Without an account, everything except AI coaching and favorites is available
 
 **Subscriptions** — FREE and PRO via Stripe. Everything except AI coaching is free; PRO ($4.99/month) adds AI match coaching. Stripe is in test mode, so checkout takes Stripe's test cards and nothing is actually charged
@@ -134,13 +136,13 @@ The React app is built into the Spring Boot image and served by it, so one conta
 
 | Suite | Count | Tool | What it covers |
 |-------|------:|------|----------------|
-| Frontend unit | 509 | Vitest, React Testing Library | Components, pages, hooks, utilities, API client |
-| Backend unit | 368 | JUnit, MockMvc, Mockito | Controllers (`@WebMvcTest` with mocked services) and services (Mockito), no database |
-| Backend integration | 12 | Testcontainers | Real PostgreSQL with the Flyway migrations: auth, favorites, subscriptions |
+| Frontend unit | 521 | Vitest, React Testing Library | Components, pages, hooks, utilities, API client |
+| Backend unit | 396 | JUnit, MockMvc, Mockito | Controllers (`@WebMvcTest` with mocked services) and services (Mockito), no database |
+| Backend integration | 15 | Testcontainers | Real PostgreSQL with the Flyway migrations: auth, favorites, subscriptions, feedback |
 | End-to-end | 20 | Playwright | 10 user journeys, each on desktop and phone |
 | Smoke | 3 | Playwright | The live site, right after each deploy |
 
-Everything except the smoke tests runs in CI on every pull request and push. Backend line coverage must stay at 70% or more (JaCoCo; currently 75%).
+Everything except the smoke tests runs in CI on every pull request and push. Backend line coverage must stay at 70% or more (JaCoCo; currently 76%).
 
 **End-to-end tests** (`frontend/e2e`) run the production build in Chromium. The API is served from fixtures and every request outside the app is blocked, so the tests are deterministic and never depend on Riot. They cover:
 
@@ -162,9 +164,9 @@ The tests were checked to fail when the feature they cover is broken.
 
 | Area | Count | Examples |
 |------|------:|----------|
-| Components | 232 | MatchList, ScoreboardTable, FavoritesList, PerformanceModal, ProfileHeader, OverviewTab, ChampionsTab |
+| Components | 239 | MatchList, ScoreboardTable, FavoritesList, PerformanceModal, ProfileHeader, OverviewTab, ChampionsTab |
 | Utilities | 101 | `playerInsights`, `trends`, LP conversion and chart axes, URL helpers |
-| Pages and routing | 98 | HomePage, PlayerPage, MatchDetailPage, LeaderboardPage, MultiSearchPage |
+| Pages and routing | 103 | HomePage, PlayerPage, MatchDetailPage, LeaderboardPage, MultiSearchPage, AdminFeedbackPage |
 | API client | 53 | Token handling, login/register, error parsing |
 | Hooks | 25 | `useAuth`, `useBodyScrollLock`, `useIsMobile`, `useTabNavigation`, `useDocumentTitle` |
 
@@ -198,6 +200,8 @@ The backend was reviewed by hand, and CodeQL scans the Java, TypeScript and work
 | Login tokens leaking into logs | After OAuth sign-in the token is passed in the URL fragment (`#token=`), which browsers never send to the server |
 | Getting PRO without paying | PRO is granted only by Stripe webhooks with a verified signature |
 | Running up the OpenAI bill | PRO is free while Stripe is in test mode, so the AI endpoint is capped on its own: 20 requests per hour per user, 300 per day across the site, and requests are size-checked before they reach OpenAI (at most 20 messages, user messages up to 1,000 characters, only `user`/`assistant` roles so a client can't inject its own system prompt) |
+| Feedback spam | 5 messages per hour per IP and 200 per day across the site (counted in the database, so restarts don't reset it), a hidden honeypot field that only bots fill in, and length and email checks |
+| Finding the admin inbox | Admins are listed in `ADMIN_USERNAMES`; the admin API and page answer 404 to everyone else, logged in or not, and the menu link only appears for admins |
 | Password guessing | The backend allows 5 login or registration attempts per minute per IP |
 | Scripts draining the Riot API quota | nginx allows each visitor 10 API requests per second (bursts of 50) |
 | Spoofed visitor IPs | The real IP is read from Cloudflare's `CF-Connecting-IP`, and only trusted on requests from Cloudflare's own address ranges |
@@ -374,6 +378,8 @@ Create a `backend/.env` file (or set env vars). The backend uses [spring-dotenv]
 | `STRIPE_WEBHOOK_SECRET` | No | — | Stripe webhook signing secret |
 | `STRIPE_PRICE_ID` | No | — | Stripe Price ID for the PRO plan |
 | `AI_DAILY_LIMIT` | No | `300` | Maximum AI analysis requests per UTC day across all users |
+| `ADMIN_USERNAMES` | No | — | Comma-separated usernames that can read feedback at `/admin/feedback` |
+| `FEEDBACK_DAILY_LIMIT` | No | `200` | Maximum feedback messages saved per UTC day across all users |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | No | — | Google OAuth credentials (required for Google sign-in) |
 | `DISCORD_CLIENT_ID` / `DISCORD_CLIENT_SECRET` | No | — | Discord OAuth credentials (required for Discord sign-in) |
 
@@ -421,6 +427,10 @@ Interactive Swagger UI is available at `/swagger-ui.html` when the app is runnin
 | | POST | `/api/subscription/cancel` | Cancel subscription at period end |
 | Checkout | POST | `/api/checkout/session` | Create Stripe Checkout session |
 | | POST | `/api/checkout/portal` | Create Stripe Customer Portal session |
+| Feedback | POST | `/api/feedback` | Send feedback (bug, idea or other) |
+| | GET | `/api/admin/status` | Whether the logged-in user is an admin |
+| | GET | `/api/admin/feedback` | Latest feedback (admins only) |
+| | PUT | `/api/admin/feedback/{id}` | Mark feedback resolved or open (admins only) |
 | Leaderboard | GET | `/api/leaderboard` | Regional ranked leaderboard (Challenger/Grandmaster/Master) |
 | Live Game | GET | `/api/live-game` | Active game data via Spectator API |
 | Multi-Search | POST | `/api/multi-search` | Batch player lookup |
@@ -446,6 +456,7 @@ PostgreSQL with Flyway-managed migrations. The schema is validated at startup (`
 | `V6__add_composite_match_index.sql` | Adds composite index on `match_records` for query performance |
 | `V7__add_search_history.sql` | Adds `search_history` table for per-user recent searches |
 | `V8__add_oauth_accounts.sql` | Adds `email` to `app_users` and `oauth_accounts` table for Google/Discord login |
+| `V9__add_feedback.sql` | Adds `feedback` table for messages sent from the feedback form |
 
 </details>
 

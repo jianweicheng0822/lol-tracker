@@ -671,6 +671,18 @@ async function adminResponse(res: Response) {
   return res.json();
 }
 
+/** Whether the logged-in user is an admin. Any failure counts as "no", since it only hides a link. */
+export async function fetchAdminStatus(): Promise<boolean> {
+  try {
+    const res = await fetchWithTimeout(`${BASE}/api/admin/status`, fetchOpts());
+    if (!res.ok) return false;
+    const body = await res.json();
+    return body?.admin === true;
+  } catch {
+    return false;
+  }
+}
+
 /** The latest feedback, newest first. Admins only. */
 export async function fetchAdminFeedback(): Promise<FeedbackEntry[]> {
   return adminResponse(await fetchWithTimeout(`${BASE}/api/admin/feedback`, fetchOpts()));

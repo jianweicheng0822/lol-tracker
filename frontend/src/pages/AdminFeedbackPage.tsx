@@ -14,7 +14,6 @@ import {
 } from "../api";
 import { COLORS } from "../utils/colors";
 import AppHeader from "../components/AppHeader";
-import AuthModal from "../components/AuthModal";
 import NotFoundPage from "./NotFoundPage";
 import { useAuth } from "../hooks/useAuth";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
@@ -22,7 +21,6 @@ import { useDocumentTitle } from "../hooks/useDocumentTitle";
 type Filter = "open" | "resolved" | "all";
 type State =
   | { kind: "loading" }
-  | { kind: "login" }
   | { kind: "notAdmin" }
   | { kind: "error"; message: string }
   | { kind: "ready"; entries: FeedbackEntry[] };
@@ -31,30 +29,31 @@ const TYPE_LABELS: Record<FeedbackType, string> = { bug: "🐞 Bug", idea: "💡
 const TYPE_COLORS: Record<FeedbackType, string> = { bug: COLORS.loss, idea: COLORS.gold, other: COLORS.teal };
 
 export default function AdminFeedbackPage() {
-  useDocumentTitle("Feedback");
   const { isLoggedIn } = useAuth();
   const [state, setState] = useState<State>({ kind: "loading" });
+  // Only name the page once we know it's an admin looking; everyone else gets the 404 page's title
+  useDocumentTitle(state.kind === "ready" || state.kind === "error" ? "Feedback" : null);
   const [filter, setFilter] = useState<Filter>("open");
-  const [showLogin, setShowLogin] = useState(false);
   const [busyId, setBusyId] = useState<number | null>(null);
   const [actionError, setActionError] = useState("");
 
   useEffect(() => {
     let active = true;
-    // Runs again after logging in from the "login" state, which then switches to the list
+    // Runs again on login/logout, e.g. logging out from the header turns this into the 404 page
     fetchAdminFeedback()
       .then((entries) => active && setState({ kind: "ready", entries }))
       .catch((err) => {
         if (!active) return;
-        if (err instanceof AuthRequiredError) setState({ kind: "login" });
-        else if (err instanceof NotAdminError) setState({ kind: "notAdmin" });
+        if (err instanceof NotAdminError || err instanceof AuthRequiredError) setState({ kind: "notAdmin" });
         else setState({ kind: "error", message: err instanceof Error ? err.message : "Could not load feedback." });
       });
     return () => { active = false; };
   }, [isLoggedIn]);
 
-  // Non-admins see the normal 404, so the page doesn't advertise itself
+  // Anyone who isn't an admin, logged in or not, sees the normal 404: the page doesn't advertise itself
   if (state.kind === "notAdmin") return <NotFoundPage />;
+  // Nothing page-specific until the server confirms an admin is asking
+  if (state.kind === "loading") return <div style={styles.page} />;
 
   async function toggle(entry: FeedbackEntry) {
     setBusyId(entry.id);
@@ -85,15 +84,6 @@ export default function AdminFeedbackPage() {
       <div style={styles.body}>
         <div style={styles.inner}>
           <h1 style={styles.title}>Feedback</h1>
-
-          {state.kind === "loading" && <p style={styles.muted}>Loading...</p>}
-
-          {state.kind === "login" && (
-            <div style={styles.card}>
-              <p style={styles.muted}>Log in with an admin account to see feedback.</p>
-              <button style={styles.primaryBtn} onClick={() => setShowLogin(true)}>Log in</button>
-            </div>
-          )}
 
           {state.kind === "error" && <p role="alert" style={{ color: COLORS.loss }}>{state.message}</p>}
 
@@ -149,7 +139,6 @@ export default function AdminFeedbackPage() {
           )}
         </div>
       </div>
-      {showLogin && <AuthModal onSuccess={() => setShowLogin(false)} onClose={() => setShowLogin(false)} />}
     </div>
   );
 }

@@ -3,7 +3,12 @@ import { render, screen, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import AppHeader from "./AppHeader";
-import { setAuthToken, getAuthToken } from "../api";
+import { setAuthToken, getAuthToken, fetchAdminStatus } from "../api";
+
+vi.mock("../api", async () => {
+  const actual = await vi.importActual<typeof import("../api")>("../api");
+  return { ...actual, fetchAdminStatus: vi.fn() };
+});
 
 vi.mock("./SearchBar", () => ({
   default: ({ initialGameName }: { initialGameName?: string }) => (
@@ -44,7 +49,30 @@ function renderHeader(props = {}, path = "/player/NA/Faker/KR1") {
 }
 
 describe("AppHeader", () => {
-  beforeEach(() => localStorage.clear());
+  beforeEach(() => {
+    localStorage.clear();
+    vi.mocked(fetchAdminStatus).mockReset().mockResolvedValue(false);
+  });
+
+  it("shows the Feedback inbox link in the account menu only to admins", async () => {
+    setAuthToken(fakeToken("JIANWEICHENG"));
+    const user = userEvent.setup();
+    const { unmount } = renderHeader();
+    await user.click(screen.getByRole("button", { name: /JIANWEICHENG/ }));
+    expect(screen.getByRole("menu")).toBeInTheDocument();
+    expect(screen.queryByRole("menuitem", { name: "Feedback inbox" })).not.toBeInTheDocument();
+    unmount();
+
+    vi.mocked(fetchAdminStatus).mockResolvedValue(true);
+    renderHeader();
+    await user.click(screen.getByRole("button", { name: /JIANWEICHENG/ }));
+    expect(await screen.findByRole("menuitem", { name: "Feedback inbox" })).toHaveAttribute("href", "/admin/feedback");
+  });
+
+  it("doesn't ask about admin status when logged out", () => {
+    renderHeader();
+    expect(fetchAdminStatus).not.toHaveBeenCalled();
+  });
 
   it("shows the logo, search and main navigation", () => {
     renderHeader();

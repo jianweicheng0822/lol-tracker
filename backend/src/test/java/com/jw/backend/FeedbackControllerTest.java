@@ -104,9 +104,23 @@ class FeedbackControllerTest {
     }
 
     @Test
-    void list_notLoggedIn_returns401() throws Exception {
+    void status_tellsWhetherCallerIsAdmin() throws Exception {
+        mockMvc.perform(get("/api/admin/status").principal(() -> "boss"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.admin").value(true));
+        mockMvc.perform(get("/api/admin/status").principal(() -> "alice"))
+            .andExpect(jsonPath("$.admin").value(false));
+        mockMvc.perform(get("/api/admin/status"))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.admin").value(false));
+    }
+
+    @Test
+    void list_notLoggedIn_returns404() throws Exception {
         mockMvc.perform(get("/api/admin/feedback"))
-            .andExpect(status().isUnauthorized());
+            .andExpect(status().isNotFound());
+
+        verify(feedbackService, never()).latest();
     }
 
     @Test

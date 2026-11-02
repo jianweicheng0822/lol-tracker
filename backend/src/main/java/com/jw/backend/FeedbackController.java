@@ -15,7 +15,7 @@ import java.util.Map;
 /**
  * Feedback form submissions (anyone) and the admin view of them.
  *
- * <p>Admin endpoints answer 401 without a login and 404 for logged-in non-admins, so they don't
+ * <p>Admin endpoints answer 404 to everyone who isn't an admin, logged in or not, so they don't
  * reveal that an admin area exists.</p>
  */
 @RestController
@@ -48,6 +48,12 @@ public class FeedbackController {
         return ResponseEntity.ok(THANKS);
     }
 
+    /** Whether the caller is an admin, so the header knows to show the Feedback link. */
+    @GetMapping("/api/admin/status")
+    public Map<String, Boolean> status(Principal principal) {
+        return Map.of("admin", principal != null && feedbackService.isAdmin(principal.getName()));
+    }
+
     @GetMapping("/api/admin/feedback")
     public ResponseEntity<?> list(Principal principal) {
         ResponseEntity<?> denied = denyUnlessAdmin(principal);
@@ -70,10 +76,7 @@ public class FeedbackController {
     }
 
     private ResponseEntity<?> denyUnlessAdmin(Principal principal) {
-        if (principal == null) {
-            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required"));
-        }
-        if (!feedbackService.isAdmin(principal.getName())) {
+        if (principal == null || !feedbackService.isAdmin(principal.getName())) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Not found"));
         }
         return null;

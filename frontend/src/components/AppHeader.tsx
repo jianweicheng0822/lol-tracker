@@ -8,7 +8,7 @@ import { Link, useLocation } from "react-router-dom";
 import SearchBar from "./SearchBar";
 import AuthModal from "./AuthModal";
 import Toast from "./Toast";
-import { setAuthToken } from "../api";
+import { fetchAdminStatus, setAuthToken } from "../api";
 import { useAuth } from "../hooks/useAuth";
 import { COLORS } from "../utils/colors";
 import type { Region } from "../types";
@@ -36,6 +36,16 @@ export default function AppHeader({ showSearch = true, showLogo = true, searchDe
   const [menuOpen, setMenuOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
+  // Which username the server said is an admin; compared to the current one so a stale answer never shows
+  const [adminFor, setAdminFor] = useState<string | null>(null);
+  const isAdmin = isLoggedIn && username !== null && adminFor === username;
+
+  useEffect(() => {
+    if (!isLoggedIn || !username) return;
+    let active = true;
+    fetchAdminStatus().then((admin) => { if (active) setAdminFor(admin ? username : null); });
+    return () => { active = false; };
+  }, [isLoggedIn, username]);
 
   // Close the account menu on outside click or Escape
   useEffect(() => {
@@ -114,6 +124,11 @@ export default function AppHeader({ showSearch = true, showLogo = true, searchDe
                   Signed in as
                   <div style={styles.menuUser}>{username ?? "your account"}</div>
                 </div>
+                {isAdmin && (
+                  <Link role="menuitem" to="/admin/feedback" style={styles.menuItem} onClick={() => setMenuOpen(false)}>
+                    Feedback inbox
+                  </Link>
+                )}
                 <button role="menuitem" style={styles.menuItem} onClick={logOut}>
                   Log out
                 </button>
@@ -271,5 +286,6 @@ const styles: Record<string, React.CSSProperties> = {
     borderRadius: 3,
     cursor: "pointer",
     fontSize: 13,
+    textDecoration: "none",
   },
 };

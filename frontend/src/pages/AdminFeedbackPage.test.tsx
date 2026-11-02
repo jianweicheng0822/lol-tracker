@@ -76,10 +76,18 @@ describe("AdminFeedbackPage", () => {
     expect(screen.getByRole("tab", { name: "Resolved (1)" })).toBeInTheDocument();
   });
 
-  it("asks to log in when not logged in", async () => {
+  it("shows the normal 404 page when not logged in, with no login prompt", async () => {
     vi.mocked(api.fetchAdminFeedback).mockRejectedValue(new api.AuthRequiredError());
     renderPage();
-    expect(await screen.findByText("Log in with an admin account to see feedback.")).toBeInTheDocument();
+    expect(await screen.findByText("Page not found")).toBeInTheDocument();
+    expect(screen.queryByText(/admin/i)).not.toBeInTheDocument();
+  });
+
+  it("shows nothing about feedback while checking", () => {
+    vi.mocked(api.fetchAdminFeedback).mockReturnValue(new Promise(() => {}));
+    renderPage();
+    expect(screen.queryByText("Feedback")).not.toBeInTheDocument();
+    expect(document.title).not.toContain("Feedback");
   });
 
   it("shows the normal 404 page to non-admins", async () => {

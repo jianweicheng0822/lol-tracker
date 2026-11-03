@@ -24,11 +24,14 @@ class FeedbackServiceTest {
     @Mock
     private FeedbackRepository repository;
 
+    @Mock
+    private FeedbackNotifier notifier;
+
     private FeedbackService service;
 
     @BeforeEach
     void setUp() {
-        service = new FeedbackService(repository, " boss , helper ,", 3);
+        service = new FeedbackService(repository, notifier, " boss , helper ,", 3);
     }
 
     @Test
@@ -42,7 +45,7 @@ class FeedbackServiceTest {
 
     @Test
     void isAdmin_noneConfigured_nobodyIsAdmin() {
-        FeedbackService none = new FeedbackService(repository, "", 3);
+        FeedbackService none = new FeedbackService(repository, notifier, "", 3);
         assertFalse(none.isAdmin(""));
         assertFalse(none.isAdmin("boss"));
     }
@@ -63,6 +66,7 @@ class FeedbackServiceTest {
         assertEquals("/leaderboard", saved.getValue().getPageUrl());
         assertEquals("UA/1", saved.getValue().getUserAgent());
         assertFalse(saved.getValue().isResolved());
+        verify(notifier).notifyNew(saved.getValue());
     }
 
     @Test
@@ -97,6 +101,7 @@ class FeedbackServiceTest {
         assertThrows(RateLimitException.class,
                 () -> service.submit(new FeedbackRequest("bug", "Broken page", null, null, null), null, null));
         verify(repository, never()).save(any());
+        verify(notifier, never()).notifyNew(any());
     }
 
     @Test

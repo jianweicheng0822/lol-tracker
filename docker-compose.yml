@@ -55,6 +55,9 @@ services:
       STRIPE_PRICE_ID: ${STRIPE_PRICE_ID}
       APP_BASE_URL: ${APP_BASE_URL:-https://loltracker.lol}
       ADMIN_USERNAMES: ${ADMIN_USERNAMES:-}
+      FEEDBACK_NOTIFY_EMAIL: ${FEEDBACK_NOTIFY_EMAIL:-}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
 
 volumes:
   pgdata:

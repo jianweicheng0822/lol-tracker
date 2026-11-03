@@ -23,7 +23,8 @@ import java.util.stream.Collectors;
  *
  * <p>Admins are the usernames in {@code admin.usernames} (comma-separated, from ADMIN_USERNAMES).
  * A site-wide daily cap, counted in the database so restarts don't reset it, keeps someone
- * rotating IPs from filling the table.</p>
+ * rotating IPs from filling the table. New entries are also emailed out by {@link FeedbackNotifier}
+ * when an address is configured.</p>
  */
 @Service
 public class FeedbackService {
@@ -34,11 +35,14 @@ public class FeedbackService {
     private final FeedbackRepository feedbackRepository;
     private final Set<String> adminUsernames;
     private final int dailyLimit;
+    private final FeedbackNotifier notifier;
 
     public FeedbackService(FeedbackRepository feedbackRepository,
+                           FeedbackNotifier notifier,
                            @Value("${admin.usernames:}") String adminUsernames,
                            @Value("${feedback.daily-limit:200}") int dailyLimit) {
         this.feedbackRepository = feedbackRepository;
+        this.notifier = notifier;
         this.adminUsernames = Arrays.stream(adminUsernames.split(","))
                 .map(String::strip)
                 .filter(s -> !s.isEmpty())
@@ -57,13 +61,15 @@ public class FeedbackService {
             throw new RateLimitException("Feedback is closed for today. Please try again tomorrow.");
         }
         String email = request.email() == null || request.email().isBlank() ? null : request.email().strip();
-        feedbackRepository.save(new Feedback(
+        Feedback feedback = new Feedback(
                 request.type(),
                 request.message().strip(),
                 email,
                 username,
                 truncate(request.pageUrl(), PAGE_URL_MAX),
-                truncate(userAgent, USER_AGENT_MAX)));
+                truncate(userAgent, USER_AGENT_MAX));
+        feedbackRepository.save(feedback);
+        notifier.notifyNew(feedback);
     }
 
     public List<FeedbackDto> latest() {

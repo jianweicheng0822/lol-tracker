@@ -19,7 +19,7 @@ A full-stack League of Legends stats site with AI match coaching: search any pla
 ## Engineering highlights
 
 - **Zero-downtime deploys on a single 1 GB server.** Each release starts next to the running one (blue/green) and nginx switches over only once it's healthy; if it never gets healthy, the old version keeps serving. Measured during a deploy: 0 failed requests out of 1,046. → [Deployment](#deployment)
-- **952 automated tests gate every deploy.** 521 frontend unit tests, 396 backend unit and 15 integration tests (real PostgreSQL via Testcontainers), and 20 Playwright end-to-end runs on desktop and phone. Smoke tests then check the live site after each release. → [Testing](#testing)
+- **960 automated tests gate every deploy.** 521 frontend unit tests, 404 backend unit and 15 integration tests (real PostgreSQL via Testcontainers), and 20 Playwright end-to-end runs on desktop and phone. Smoke tests then check the live site after each release. → [Testing](#testing)
 - **Security-reviewed.** OAuth sign-in hardened against login CSRF, per-visitor rate limits behind Cloudflare, Stripe webhook signature checks, and CodeQL scanning with 0 open alerts. → [Security](#security)
 - **Accessible.** Checked with axe-core (0 violations on every page); every control works from the keyboard, and the layout holds down to a 320px-wide phone.
 - **Fast despite a rate-limited data source.** About 65% of the 14M+ Riot API lookups so far were served from Redis, which takes a 10-match history load from ~700 ms to ~200 ms. A sliding-window limiter keeps calls under Riot's 100-requests-per-2-minutes cap, and leaderboards are prefetched in the background within that budget.
@@ -94,7 +94,7 @@ A full-stack League of Legends stats site with AI match coaching: search any pla
 
 **AI Match Analysis** — Click the sparkle button on a match to chat about it. Answers stream in as they're written (Server-Sent Events); the prompt is built on the server from the match data
 
-**Feedback** — A Feedback button on every page sends bug reports and ideas (with the page they came from) straight to the database. Admins read and resolve them in an inbox reached from the account menu; to everyone else the inbox doesn't exist (404)
+**Feedback** — A Feedback button on every page sends bug reports and ideas (with the page they came from) straight to the database, and emails each one to the maintainer when `FEEDBACK_NOTIFY_EMAIL` is set. Admins read and resolve them in an inbox reached from the account menu; to everyone else the inbox doesn't exist (404)
 
 **Accounts** — Username/password or Google/Discord sign-in. Without an account, everything except AI coaching and favorites is available
 
@@ -137,7 +137,7 @@ The React app is built into the Spring Boot image and served by it, so one conta
 | Suite | Count | Tool | What it covers |
 |-------|------:|------|----------------|
 | Frontend unit | 521 | Vitest, React Testing Library | Components, pages, hooks, utilities, API client |
-| Backend unit | 396 | JUnit, MockMvc, Mockito | Controllers (`@WebMvcTest` with mocked services) and services (Mockito), no database |
+| Backend unit | 404 | JUnit, MockMvc, Mockito | Controllers (`@WebMvcTest` with mocked services) and services (Mockito), no database |
 | Backend integration | 15 | Testcontainers | Real PostgreSQL with the Flyway migrations: auth, favorites, subscriptions, feedback |
 | End-to-end | 20 | Playwright | 10 user journeys, each on desktop and phone |
 | Smoke | 3 | Playwright | The live site, right after each deploy |
@@ -202,6 +202,7 @@ The backend was reviewed by hand, and CodeQL scans the Java, TypeScript and work
 | Running up the OpenAI bill | PRO is free while Stripe is in test mode, so the AI endpoint is capped on its own: 20 requests per hour per user, 300 per day across the site, and requests are size-checked before they reach OpenAI (at most 20 messages, user messages up to 1,000 characters, only `user`/`assistant` roles so a client can't inject its own system prompt) |
 | Feedback spam | 5 messages per hour per IP and 200 per day across the site (counted in the database, so restarts don't reset it), a hidden honeypot field that only bots fill in, and length and email checks |
 | Finding the admin inbox | Admins are listed in `ADMIN_USERNAMES`; the admin API and page answer 404 to everyone else, logged in or not, and the menu link only appears for admins |
+| Leaking the maintainer's email | The notification address and SMTP login live only in server environment variables; the browser never sees them. The email is sent on a background thread, so a slow or failing mail server can't slow down or break a submission |
 | Password guessing | The backend allows 5 login or registration attempts per minute per IP |
 | Scripts draining the Riot API quota | nginx allows each visitor 10 API requests per second (bursts of 50) |
 | Spoofed visitor IPs | The real IP is read from Cloudflare's `CF-Connecting-IP`, and only trusted on requests from Cloudflare's own address ranges |
@@ -380,6 +381,9 @@ Create a `backend/.env` file (or set env vars). The backend uses [spring-dotenv]
 | `AI_DAILY_LIMIT` | No | `300` | Maximum AI analysis requests per UTC day across all users |
 | `ADMIN_USERNAMES` | No | — | Comma-separated usernames that can read feedback at `/admin/feedback` |
 | `FEEDBACK_DAILY_LIMIT` | No | `200` | Maximum feedback messages saved per UTC day across all users |
+| `FEEDBACK_NOTIFY_EMAIL` | No | — | Where to email new feedback; empty means it is only saved to the database |
+| `MAIL_USERNAME` / `MAIL_PASSWORD` | No | — | SMTP login for those emails (Gmail by default; use an App Password, not the account password) |
+| `MAIL_HOST` / `MAIL_PORT` | No | `smtp.gmail.com` / `587` | SMTP server, if not Gmail |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | No | — | Google OAuth credentials (required for Google sign-in) |
 | `DISCORD_CLIENT_ID` / `DISCORD_CLIENT_SECRET` | No | — | Discord OAuth credentials (required for Discord sign-in) |
 

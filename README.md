@@ -72,6 +72,12 @@ A full-stack League of Legends stats site with AI match coaching: search any pla
     <td><img src="screenshots/champions.png" alt="Champions" width="480" /></td>
     <td align="center"><img src="screenshots/mobile.png" alt="Mobile" width="200" /></td>
   </tr>
+  <tr>
+    <td align="center" colspan="2"><b>Feedback</b></td>
+  </tr>
+  <tr>
+    <td align="center" colspan="2"><img src="screenshots/feedback.png" alt="Feedback form, opened from the button in the corner of every page" width="480" /></td>
+  </tr>
 </table>
 
 > The demo runs on a single AWS EC2 instance and may be unavailable if the instance is stopped.

@@ -95,3 +95,6 @@ h1, h2 {
   .feedback-fab { right: 14px !important; bottom: 14px !important; padding: 12px !important; }
   .feedback-fab__label { display: none; }
 }
+/* Leave room under every page so the floating Feedback button never sits on top of the last row.
+   Page roots are min-height 100vh with border-box, so short pages don't start scrolling. */
+main > div:first-child { padding-bottom: 88px !important; }

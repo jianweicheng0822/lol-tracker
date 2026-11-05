@@ -1,6 +1,6 @@
 /**
  * @file FeedbackButton.tsx
- * @description Floating "Feedback" button shown on every page, and the form it opens.
+ * @description "Feedback" button (floating on phones, in the top bar elsewhere) and the form it opens.
  * @module frontend.components
  */
 import { useEffect, useState } from "react";
@@ -20,16 +20,34 @@ const TYPES: { value: FeedbackType; label: string }[] = [
   { value: "other", label: "💬 Other" },
 ];
 
-export default function FeedbackButton() {
+/**
+ * "floating": the round button in the corner, used on phones (index.css hides it on wider screens).
+ * "header": a link-style button in the top bar, used on wider screens, where a floating button
+ * would sit on top of the match list's buttons.
+ */
+export default function FeedbackButton({ variant = "floating" }: { variant?: "floating" | "header" }) {
   const [open, setOpen] = useState(false);
   const [toast, setToast] = useState<string | null>(null);
+  const hidden = useHideOnScrollDown(variant === "floating");
 
   return (
     <>
-      <button className="feedback-fab" style={styles.fab} onClick={() => setOpen(true)} aria-label="Send feedback">
-        <ChatIcon />
-        <span className="feedback-fab__label">Feedback</span>
-      </button>
+      {variant === "header" ? (
+        <button className="app-header__feedback" style={styles.headerBtn} onClick={() => setOpen(true)}>
+          <ChatIcon />
+          Feedback
+        </button>
+      ) : (
+        <button
+          className={`feedback-fab${hidden ? " feedback-fab--hidden" : ""}`}
+          style={styles.fab}
+          onClick={() => setOpen(true)}
+          aria-label="Send feedback"
+        >
+          <ChatIcon />
+          <span className="feedback-fab__label">Feedback</span>
+        </button>
+      )}
       {open && (
         <FeedbackModal
           onClose={() => setOpen(false)}
@@ -158,6 +176,27 @@ export function FeedbackModal({ onClose, onSent }: { onClose: () => void; onSent
   );
 }
 
+/**
+ * True while the page is being scrolled down (past the first screenful), false again on any
+ * scroll up. Lets the floating button get out of the way while you read.
+ */
+function useHideOnScrollDown(enabled: boolean): boolean {
+  const [hidden, setHidden] = useState(false);
+  useEffect(() => {
+    if (!enabled) return;
+    let lastY = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (Math.abs(y - lastY) < 8) return; // ignore jitter
+      setHidden(y > lastY && y > 120);
+      lastY = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, [enabled]);
+  return hidden;
+}
+
 function ChatIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
@@ -184,6 +223,21 @@ const styles: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     cursor: "pointer",
     boxShadow: "0 4px 16px rgba(0,0,0,0.5)",
+  },
+  // Matches the header's nav links, but in the neutral text color so it doesn't compete with them
+  headerBtn: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: 6,
+    background: "transparent",
+    color: COLORS.textSecondary,
+    border: `1px solid ${COLORS.cardBorder}`,
+    borderRadius: 3,
+    padding: "6px 12px",
+    fontSize: 13,
+    fontWeight: 600,
+    cursor: "pointer",
+    whiteSpace: "nowrap",
   },
   backdrop: {
     position: "fixed",

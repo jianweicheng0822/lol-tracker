@@ -35,6 +35,7 @@ vi.mock("../components/ScoreboardTable", () => ({
     <div data-testid="team-table">{team.win ? "Win" : "Loss"}</div>
   ),
   ArenaScoreboard: () => <div data-testid="arena-scoreboard">Arena</div>,
+  ScoreboardSwipeHint: () => null,
 }));
 
 import { fetchMatchDetail } from "../api";

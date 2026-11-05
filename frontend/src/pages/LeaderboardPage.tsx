@@ -42,6 +42,9 @@ type Queue = (typeof QUEUES)[number]["value"];
 // Smaller pages mean fewer names/icons to resolve on a first visit (Riot rate limit)
 const PAGE_SIZE = 25;
 
+// Wide enough to use big screens, narrow enough that a row still reads as one line
+const LEADERBOARD_WIDTH = 1100;
+
 // The standard icon new accounts start with — shown while a player's real icon isn't resolved yet
 const DEFAULT_PROFILE_ICON_ID = 29;
 
@@ -415,7 +418,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     gap: 16,
     width: "100%",
-    maxWidth: 900,
+    maxWidth: LEADERBOARD_WIDTH,
     marginBottom: 24,
   },
   title: {
@@ -428,7 +431,7 @@ const styles: Record<string, React.CSSProperties> = {
     alignItems: "center",
     gap: 20,
     width: "100%",
-    maxWidth: 900,
+    maxWidth: LEADERBOARD_WIDTH,
     marginBottom: 20,
     flexWrap: "wrap",
   },
@@ -483,7 +486,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   tableWrapper: {
     width: "100%",
-    maxWidth: 900,
+    maxWidth: LEADERBOARD_WIDTH,
     background: COLORS.cardBg,
     border: `1px solid ${COLORS.cardBorder}`,
     borderRadius: 4,
@@ -535,7 +538,7 @@ const styles: Record<string, React.CSSProperties> = {
     gap: 16,
     marginTop: 16,
     width: "100%",
-    maxWidth: 900,
+    maxWidth: LEADERBOARD_WIDTH,
   },
   pageBtn: {
     background: COLORS.cardBg,

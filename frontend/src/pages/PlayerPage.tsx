@@ -25,6 +25,7 @@ import LiveGameCard from "../components/LiveGameCard";
 import PlayerPageSkeleton from "../components/PlayerPageSkeleton";
 import { computeStreak, computeClimbStatus } from "../utils/playerInsights";
 import { COLORS } from "../utils/colors";
+import { PAGE_MAX_WIDTH, PAGE_GUTTER } from "../utils/layout";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 const MATCH_PAGE_SIZE = 20;
@@ -426,9 +427,9 @@ const styles: Record<string, React.CSSProperties> = {
     fontFamily: "Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
   },
   content: {
-    maxWidth: 1200,
+    maxWidth: PAGE_MAX_WIDTH,
     margin: "0 auto",
-    padding: "30px 20px",
+    padding: `30px ${PAGE_GUTTER}px`,
   },
   errorBox: {
     background: "#2d1111",

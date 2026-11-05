@@ -33,6 +33,7 @@ vi.mock("../utils/ddragon", () => ({
 vi.mock("./ScoreboardTable", () => ({
   ScoreboardTeamTable: () => <div data-testid="team-table">TeamTable</div>,
   ArenaScoreboard: () => <div data-testid="arena-scoreboard">Arena</div>,
+  ScoreboardSwipeHint: () => null,
 }));
 
 vi.mock("./AiChatModal", () => ({
@@ -242,5 +243,24 @@ describe("MatchList", () => {
     const match = makeMatchSummary({ kills: 5, deaths: 0, assists: 3 });
     render(<MatchList matches={[match]} region="NA" puuid="test" />);
     expect(screen.getByText("Perfect KDA")).toBeInTheDocument();
+  });
+
+  it("lists both teams on the card, with the player first on their team", () => {
+    render(<MatchList matches={[makeMatchSummary()]} region="NA" puuid="test" />);
+    const mine = screen.getByRole("list", { name: "Your team" });
+    const enemy = screen.getByRole("list", { name: "Enemy team" });
+    const myRows = mine.querySelectorAll("li");
+    expect(myRows).toHaveLength(5);
+    expect(myRows[0]).toHaveTextContent("You");
+    expect(myRows[0]).toHaveClass("is-me");
+    expect(mine).toHaveTextContent("Ally4");
+    expect(enemy.querySelectorAll("li")).toHaveLength(5);
+    expect(enemy).toHaveTextContent("Enemy5");
+  });
+
+  it("skips the team lists for Arena games", () => {
+    const arena = makeMatchSummary({ queueId: 1700, allies: [], enemies: [] });
+    render(<MatchList matches={[arena]} region="NA" puuid="test" />);
+    expect(screen.queryByRole("list", { name: "Your team" })).not.toBeInTheDocument();
   });
 });

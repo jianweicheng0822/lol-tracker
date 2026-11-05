@@ -5,6 +5,7 @@ import { makePlayerStats, makeMatchSummary, makeRankedEntry } from "../../test/f
 
 vi.mock("../../hooks/useIsMobile", () => ({
   useIsMobile: vi.fn(() => false),
+  STACK_BREAKPOINT: 1100,
 }));
 
 vi.mock("../sidebar/OverviewSidebar", () => ({

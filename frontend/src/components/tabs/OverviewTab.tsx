@@ -1,6 +1,6 @@
 import { lazy, Suspense, useState } from "react";
 import type { PlayerStats, MatchSummary, RankedEntry, TabId } from "../../types";
-import { useIsMobile } from "../../hooks/useIsMobile";
+import { useIsMobile, STACK_BREAKPOINT } from "../../hooks/useIsMobile";
 import OverviewSidebar from "../sidebar/OverviewSidebar";
 import MatchList from "../MatchList";
 import LpSparkline from "../sidebar/LpSparkline";
@@ -31,6 +31,7 @@ export default function OverviewTab({
   onTabChange, onShowAuth,
 }: Props) {
   const isMobile = useIsMobile();
+  const isStacked = useIsMobile(STACK_BREAKPOINT);
   const [showPerformanceModal, setShowPerformanceModal] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [bannerDismissed, setBannerDismissed] = useState(
@@ -44,7 +45,7 @@ export default function OverviewTab({
 
   return (
     <>
-      <div style={isMobile ? styles.stackLayout : styles.gridLayout}>
+      <div style={isStacked ? styles.stackLayout : styles.gridLayout}>
         <OverviewSidebar
           stats={stats}
           matches={matches}
@@ -117,7 +118,8 @@ const styles: Record<string, React.CSSProperties> = {
     display: "grid",
     // minmax(0, 1fr): a plain 1fr column can't shrink below its content, so a wide expanded
     // scoreboard would stretch the column and push the whole page sideways
-    gridTemplateColumns: "280px minmax(0, 1fr)",
+    // 300px fits "Challenger 3640 LP" on one line
+    gridTemplateColumns: "300px minmax(0, 1fr)",
     gap: 20,
   },
   stackLayout: {

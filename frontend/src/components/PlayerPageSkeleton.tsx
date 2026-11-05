@@ -7,7 +7,7 @@
  * asks Riot. Grey blocks in the page's layout read as "loading" instead of "stuck", and the real
  * content then appears in the same places without the page jumping around.
  */
-import { useIsMobile } from "../hooks/useIsMobile";
+import { useIsMobile, STACK_BREAKPOINT } from "../hooks/useIsMobile";
 import { COLORS } from "../utils/colors";
 
 /** One shimmering placeholder block. */
@@ -22,6 +22,8 @@ function Bone({ width, height, round = false, style }: {
 
 export default function PlayerPageSkeleton() {
   const isMobile = useIsMobile();
+  // Same switch as the real page, so the layout doesn't jump when the data arrives
+  const isStacked = useIsMobile(STACK_BREAKPOINT);
 
   return (
     <div role="status" aria-label="Loading player">
@@ -47,7 +49,7 @@ export default function PlayerPageSkeleton() {
         <Bone width={84} height={18} />
       </div>
 
-      <div style={isMobile ? styles.stack : styles.grid}>
+      <div style={isStacked ? styles.stack : styles.grid}>
         {/* Sidebar: ranked and LP history cards */}
         <div style={styles.column}>
           <div style={styles.card}>
@@ -119,7 +121,7 @@ const styles: Record<string, React.CSSProperties> = {
   },
   grid: {
     display: "grid",
-    gridTemplateColumns: "280px minmax(0, 1fr)",
+    gridTemplateColumns: "300px minmax(0, 1fr)",
     gap: 20,
   },
   stack: {

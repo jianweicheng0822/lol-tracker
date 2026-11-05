@@ -26,7 +26,7 @@ import {
   useSummonerSpells,
   useKeystoneRunes,
 } from "../utils/ddragon";
-import { ScoreboardTeamTable, ArenaScoreboard } from "./ScoreboardTable";
+import { ScoreboardTeamTable, ArenaScoreboard, ScoreboardSwipeHint } from "./ScoreboardTable";
 import { kdaColor as getKdaColor, COLORS } from "../utils/colors";
 import AiChatModal from "./AiChatModal";
 import { teamsWithPlayerFirst } from "../utils/scoreboard";
@@ -138,6 +138,40 @@ function ItemIcon({ itemId, imgBase }: { itemId: number; imgBase: string }) {
           onError={hideOnError}
         />
       )}
+    </div>
+  );
+}
+
+/**
+ * Both teams' champions and names, op.gg style. Only for 5v5 games (Arena has no fixed teams),
+ * and only shown once the card is wide enough (container query in index.css).
+ * `allies` leaves out the player whose page this is, so their own champion leads the first team.
+ */
+function TeamRosters({ match, imgBase }: { match: MatchSummary; imgBase: string }) {
+  if (match.allies.length !== 4 || match.enemies.length !== 5) return null;
+  const teams = [
+    [{ key: "me", championName: match.championName, name: "You", isMe: true },
+      ...match.allies.map((p) => ({ key: p.puuid, championName: p.championName, name: p.summonerName, isMe: false }))],
+    match.enemies.map((p) => ({ key: p.puuid, championName: p.championName, name: p.summonerName, isMe: false })),
+  ];
+  return (
+    <div className="match-card__teams">
+      {teams.map((team, i) => (
+        <ul key={i} className="match-card__team" aria-label={i === 0 ? "Your team" : "Enemy team"}>
+          {team.map((p) => (
+            <li key={p.key} className={p.isMe ? "is-me" : undefined}>
+              <img
+                src={championIconUrl(p.championName, imgBase)}
+                alt={p.championName}
+                width={16}
+                height={16}
+                onError={championIconOnError(p.championName)}
+              />
+              <span title={p.name}>{p.name}</span>
+            </li>
+          ))}
+        </ul>
+      ))}
     </div>
   );
 }
@@ -400,7 +434,8 @@ export default function MatchList({ matches, region, puuid, onLoadMore, isLoadin
   if (!matches.length) return null;
 
   return (
-    <div>
+    // match-list is a size container: the team rosters show up when the list itself is wide
+    <div className="match-list">
       {/* h2 under the player-name h1, styled as before (body font, h3 size) */}
       <h2 style={{ marginBottom: 12, fontSize: "1.17em", fontFamily: "inherit", letterSpacing: "normal" }}>Recent Matches</h2>
 
@@ -649,6 +684,9 @@ export default function MatchList({ matches, region, puuid, onLoadMore, isLoadin
                   </div>
                 </div>
 
+                {/* MIDDLE (wide cards only) — both teams, so the space isn't empty */}
+                <TeamRosters match={m} imgBase={imgBase} />
+
                 {/* RIGHT — action buttons */}
                 {region && puuid && (
                   <div
@@ -696,6 +734,7 @@ export default function MatchList({ matches, region, puuid, onLoadMore, isLoadin
                   data-testid="expanded-scoreboard"
                 >
                   <MatchLinks matchId={m.matchId} region={region} puuid={puuid} />
+                  <ScoreboardSwipeHint />
                   <InlineScoreboard
                     matchId={m.matchId}
                     region={region}

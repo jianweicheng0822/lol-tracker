@@ -19,7 +19,7 @@ import {
   formatDuration,
   timeAgo,
 } from "../utils/ddragon";
-import { ScoreboardTeamTable, ArenaScoreboard } from "../components/ScoreboardTable";
+import { ScoreboardTeamTable, ArenaScoreboard, ScoreboardSwipeHint } from "../components/ScoreboardTable";
 import { COLORS } from "../utils/colors";
 import { teamsWithPlayerFirst } from "../utils/scoreboard";
 import AppHeader from "../components/AppHeader";
@@ -105,6 +105,7 @@ export default function MatchDetailPage() {
 
             {/* Scoreboard: scrolls sideways on its own when wider than the page */}
             <div style={{ overflowX: "auto" }} data-testid="scoreboard-scroll" tabIndex={0} role="region" aria-label="Scoreboard">
+              <ScoreboardSwipeHint />
               {isArenaQueue(match.queueId) ? (
                 <ArenaScoreboard
                   participants={match.participants}

@@ -86,7 +86,7 @@ export function ArenaScoreboard({
   const allParticipants = participants;
   const maxDamage = Math.max(...allParticipants.map((p) => p.totalDamageDealtToChampions), 1) || 1;
 
-  const gridCols = "200px 120px 80px 100px 70px 180px";
+  const gridCols = "minmax(170px, 2fr) 100px 64px minmax(56px, 1fr) 56px 170px";
 
   return (
     <div>
@@ -271,8 +271,8 @@ export function ScoreboardTeamTable({
   const maxDamage = Math.max(...participants.map((p) => p.totalDamageDealtToChampions), 1) || 1;
 
   const gridCols = showWards
-    ? "200px 90px 80px 100px 70px 70px 180px 70px"
-    : "200px 90px 80px 100px 70px 70px 180px";
+    ? "minmax(170px, 2fr) 76px 56px minmax(56px, 1fr) 56px 44px 170px 56px"
+    : "minmax(170px, 2fr) 76px 56px minmax(56px, 1fr) 56px 44px 170px";
 
   return (
     <div style={{ marginBottom: 24 }}>
@@ -379,6 +379,19 @@ export function ScoreboardTeamTable({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+/**
+ * "Swipe for more" line for narrow screens, where only the champion and KDA columns fit.
+ * Put it inside the scrolling box: it stays pinned to the left edge while the table scrolls.
+ * Hidden on wider screens by CSS (index.css), where the whole scoreboard fits.
+ */
+export function ScoreboardSwipeHint() {
+  return (
+    <div className="scoreboard-swipe-hint" aria-hidden="true">
+      Swipe sideways for damage, gold and items &rarr;
     </div>
   );
 }

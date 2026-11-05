@@ -48,10 +48,16 @@ h1, h2 {
  * Phone layouts. Most styling is inline, which can't use media queries, so the few
  * components that need to rearrange on narrow screens hang these classes off their elements.
  */
+/* The header's search toggle is a phone-only control */
+.app-header__search-toggle { display: none; }
+
 @media (max-width: 640px) {
-  /* Header: logo and nav on the first row, the search box on its own row below */
+  /* Header: logo and the search toggle on the first row, nav below it. The search box is
+     folded away (it would take two more rows) until the toggle opens it under the nav. */
   .app-header { padding: 10px 16px !important; }
-  .app-header__search { order: 3; flex-basis: 100% !important; }
+  .app-header__search-toggle { display: inline-flex; margin-left: auto; }
+  .app-header__search { display: none; order: 3; flex-basis: 100% !important; }
+  .app-header--search-open .app-header__search { display: block; }
   .app-header__nav { margin-left: auto !important; }
   .app-header__username { display: none; }
 
@@ -89,11 +95,52 @@ h1, h2 {
 }
 
 /* Feedback button: brighter on hover; on phones just the icon, so it covers less of the page */
-.feedback-fab { transition: border-color 0.15s, color 0.15s; }
 .feedback-fab:hover, .feedback-fab:focus-visible { border-color: #C89B3C !important; color: #C89B3C !important; }
 @media (max-width: 640px) {
   .feedback-fab { right: 14px !important; bottom: 14px !important; padding: 12px !important; }
   .feedback-fab__label { display: none; }
+  .app-header__feedback { display: none !important; }
+}
+/* Wider screens: Feedback lives in the top bar, so drop the floating one, which would cover the
+   match list's buttons. Pages without the top bar (404, checkout) keep the floating button. */
+@media (min-width: 641px) {
+  body:has(.app-header__feedback) .feedback-fab { display: none !important; }
+}
+/* Slides out while you scroll down, back on scroll up (FeedbackButton's useHideOnScrollDown) */
+.feedback-fab { transition: border-color 0.15s, color 0.15s, transform 0.25s ease; }
+.feedback-fab--hidden { transform: translateY(160%); }
+@media (prefers-reduced-motion: reduce) {
+  .feedback-fab { transition: none; }
+}
+
+/*
+ * Match cards: the list is a size container, so a card shows both teams in its middle only when
+ * the list is wide enough (not tied to the screen width: the sidebar can sit beside or above it).
+ */
+.match-list { container-type: inline-size; }
+.match-card__teams { display: none; }
+@container (min-width: 760px) {
+  .match-card__teams { display: flex; gap: 14px; flex-shrink: 0; margin: 0 16px; }
+}
+.match-card__team { list-style: none; margin: 0; padding: 0; width: 118px; display: flex; flex-direction: column; gap: 2px; }
+.match-card__team li { display: flex; align-items: center; gap: 5px; min-width: 0; font-size: 11px; line-height: 16px; color: #A09B8C; }
+.match-card__team img { border-radius: 3px; flex-shrink: 0; }
+.match-card__team span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.match-card__team .is-me { color: #C89B3C; font-weight: 700; }
+
+/* Scoreboards: on narrow screens only champion and KDA fit, so say the rest is a swipe away.
+   Sticky so it stays in view while the table scrolls under it. */
+.scoreboard-swipe-hint { display: none; }
+@media (max-width: 800px) {
+  .scoreboard-swipe-hint {
+    display: block;
+    position: sticky;
+    left: 0;
+    width: max-content;
+    margin: 2px 0 8px;
+    font-size: 11px;
+    color: #A09B8C;
+  }
 }
 /* Leave room under every page so the floating Feedback button never sits on top of the last row.
    Page roots are min-height 100vh with border-box, so short pages don't start scrolling. */

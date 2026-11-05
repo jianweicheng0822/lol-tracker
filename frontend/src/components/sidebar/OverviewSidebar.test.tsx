@@ -5,6 +5,7 @@ import { makePlayerStats, makeMatchSummary, makeRankedEntry } from "../../test/f
 
 vi.mock("../../hooks/useIsMobile", () => ({
   useIsMobile: vi.fn(() => false),
+  STACK_BREAKPOINT: 1100,
 }));
 
 vi.mock("./LpSparkline", () => ({
@@ -107,5 +108,17 @@ describe("OverviewSidebar", () => {
   it("shows LP sparkline on desktop", () => {
     render(<OverviewSidebar {...defaultProps} />);
     expect(screen.getByTestId("lp-sparkline")).toBeInTheDocument();
+  });
+
+  it("shows every section side by side, without accordions, on tablets", () => {
+    // Only the stacking breakpoint matches: wider than a phone, too narrow for the sidebar column
+    vi.mocked(useIsMobile).mockImplementation((bp?: number) => bp === 1100);
+    const { container } = render(<OverviewSidebar {...defaultProps} />);
+    expect(screen.getByTestId("lp-sparkline")).toBeInTheDocument();
+    expect(screen.getByTestId("recent-stats")).toBeInTheDocument();
+    expect(screen.getByTestId("top-champs")).toBeInTheDocument();
+    const wrapper = container.firstChild as HTMLElement;
+    expect(wrapper.style.display).toBe("grid");
+    expect(wrapper.style.position).not.toBe("sticky");
   });
 });

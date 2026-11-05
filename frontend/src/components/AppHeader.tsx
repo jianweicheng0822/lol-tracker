@@ -8,9 +8,11 @@ import { Link, useLocation } from "react-router-dom";
 import SearchBar from "./SearchBar";
 import AuthModal from "./AuthModal";
 import Toast from "./Toast";
+import FeedbackButton from "./FeedbackButton";
 import { fetchAdminStatus, setAuthToken } from "../api";
 import { useAuth } from "../hooks/useAuth";
 import { COLORS } from "../utils/colors";
+import { PAGE_MAX_WIDTH, PAGE_GUTTER } from "../utils/layout";
 import type { Region } from "../types";
 
 type Props = {
@@ -34,6 +36,7 @@ export default function AppHeader({ showSearch = true, showLogo = true, searchDe
   const { isLoggedIn, username } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   // Which username the server said is an admin; compared to the current one so a stale answer never shows
@@ -69,13 +72,30 @@ export default function AppHeader({ showSearch = true, showLogo = true, searchDe
   };
 
   return (
-    <header className="app-header" style={transparent ? { ...styles.bar, ...styles.barTransparent } : styles.bar}>
+    <header
+      className={`app-header${searchOpen ? " app-header--search-open" : ""}`}
+      style={transparent ? { ...styles.bar, ...styles.barTransparent } : styles.bar}
+    >
       {toastMsg && <Toast message={toastMsg} onDone={() => setToastMsg(null)} />}
 
       {showLogo && <Link to="/" className="app-header__logo" style={styles.logo}>LoL Tracker</Link>}
 
+      {/* Phones only (index.css): the search box takes two rows, so it stays folded until asked for */}
       {showSearch && (
-        <div className="app-header__search" style={styles.search}>
+        <button
+          className="app-header__search-toggle"
+          style={styles.searchToggle}
+          onClick={() => setSearchOpen((o) => !o)}
+          aria-expanded={searchOpen}
+          aria-controls="header-search"
+          aria-label={searchOpen ? "Hide player search" : "Search for a player"}
+        >
+          <SearchIcon />
+        </button>
+      )}
+
+      {showSearch && (
+        <div id="header-search" className="app-header__search" style={styles.search}>
           <SearchBar
             // Re-mount when the player changes so the box shows the current player
             key={`${searchDefaults?.region}|${searchDefaults?.gameName}|${searchDefaults?.tag}`}
@@ -140,6 +160,9 @@ export default function AppHeader({ showSearch = true, showLogo = true, searchDe
             Log in
           </button>
         )}
+
+        {/* Wider screens only; phones keep the floating button (index.css) */}
+        <FeedbackButton variant="header" />
       </nav>
 
       {showAuthModal && (
@@ -152,13 +175,23 @@ export default function AppHeader({ showSearch = true, showLogo = true, searchDe
   );
 }
 
+function SearchIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="7" />
+      <path d="m20 20-3.5-3.5" />
+    </svg>
+  );
+}
+
 const styles: Record<string, React.CSSProperties> = {
   bar: {
     display: "flex",
     alignItems: "center",
     flexWrap: "wrap",
     gap: "10px 20px",
-    padding: "12px 24px",
+    // Line the logo and buttons up with the page content on wide screens instead of the screen edges
+    padding: `12px max(24px, calc((100% - ${PAGE_MAX_WIDTH}px) / 2 + ${PAGE_GUTTER}px))`,
     background: "rgba(10,20,40,0.92)",
     // Thin gold rule under the header, like the League client
     borderBottom: "1px solid rgba(200,155,60,0.25)",
@@ -185,6 +218,18 @@ const styles: Record<string, React.CSSProperties> = {
     // Takes the free space; wraps onto its own line on narrow screens
     flex: "1 1 360px",
     minWidth: 0,
+  },
+  searchToggle: {
+    background: "transparent",
+    color: COLORS.textSecondary,
+    border: `1px solid ${COLORS.cardBorder}`,
+    borderRadius: 3,
+    width: 36,
+    height: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    cursor: "pointer",
+    padding: 0,
   },
   nav: {
     display: "flex",

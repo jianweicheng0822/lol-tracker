@@ -1,6 +1,6 @@
 import { useState } from "react";
 import type { PlayerStats, MatchSummary, RankedEntry } from "../../types";
-import { useIsMobile } from "../../hooks/useIsMobile";
+import { useIsMobile, STACK_BREAKPOINT } from "../../hooks/useIsMobile";
 import RankSummary from "./RankSummary";
 import LpSparkline from "./LpSparkline";
 import RecentStatsPreview from "./RecentStatsPreview";
@@ -22,6 +22,8 @@ type Props = {
 
 export default function OverviewSidebar({ stats, matches, ranked, puuid, onOpenPerformance, onViewChampions }: Props) {
   const isMobile = useIsMobile();
+  // Tablets: the sidebar sits above the matches, so lay its cards out side by side
+  const isStacked = useIsMobile(STACK_BREAKPOINT);
   const [statsOpen, setStatsOpen] = useState(false);
   const [champsOpen, setChampsOpen] = useState(false);
   // Same games as the backend stats (ranked games among the 20 most recent), so every sidebar
@@ -30,7 +32,7 @@ export default function OverviewSidebar({ stats, matches, ranked, puuid, onOpenP
   const scopeLabel = rankedScopeLabel(recentRanked.length, Math.min(matches.length, RECENT_MATCH_COUNT));
 
   return (
-    <div style={isMobile ? undefined : { position: "sticky", top: 20 }}>
+    <div style={isMobile ? undefined : isStacked ? tabletGrid : { position: "sticky", top: 20 }}>
       <RankSummary entries={ranked} />
       {!isMobile && <LpSparkline puuid={puuid} onClick={onOpenPerformance} />}
 
@@ -52,6 +54,14 @@ export default function OverviewSidebar({ stats, matches, ranked, puuid, onOpenP
     </div>
   );
 }
+
+// Two columns of cards on tablets; the cards keep their own bottom margin as the row gap
+const tabletGrid: React.CSSProperties = {
+  display: "grid",
+  gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
+  columnGap: 12,
+  alignItems: "start",
+};
 
 function Accordion({ label, open, onToggle, children }: { label: string; open: boolean; onToggle: () => void; children: React.ReactNode }) {
   return (

@@ -108,8 +108,9 @@ const styles: Record<string, React.CSSProperties> = {
   tierIcon: { width: 56, height: 56 },
   tierRow: {
     display: "flex",
+    flexWrap: "wrap",
     alignItems: "baseline",
-    gap: 8,
+    gap: "0 8px",
   },
   tier: {
     fontSize: 20,
@@ -120,6 +121,8 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 16,
     color: "#C89B3C",
     fontWeight: 700,
+    // "3640 LP" moves down as one piece when the tier name is long, never "3640" / "LP"
+    whiteSpace: "nowrap",
   },
   record: {
     fontSize: 12,

@@ -151,4 +151,21 @@ describe("AppHeader", () => {
     act(() => setAuthToken(fakeToken("Caps")));
     expect(screen.getByRole("button", { name: /Caps/ })).toBeInTheDocument();
   });
+
+  it("has a phone search toggle that opens and closes the search box", async () => {
+    const user = userEvent.setup();
+    const { container } = renderHeader();
+    const toggle = screen.getByRole("button", { name: "Search for a player" });
+    expect(toggle).toHaveAttribute("aria-expanded", "false");
+    expect(toggle).toHaveAttribute("aria-controls", "header-search");
+
+    await user.click(toggle);
+    expect(screen.getByRole("button", { name: "Hide player search" })).toHaveAttribute("aria-expanded", "true");
+    expect(container.querySelector("header")).toHaveClass("app-header--search-open");
+  });
+
+  it("has no search toggle when the search box is hidden", () => {
+    renderHeader({ showSearch: false });
+    expect(screen.queryByRole("button", { name: "Search for a player" })).not.toBeInTheDocument();
+  });
 });

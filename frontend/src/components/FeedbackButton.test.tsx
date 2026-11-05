@@ -85,4 +85,16 @@ describe("FeedbackButton", () => {
     await user.click(screen.getByRole("button", { name: "Close" }));
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
+
+  it("opens the same form from the top bar variant", async () => {
+    const user = userEvent.setup();
+    render(
+      <MemoryRouter>
+        <FeedbackButton variant="header" />
+      </MemoryRouter>,
+    );
+    expect(screen.queryByRole("button", { name: "Send feedback" })).not.toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Feedback" }));
+    expect(screen.getByRole("dialog")).toBeInTheDocument();
+  });
 });

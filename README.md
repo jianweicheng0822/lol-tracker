@@ -30,53 +30,24 @@ A full-stack League of Legends stats site with AI match coaching: search any pla
 
 <table>
   <tr>
-    <td align="center"><b>Home (logged in, with favorites)</b></td>
-    <td align="center"><b>Overview</b></td>
+    <td align="center"><b>Home (logged in, with favorites)</b><br><img src="screenshots/home.png" alt="Home page, logged in, with a favorite player" width="400" /></td>
+    <td align="center"><b>Overview</b><br><img src="screenshots/overview.png" alt="Player overview with rank, LP history and recent matches" width="400" /></td>
   </tr>
   <tr>
-    <td><img src="screenshots/home.png" alt="Home" width="480" /></td>
-    <td><img src="screenshots/overview.png" alt="Overview" width="480" /></td>
+    <td align="center"><b>Leaderboard</b><br><img src="screenshots/leaderboard.png" alt="Challenger leaderboard" width="400" /></td>
+    <td align="center"><b>Multi-Search</b><br><img src="screenshots/multi-search.png" alt="Multi-Search comparing two players" width="400" /></td>
   </tr>
   <tr>
-    <td align="center"><b>Leaderboard</b></td>
-    <td align="center"><b>Multi-Search</b></td>
+    <td align="center"><b>Match History</b><br><img src="screenshots/match-history.png" alt="Recent matches with an expanded scoreboard" width="400" /></td>
+    <td align="center"><b>Match Page</b><br><img src="screenshots/match-page.png" alt="Shareable page for a single match" width="400" /></td>
   </tr>
   <tr>
-    <td><img src="screenshots/leaderboard.png" alt="Leaderboard" width="480" /></td>
-    <td><img src="screenshots/multi-search.png" alt="Multi-Search" width="480" /></td>
+    <td align="center"><b>LP Progression</b><br><img src="screenshots/performance.png" alt="Ranked progression chart over 30 days" width="400" /></td>
+    <td align="center"><b>Champions</b><br><img src="screenshots/champions.png" alt="Per-champion stats" width="400" /></td>
   </tr>
   <tr>
-    <td align="center"><b>Match History</b></td>
-    <td align="center"><b>Login & PRO Upgrade</b></td>
-  </tr>
-  <tr>
-    <td><img src="screenshots/match-history.png" alt="Match History" width="480" /></td>
-    <td>
-      <img src="screenshots/login.png" alt="Login" width="220" />
-      <img src="screenshots/pro-upgrade.png" alt="PRO Upgrade" width="200" />
-    </td>
-  </tr>
-  <tr>
-    <td align="center"><b>LP Progression</b></td>
-    <td align="center"><b>Match Page</b></td>
-  </tr>
-  <tr>
-    <td><img src="screenshots/performance.png" alt="LP Progression" width="480" /></td>
-    <td><img src="screenshots/match-page.png" alt="Match Page" width="480" /></td>
-  </tr>
-  <tr>
-    <td align="center"><b>Champions</b></td>
-    <td align="center"><b>Mobile</b></td>
-  </tr>
-  <tr>
-    <td><img src="screenshots/champions.png" alt="Champions" width="480" /></td>
-    <td align="center"><img src="screenshots/mobile.png" alt="Mobile" width="200" /></td>
-  </tr>
-  <tr>
-    <td align="center" colspan="2"><b>Feedback</b></td>
-  </tr>
-  <tr>
-    <td align="center" colspan="2"><img src="screenshots/feedback.png" alt="Feedback form, opened from the Feedback button in the header" width="480" /></td>
+    <td align="center"><b>Login, PRO &amp; Feedback</b><br><img src="screenshots/modals.png" alt="Login, PRO upgrade and Feedback dialogs side by side" width="400" /></td>
+    <td align="center"><b>Mobile</b><br><img src="screenshots/mobile.png" alt="Two phones: player overview and the recent matches list" width="400" /></td>
   </tr>
 </table>
 

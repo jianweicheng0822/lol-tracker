@@ -19,7 +19,7 @@ A full-stack League of Legends stats site with AI match coaching: search any pla
 ## Engineering highlights
 
 - **Zero-downtime deploys on a single 1 GB server.** Each release starts next to the running one (blue/green) and nginx switches over only once it's healthy; if it never gets healthy, the old version keeps serving. Measured during a deploy: 0 failed requests out of 1,046. → [Deployment](#deployment)
-- **960 automated tests gate every deploy.** 521 frontend unit tests, 404 backend unit and 15 integration tests (real PostgreSQL via Testcontainers), and 20 Playwright end-to-end runs on desktop and phone. Smoke tests then check the live site after each release. → [Testing](#testing)
+- **966 automated tests gate every deploy.** 527 frontend unit tests, 404 backend unit and 15 integration tests (real PostgreSQL via Testcontainers), and 20 Playwright end-to-end runs on desktop and phone. Smoke tests then check the live site after each release. → [Testing](#testing)
 - **Security-reviewed.** OAuth sign-in hardened against login CSRF, per-visitor rate limits behind Cloudflare, Stripe webhook signature checks, and CodeQL scanning with 0 open alerts. → [Security](#security)
 - **Accessible.** Checked with axe-core (0 violations on every page); every control works from the keyboard, and the layout holds down to a 320px-wide phone.
 - **Fast despite a rate-limited data source.** About 65% of the 14M+ Riot API lookups so far were served from Redis, which takes a 10-match history load from ~700 ms to ~200 ms. A sliding-window limiter keeps calls under Riot's 100-requests-per-2-minutes cap, and leaderboards are prefetched in the background within that budget.
@@ -76,7 +76,7 @@ A full-stack League of Legends stats site with AI match coaching: search any pla
     <td align="center" colspan="2"><b>Feedback</b></td>
   </tr>
   <tr>
-    <td align="center" colspan="2"><img src="screenshots/feedback.png" alt="Feedback form, opened from the button in the corner of every page" width="480" /></td>
+    <td align="center" colspan="2"><img src="screenshots/feedback.png" alt="Feedback form, opened from the Feedback button in the header" width="480" /></td>
   </tr>
 </table>
 
@@ -100,7 +100,7 @@ A full-stack League of Legends stats site with AI match coaching: search any pla
 
 **AI Match Analysis** — Click the sparkle button on a match to chat about it. Answers stream in as they're written (Server-Sent Events); the prompt is built on the server from the match data
 
-**Feedback** — A Feedback button on every page sends bug reports and ideas (with the page they came from) straight to the database, and emails each one to the maintainer when `FEEDBACK_NOTIFY_EMAIL` is set. Admins read and resolve them in an inbox reached from the account menu; to everyone else the inbox doesn't exist (404)
+**Feedback** — A Feedback button on every page (in the header on wider screens, floating in the corner on phones) sends bug reports and ideas (with the page they came from) straight to the database, and emails each one to the maintainer when `FEEDBACK_NOTIFY_EMAIL` is set. Admins read and resolve them in an inbox reached from the account menu; to everyone else the inbox doesn't exist (404)
 
 **Accounts** — Username/password or Google/Discord sign-in. Without an account, everything except AI coaching and favorites is available
 
@@ -142,7 +142,7 @@ The React app is built into the Spring Boot image and served by it, so one conta
 
 | Suite | Count | Tool | What it covers |
 |-------|------:|------|----------------|
-| Frontend unit | 521 | Vitest, React Testing Library | Components, pages, hooks, utilities, API client |
+| Frontend unit | 527 | Vitest, React Testing Library | Components, pages, hooks, utilities, API client |
 | Backend unit | 404 | JUnit, MockMvc, Mockito | Controllers (`@WebMvcTest` with mocked services) and services (Mockito), no database |
 | Backend integration | 15 | Testcontainers | Real PostgreSQL with the Flyway migrations: auth, favorites, subscriptions, feedback |
 | End-to-end | 20 | Playwright | 10 user journeys, each on desktop and phone |
@@ -170,7 +170,7 @@ The tests were checked to fail when the feature they cover is broken.
 
 | Area | Count | Examples |
 |------|------:|----------|
-| Components | 239 | MatchList, ScoreboardTable, FavoritesList, PerformanceModal, ProfileHeader, OverviewTab, ChampionsTab |
+| Components | 245 | MatchList, ScoreboardTable, FavoritesList, PerformanceModal, ProfileHeader, OverviewTab, ChampionsTab |
 | Utilities | 101 | `playerInsights`, `trends`, LP conversion and chart axes, URL helpers |
 | Pages and routing | 103 | HomePage, PlayerPage, MatchDetailPage, LeaderboardPage, MultiSearchPage, AdminFeedbackPage |
 | API client | 53 | Token handling, login/register, error parsing |

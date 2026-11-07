@@ -254,6 +254,8 @@ jobs:
             # visitor's IP from CF-Connecting-IP, but only when the request really comes from Cloudflare
             # (ranges from https://www.cloudflare.com/ips/), so the header can't be spoofed by connecting
             # directly. The backend's per-IP rate limits (login, register) depend on this.
+            # The EC2 security group allows port 80 only from these same ranges. If Cloudflare changes them,
+            # update this list, nginx.conf, and the security group.
             set_real_ip_from 173.245.48.0/20;
             set_real_ip_from 103.21.244.0/22;
             set_real_ip_from 103.22.200.0/22;

@@ -47,7 +47,7 @@ class MetricsDigestTest {
         assertTrue(body.contains("player_view          3  (3 visitors)"), body);
         assertTrue(body.contains("ai_analysis          1  (1 visitor)"), body);
         assertTrue(body.contains("reddit.com"), body);
-        assertTrue(body.contains("https://loltracker.lol/admin/metrics"), body);
+        assertTrue(body.contains("https://loltracker.lol/admin/usage"), body);
     }
 
     @Test

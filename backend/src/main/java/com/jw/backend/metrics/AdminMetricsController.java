@@ -10,7 +10,10 @@ import org.springframework.web.bind.annotation.RestController;
 import java.security.Principal;
 import java.util.Map;
 
-/** Usage metrics for the admin page. Like the feedback inbox, everyone else gets a 404. */
+/**
+ * Usage metrics for the admin page. Like the feedback inbox, everyone else gets a 404.
+ * Served at /usage rather than /metrics, which ad blockers block.
+ */
 @RestController
 public class AdminMetricsController {
 
@@ -22,7 +25,7 @@ public class AdminMetricsController {
         this.feedbackService = feedbackService;
     }
 
-    @GetMapping("/api/admin/metrics")
+    @GetMapping("/api/admin/usage")
     public ResponseEntity<?> metrics(@RequestParam(defaultValue = "14") int days, Principal principal) {
         if (principal == null || !feedbackService.isAdmin(principal.getName())) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Not found"));

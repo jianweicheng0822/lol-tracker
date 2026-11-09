@@ -60,7 +60,7 @@ export default function App() {
       <Route path="/checkout/cancel" element={<CheckoutCancelPage />} />
       <Route path="/oauth-callback" element={<OAuthCallbackPage />} />
       <Route path="/admin/feedback" element={<AdminFeedbackPage />} />
-      <Route path="/admin/metrics" element={<AdminMetricsPage />} />
+      <Route path="/admin/usage" element={<AdminMetricsPage />} />
       <Route path="*" element={<NotFoundPage />} />
       </Routes>
       <FeedbackButton />

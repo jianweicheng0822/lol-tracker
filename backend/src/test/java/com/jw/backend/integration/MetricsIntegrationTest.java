@@ -46,7 +46,7 @@ class MetricsIntegrationTest extends BaseIntegrationSupport {
 
     @Test
     void trackEndpoint_savesPageViewAndReferrer() throws Exception {
-        mockMvc.perform(post("/api/track").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/nav").contentType(MediaType.APPLICATION_JSON)
                 .header("User-Agent", BROWSER).header("X-Visitor-Id", A)
                 .content("{\"page\": \"leaderboard\", \"referrer\": \"www.reddit.com\"}"))
             .andExpect(status().isNoContent());
@@ -98,13 +98,13 @@ class MetricsIntegrationTest extends BaseIntegrationSupport {
         assertEquals(new MetricsReport.Count("home", 2, 1), report.pages().get(0));
         assertTrue(report.recent().stream().noneMatch(r -> r.visitor().startsWith("dddddd")));
 
-        mockMvc.perform(get("/api/admin/metrics?days=7")
+        mockMvc.perform(get("/api/admin/usage?days=7")
                 .header("Authorization", "Bearer " + jwtUtil.generateToken("metricsadmin")))
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.totals.visitors").value(3))
             .andExpect(jsonPath("$.daily.length()").value(7))
             .andExpect(jsonPath("$.zone").value("America/Denver"));
-        mockMvc.perform(get("/api/admin/metrics")
+        mockMvc.perform(get("/api/admin/usage")
                 .header("Authorization", "Bearer " + jwtUtil.generateToken("someoneelse")))
             .andExpect(status().isNotFound());
     }

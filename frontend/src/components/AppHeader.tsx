@@ -150,7 +150,7 @@ export default function AppHeader({ showSearch = true, showLogo = true, searchDe
                   </Link>
                 )}
                 {isAdmin && (
-                  <Link role="menuitem" to="/admin/metrics" style={styles.menuItem} onClick={() => setMenuOpen(false)}>
+                  <Link role="menuitem" to="/admin/usage" style={styles.menuItem} onClick={() => setMenuOpen(false)}>
                     Usage metrics
                   </Link>
                 )}

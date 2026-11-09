@@ -52,7 +52,7 @@ public class MetricsDigest {
         this.mailSender = mailSender;
         this.toEmail = toEmail == null ? "" : toEmail.strip();
         this.fromEmail = fromEmail == null || fromEmail.isBlank() ? this.toEmail : fromEmail.strip();
-        this.dashboardUrl = (baseUrl == null ? "" : baseUrl.strip().replaceAll("/+$", "")) + "/admin/metrics";
+        this.dashboardUrl = (baseUrl == null ? "" : baseUrl.strip().replaceAll("/+$", "")) + "/admin/usage";
     }
 
     public boolean isEnabled() {

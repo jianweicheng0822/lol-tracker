@@ -13,6 +13,9 @@ import java.util.regex.Pattern;
  * Page views from the frontend. The single-page app changes pages without asking the server, so
  * it reports each page here, and on the first page of a visit where the visitor came from.
  * Always answers 204, whatever it's sent, so there's nothing to probe.
+ *
+ * <p>The path avoids words like "track", "metrics" or "analytics": ad blockers block requests
+ * whose URL contains them, which would hide those visitors.</p>
  */
 @RestController
 public class TrackController {
@@ -29,7 +32,7 @@ public class TrackController {
         this.usageEvents = usageEvents;
     }
 
-    @PostMapping("/api/track")
+    @PostMapping("/api/nav")
     public ResponseEntity<Void> track(@RequestBody(required = false) TrackRequest body, HttpServletRequest request) {
         if (body != null && body.page() != null && PAGE.matcher(body.page()).matches()) {
             usageEvents.record("page_view", body.page(), request);

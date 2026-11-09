@@ -695,7 +695,7 @@ export async function fetchAdminFeedback(): Promise<FeedbackEntry[]> {
 /** Report a page view for the usage metrics. Fire-and-forget: failures are ignored. */
 export function trackPageView(page: string, referrer: string | null): void {
   try {
-    fetch(`${BASE}/api/track`, fetchOpts({
+    fetch(`${BASE}/api/nav`, fetchOpts({
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ page, referrer }),
@@ -729,7 +729,7 @@ export type MetricsReport = {
 
 /** Usage over the last `days` days, today included. Admins only. */
 export async function fetchAdminMetrics(days: number): Promise<MetricsReport> {
-  return adminResponse(await fetchWithTimeout(`${BASE}/api/admin/metrics?days=${days}`, fetchOpts()));
+  return adminResponse(await fetchWithTimeout(`${BASE}/api/admin/usage?days=${days}`, fetchOpts()));
 }
 
 /** Mark a feedback entry handled (or not). Admins only. */

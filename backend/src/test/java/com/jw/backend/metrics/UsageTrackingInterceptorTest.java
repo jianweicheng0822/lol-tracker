@@ -33,10 +33,10 @@ class UsageTrackingInterceptorTest {
     @Test
     void eventFor_ignoresEverythingElse() {
         assertNull(UsageTrackingInterceptor.eventFor("GET", "/api/matches/summary"));
-        assertNull(UsageTrackingInterceptor.eventFor("GET", "/api/admin/metrics"));
+        assertNull(UsageTrackingInterceptor.eventFor("GET", "/api/admin/usage"));
         assertNull(UsageTrackingInterceptor.eventFor("POST", "/api/summoner"));
         assertNull(UsageTrackingInterceptor.eventFor("DELETE", "/api/favorites"));
-        assertNull(UsageTrackingInterceptor.eventFor("POST", "/api/track"));
+        assertNull(UsageTrackingInterceptor.eventFor("POST", "/api/nav"));
     }
 
     @Test

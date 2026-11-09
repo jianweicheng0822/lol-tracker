@@ -30,7 +30,7 @@ describe("pageName", () => {
   });
 
   it("skips admin and OAuth pages", () => {
-    expect(pageName("/admin/metrics")).toBeNull();
+    expect(pageName("/admin/usage")).toBeNull();
     expect(pageName("/admin/feedback")).toBeNull();
     expect(pageName("/oauth-callback")).toBeNull();
   });

@@ -30,7 +30,7 @@ class TrackControllerTest {
 
     @Test
     void pageView_withReferrer_recordsBoth() throws Exception {
-        mockMvc.perform(post("/api/track").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/nav").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"page\": \"home\", \"referrer\": \"news.ycombinator.com\"}"))
             .andExpect(status().isNoContent());
 
@@ -40,10 +40,10 @@ class TrackControllerTest {
 
     @Test
     void invalidPage_recordsNothingButStillAnswers204() throws Exception {
-        mockMvc.perform(post("/api/track").contentType(MediaType.APPLICATION_JSON)
+        mockMvc.perform(post("/api/nav").contentType(MediaType.APPLICATION_JSON)
                 .content("{\"page\": \"<script>\"}"))
             .andExpect(status().isNoContent());
-        mockMvc.perform(post("/api/track").contentType(MediaType.APPLICATION_JSON).content("{}"))
+        mockMvc.perform(post("/api/nav").contentType(MediaType.APPLICATION_JSON).content("{}"))
             .andExpect(status().isNoContent());
 
         verifyNoInteractions(usageEvents);

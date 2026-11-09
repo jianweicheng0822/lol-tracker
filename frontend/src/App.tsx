@@ -15,6 +15,8 @@ import LiveMatchPage from "./pages/LiveMatchPage";
 import OAuthCallbackPage from "./pages/OAuthCallbackPage";
 import NotFoundPage from "./pages/NotFoundPage";
 import AdminFeedbackPage from "./pages/AdminFeedbackPage";
+import AdminMetricsPage from "./pages/AdminMetricsPage";
+import { usePageTracking } from "./hooks/usePageTracking";
 import FeedbackButton from "./components/FeedbackButton";
 
 /**
@@ -43,6 +45,7 @@ function WithRegion({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  usePageTracking();
   return (
     <main>
       <Routes>
@@ -57,6 +60,7 @@ export default function App() {
       <Route path="/checkout/cancel" element={<CheckoutCancelPage />} />
       <Route path="/oauth-callback" element={<OAuthCallbackPage />} />
       <Route path="/admin/feedback" element={<AdminFeedbackPage />} />
+      <Route path="/admin/metrics" element={<AdminMetricsPage />} />
       <Route path="*" element={<NotFoundPage />} />
       </Routes>
       <FeedbackButton />

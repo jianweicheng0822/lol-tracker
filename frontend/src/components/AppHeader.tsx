@@ -149,6 +149,11 @@ export default function AppHeader({ showSearch = true, showLogo = true, searchDe
                     Feedback inbox
                   </Link>
                 )}
+                {isAdmin && (
+                  <Link role="menuitem" to="/admin/metrics" style={styles.menuItem} onClick={() => setMenuOpen(false)}>
+                    Usage metrics
+                  </Link>
+                )}
                 <button role="menuitem" style={styles.menuItem} onClick={logOut}>
                   Log out
                 </button>

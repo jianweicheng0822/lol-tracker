@@ -4,6 +4,7 @@
  *   Riot API data fetching, favorites management, trend endpoints, and AI match analysis streaming.
  * @module frontend.api
  */
+import { getVisitorId } from "./utils/visitor";
 
 /**
  * Base URL for API requests. In development the browser calls the backend on
@@ -107,7 +108,10 @@ function authHeaders(): Record<string, string> {
  * @returns Combined RequestInit with authorization headers applied.
  */
 function fetchOpts(extra?: RequestInit): RequestInit {
-  return { ...extra, headers: { ...authHeaders(), ...(extra?.headers || {}) } };
+  return {
+    ...extra,
+    headers: { ...authHeaders(), "X-Visitor-Id": getVisitorId(), ...(extra?.headers || {}) },
+  };
 }
 
 /**
@@ -686,6 +690,46 @@ export async function fetchAdminStatus(): Promise<boolean> {
 /** The latest feedback, newest first. Admins only. */
 export async function fetchAdminFeedback(): Promise<FeedbackEntry[]> {
   return adminResponse(await fetchWithTimeout(`${BASE}/api/admin/feedback`, fetchOpts()));
+}
+
+/** Report a page view for the usage metrics. Fire-and-forget: failures are ignored. */
+export function trackPageView(page: string, referrer: string | null): void {
+  try {
+    fetch(`${BASE}/api/track`, fetchOpts({
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ page, referrer }),
+      keepalive: true,
+    })).catch(() => {});
+  } catch {
+    // Tracking must never break the page
+  }
+}
+
+export type MetricsCount = { name: string; count: number; visitors: number };
+
+export type MetricsReport = {
+  zone: string;
+  from: string;
+  to: string;
+  totals: {
+    visitors: number;
+    newVisitors: number;
+    returningVisitors: number;
+    pageViews: number;
+    actions: number;
+    signups: number;
+  };
+  daily: { date: string; visitors: number; newVisitors: number; pageViews: number; actions: number }[];
+  features: MetricsCount[];
+  pages: MetricsCount[];
+  referrers: MetricsCount[];
+  recent: { at: string; event: string; detail: string | null; visitor: string; username: string | null }[];
+};
+
+/** Usage over the last `days` days, today included. Admins only. */
+export async function fetchAdminMetrics(days: number): Promise<MetricsReport> {
+  return adminResponse(await fetchWithTimeout(`${BASE}/api/admin/metrics?days=${days}`, fetchOpts()));
 }
 
 /** Mark a feedback entry handled (or not). Admins only. */

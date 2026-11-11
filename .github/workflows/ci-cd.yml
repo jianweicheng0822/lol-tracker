@@ -160,8 +160,25 @@ jobs:
               done
             fi
 
-            # --- Start Redis if not already running ---
-            if ! docker ps --format '{{.Names}}' | grep -q '^lol-redis$'; then
+            # --- Redis: always behind a password ---
+            if [ -z "$REDIS_PASSWORD" ]; then
+              echo "REDIS_PASSWORD secret is empty; refusing to run Redis without a password" >&2
+              exit 1
+            fi
+            # (Re)create it when it isn't running, when it answers without a password (containers
+            # started before the secret existed), or when it doesn't take the current password.
+            # It only holds cached Riot responses, and the app treats Redis errors as cache misses.
+            REDIS_OK=false
+            if docker ps --format '{{.Names}}' | grep -q '^lol-redis$'; then
+              if docker exec lol-redis redis-cli ping 2>/dev/null | grep -q PONG; then
+                echo "lol-redis runs without a password, recreating it"
+              elif docker exec lol-redis redis-cli --no-auth-warning -a "$REDIS_PASSWORD" ping 2>/dev/null | grep -q PONG; then
+                REDIS_OK=true
+              else
+                echo "lol-redis doesn't take the current password, recreating it"
+              fi
+            fi
+            if [ "$REDIS_OK" != true ]; then
               docker rm -f lol-redis 2>/dev/null || true
               docker run -d \
                 --name lol-redis \
@@ -171,7 +188,7 @@ jobs:
                 redis-server --requirepass "$REDIS_PASSWORD"
               echo "Waiting for Redis..."
               for i in $(seq 1 15); do
-                docker exec lol-redis redis-cli -a "$REDIS_PASSWORD" ping >/dev/null 2>&1 && break
+                docker exec lol-redis redis-cli --no-auth-warning -a "$REDIS_PASSWORD" ping 2>/dev/null | grep -q PONG && break
                 sleep 1
               done
             fi

@@ -75,8 +75,13 @@ jobs:
     permissions:
       contents: read
       packages: write
+      # Lets the job sign in to AWS as the lol-tracker-deploy role (no AWS keys stored in GitHub)
+      id-token: write
     env:
       IMAGE: ghcr.io/${{ github.repository_owner }}/lol-tracker:latest
+      # The EC2 instance's security group. SSH (22) only allows the owner's IP; each deploy adds
+      # this runner's IP for the length of the deploy and removes it afterwards.
+      DEPLOY_SG: sg-00710362604586035
     steps:
       - uses: actions/checkout@v7
 
@@ -95,6 +100,19 @@ jobs:
           tags: ${{ env.IMAGE }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      - uses: aws-actions/configure-aws-credentials@e1253824e5c10ff9df46874f81ed3ec929e19cfd # v6.3.0
+        with:
+          role-to-assume: ${{ vars.AWS_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Let this runner reach SSH
+        id: ssh-open
+        run: |
+          IP=$(curl -fsS https://checkip.amazonaws.com | tr -d '[:space:]')
+          aws ec2 authorize-security-group-ingress --group-id "$DEPLOY_SG" \
+            --ip-permissions "IpProtocol=tcp,FromPort=22,ToPort=22,IpRanges=[{CidrIp=$IP/32,Description=github-actions-deploy}]"
+          echo "ip=$IP" >> "$GITHUB_OUTPUT"
 
       - name: Deploy to EC2
         uses: appleboy/ssh-action@0ff4204d59e8e51228ff73bce53f80d53301dee2 # v1.2.5
@@ -405,6 +423,12 @@ jobs:
               docker stop "$OLD" && docker rm "$OLD"
             fi
             echo "Deployed $NEW"
+
+      - name: Close SSH again
+        if: always() && steps.ssh-open.outputs.ip != ''
+        run: |
+          aws ec2 revoke-security-group-ingress --group-id "$DEPLOY_SG" \
+            --ip-permissions "IpProtocol=tcp,FromPort=22,ToPort=22,IpRanges=[{CidrIp=${{ steps.ssh-open.outputs.ip }}/32}]"
 
   # Read-only checks against the live site once it's deployed (frontend/smoke)
   smoke:

@@ -183,7 +183,7 @@ The backend was reviewed by hand, and CodeQL scans the Java, TypeScript and work
 | Password guessing | The backend allows 5 login or registration attempts per minute per IP |
 | Scripts draining the Riot API quota | nginx allows each visitor 10 API requests per second (bursts of 50) |
 | Spoofed visitor IPs | The real IP is read from Cloudflare's `CF-Connecting-IP`, and only trusted on requests from Cloudflare's own address ranges |
-| Bypassing Cloudflare by hitting the server's IP | The EC2 security group accepts web traffic only from Cloudflare's address ranges; SSH stays open for the deploy job, and no other ports are open |
+| Bypassing Cloudflare by hitting the server's IP | The EC2 security group accepts web traffic only from Cloudflare's address ranges; SSH accepts only the owner's IP, plus the deploy job's runner for the few minutes of a deploy (added and removed through a narrow IAM role over GitHub OIDC, no stored AWS keys); no other ports are open |
 | Surprise cloud bills | An AWS budget emails at 85% and 100% of $50/month (and when the forecast passes $50), and Cost Anomaly Detection emails when any service costs $3 or more above normal; the OpenAI account is prepaid with auto-reload off |
 | Running the server out of memory via sign-in | Pending sign-ins are capped at 10,000 and expired ones are cleared every minute |
 | Cross-site scripting, clickjacking | React escapes rendered content; CSP, HSTS, `X-Frame-Options: DENY`, `nosniff` and a strict referrer policy are set by nginx |

@@ -7,6 +7,7 @@ import { useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import SearchBar from "./SearchBar";
 import AuthModal from "./AuthModal";
+import LinkedAccountsModal from "./LinkedAccountsModal";
 import Toast from "./Toast";
 import FeedbackButton from "./FeedbackButton";
 import { fetchAdminStatus, setAuthToken } from "../api";
@@ -32,9 +33,10 @@ const NAV_LINKS = [
 ];
 
 export default function AppHeader({ showSearch = true, showLogo = true, searchDefaults, transparent = false }: Props) {
-  const { pathname } = useLocation();
+  const { pathname, state: locationState, key: locationKey } = useLocation();
   const { isLoggedIn, username } = useAuth();
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [showLinkedAccounts, setShowLinkedAccounts] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -65,6 +67,15 @@ export default function AppHeader({ showSearch = true, showLogo = true, searchDe
     };
   }, [menuOpen]);
 
+  // A page that redirected here can ask for a toast (e.g. "Google linked" after linking an account)
+  const requested = (locationState as { toast?: unknown } | null)?.toast;
+  const [routeToastDoneFor, setRouteToastDoneFor] = useState<string | null>(null);
+  const routeToast = typeof requested === "string" && routeToastDoneFor !== locationKey ? requested : null;
+  useEffect(() => {
+    // Drop it from history so a refresh or Back doesn't show it again
+    if (typeof requested === "string") window.history.replaceState({ ...window.history.state, usr: null }, "");
+  }, [requested]);
+
   const logOut = () => {
     setMenuOpen(false);
     setAuthToken(null);
@@ -77,6 +88,7 @@ export default function AppHeader({ showSearch = true, showLogo = true, searchDe
       style={transparent ? { ...styles.bar, ...styles.barTransparent } : styles.bar}
     >
       {toastMsg && <Toast message={toastMsg} onDone={() => setToastMsg(null)} />}
+      {routeToast && !toastMsg && <Toast message={routeToast} onDone={() => setRouteToastDoneFor(locationKey)} />}
 
       {showLogo && <Link to="/" className="app-header__logo" style={styles.logo}>LoL Tracker</Link>}
 
@@ -154,6 +166,13 @@ export default function AppHeader({ showSearch = true, showLogo = true, searchDe
                     Usage metrics
                   </Link>
                 )}
+                <button
+                  role="menuitem"
+                  style={styles.menuItem}
+                  onClick={() => { setMenuOpen(false); setShowLinkedAccounts(true); }}
+                >
+                  Linked accounts
+                </button>
                 <button role="menuitem" style={styles.menuItem} onClick={logOut}>
                   Log out
                 </button>
@@ -176,6 +195,7 @@ export default function AppHeader({ showSearch = true, showLogo = true, searchDe
           onClose={() => setShowAuthModal(false)}
         />
       )}
+      {showLinkedAccounts && isLoggedIn && <LinkedAccountsModal onClose={() => setShowLinkedAccounts(false)} />}
     </header>
   );
 }

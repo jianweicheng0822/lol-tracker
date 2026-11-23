@@ -5,6 +5,7 @@ import com.jw.backend.entity.OAuthAccount;
 import com.jw.backend.repository.AppUserRepository;
 import com.jw.backend.repository.OAuthAccountRepository;
 import com.jw.backend.security.OAuth2Properties;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.*;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
@@ -16,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
@@ -29,8 +31,31 @@ public class OAuth2Service {
     private final AppUserRepository appUserRepository;
     private final RestTemplate restTemplate;
 
-    // In-memory state store with expiry (state -> timestamp)
-    private final ConcurrentHashMap<String, Long> stateStore = new ConcurrentHashMap<>();
+    /**
+     * A sign-in or link attempt waiting for the provider to send the user back.
+     *
+     * @param createdAt  when it started (epoch ms), for the 5-minute expiry
+     * @param linkUserId the logged-in user who asked to link this provider, or null for a sign-in
+     */
+    public record PendingState(long createdAt, Long linkUserId) {
+        public boolean isLink() {
+            return linkUserId != null;
+        }
+    }
+
+    /** What happened when a user tried to link a Google/Discord account. */
+    public enum LinkResult {
+        LINKED,
+        /** This Google/Discord account was already linked to this user; nothing changed. */
+        ALREADY_LINKED,
+        /** This Google/Discord account already signs in to a different user. */
+        TAKEN_BY_OTHER_USER,
+        /** The user already linked a different account from the same provider. */
+        PROVIDER_ALREADY_LINKED
+    }
+
+    // In-memory state store with expiry
+    private final ConcurrentHashMap<String, PendingState> stateStore = new ConcurrentHashMap<>();
     private static final long STATE_TTL_MS = 5 * 60 * 1000; // 5 minutes
     /**
      * Anyone can start a sign-in without logging in, so the store is capped: without a cap,
@@ -67,12 +92,27 @@ public class OAuth2Service {
      *         user to try again shortly)
      */
     public String generateState() {
+        return newState(null);
+    }
+
+    /**
+     * Create a one-time state for linking a provider to a logged-in user. The callback then links
+     * the account to that user instead of signing anyone in.
+     *
+     * @return the state, or null when too many attempts are pending
+     */
+    public String generateLinkState(Long userId) {
+        if (userId == null) throw new IllegalArgumentException("userId is required to link an account");
+        return newState(userId);
+    }
+
+    private String newState(Long linkUserId) {
         if (stateStore.size() >= maxPendingStates) {
             evictExpiredStates(System.currentTimeMillis());
             if (stateStore.size() >= maxPendingStates) return null;
         }
         String state = UUID.randomUUID().toString();
-        stateStore.put(state, System.currentTimeMillis());
+        stateStore.put(state, new PendingState(System.currentTimeMillis(), linkUserId));
         return state;
     }
 
@@ -83,17 +123,24 @@ public class OAuth2Service {
     }
 
     void evictExpiredStates(long now) {
-        stateStore.values().removeIf(createdAt -> now - createdAt >= STATE_TTL_MS);
+        stateStore.values().removeIf(pending -> now - pending.createdAt() >= STATE_TTL_MS);
     }
 
     int pendingStateCount() {
         return stateStore.size();
     }
 
-    public boolean validateAndConsumeState(String state) {
-        Long timestamp = stateStore.remove(state);
-        if (timestamp == null) return false;
-        return (System.currentTimeMillis() - timestamp) < STATE_TTL_MS;
+    /**
+     * Use up a state. Each state works once.
+     *
+     * @return what the state was for, or empty if it's unknown, already used or expired
+     */
+    public Optional<PendingState> consumeState(String state) {
+        PendingState pending = stateStore.remove(state);
+        if (pending == null || System.currentTimeMillis() - pending.createdAt() >= STATE_TTL_MS) {
+            return Optional.empty();
+        }
+        return Optional.of(pending);
     }
 
     public String buildAuthorizationUrl(String provider, String state, String callbackUrl) {
@@ -237,6 +284,44 @@ public class OAuth2Service {
         oauthRepository.save(oauthAccount);
 
         return user;
+    }
+
+    /**
+     * Link a Google/Discord account to a user who is already logged in, so they can sign in with it
+     * later (for example after forgetting their password). Unlike sign-in, this never matches by
+     * email and never creates a user.
+     */
+    public LinkResult linkAccount(AppUser user, String provider, OAuthUserInfo info) {
+        Optional<OAuthAccount> existing = oauthRepository.findByProviderAndProviderId(provider, info.id());
+        if (existing.isPresent()) {
+            return existing.get().getUser().getId().equals(user.getId())
+                ? LinkResult.ALREADY_LINKED
+                : LinkResult.TAKEN_BY_OTHER_USER;
+        }
+        boolean hasThisProvider = oauthRepository.findAllByUser(user).stream()
+            .anyMatch(account -> account.getProvider().equals(provider));
+        if (hasThisProvider) {
+            return LinkResult.PROVIDER_ALREADY_LINKED;
+        }
+
+        OAuthAccount account = new OAuthAccount(provider, info.id(), info.email());
+        account.setUser(user);
+        try {
+            oauthRepository.save(account);
+        } catch (DataIntegrityViolationException e) {
+            // Someone linked or signed up with this same account at the same moment (unique index)
+            return LinkResult.TAKEN_BY_OTHER_USER;
+        }
+        return LinkResult.LINKED;
+    }
+
+    /** The providers ("google", "discord") linked to this user, sorted. */
+    public List<String> linkedProviders(AppUser user) {
+        return oauthRepository.findAllByUser(user).stream()
+            .map(OAuthAccount::getProvider)
+            .distinct()
+            .sorted()
+            .toList();
     }
 
     private String generateUniqueUsername(String provider, String displayName) {

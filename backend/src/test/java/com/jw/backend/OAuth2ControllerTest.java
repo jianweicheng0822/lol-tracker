@@ -14,6 +14,10 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import java.security.Principal;
+import java.util.List;
+import java.util.Optional;
+
 import static org.hamcrest.Matchers.containsString;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
@@ -21,6 +25,8 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.mockito.ArgumentMatchers.any;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(OAuth2Controller.class)
@@ -107,7 +113,7 @@ class OAuth2ControllerTest {
 
     @Test
     void callback_withInvalidState_returns400() throws Exception {
-        when(oAuth2Service.validateAndConsumeState("bad-state")).thenReturn(false);
+        when(oAuth2Service.consumeState("bad-state")).thenReturn(Optional.empty());
 
         mockMvc.perform(get("/api/oauth2/google/callback")
                 .param("code", "some-code")
@@ -122,7 +128,7 @@ class OAuth2ControllerTest {
         AppUser user = new AppUser("testuser", null, true);
         user.setId(1L);
 
-        when(oAuth2Service.validateAndConsumeState("valid-state")).thenReturn(true);
+        when(oAuth2Service.consumeState("valid-state")).thenReturn(Optional.of(signIn()));
         when(oAuth2Service.exchangeCodeForToken(eq("google"), eq("auth-code"), anyString()))
             .thenReturn("access-token");
         when(oAuth2Service.fetchUserInfo("google", "access-token"))
@@ -157,8 +163,130 @@ class OAuth2ControllerTest {
             .andExpect(status().isBadRequest());
 
         // Rejected before the state or code is used
-        verify(oAuth2Service, never()).validateAndConsumeState(anyString());
+        verify(oAuth2Service, never()).consumeState(anyString());
         verify(oAuth2Service, never()).exchangeCodeForToken(anyString(), anyString(), anyString());
+    }
+
+    // --- Linking Google/Discord to a logged-in user ---
+
+    private static final Principal ALICE = () -> "alice";
+
+    private static OAuth2Service.PendingState signIn() {
+        return new OAuth2Service.PendingState(System.currentTimeMillis(), null);
+    }
+
+    private static OAuth2Service.PendingState linkFor(long userId) {
+        return new OAuth2Service.PendingState(System.currentTimeMillis(), userId);
+    }
+
+    private AppUser alice() {
+        AppUser alice = new AppUser("alice", "hashed", true);
+        alice.setId(7L);
+        when(appUserRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
+        return alice;
+    }
+
+    private void providerReturns(OAuth2Service.OAuthUserInfo info) {
+        when(oAuth2Service.exchangeCodeForToken(eq("google"), eq("auth-code"), anyString())).thenReturn("access-token");
+        when(oAuth2Service.fetchUserInfo("google", "access-token")).thenReturn(info);
+    }
+
+    @Test
+    void startLink_withoutLogin_returns401() throws Exception {
+        mockMvc.perform(post("/api/oauth2/google/link"))
+            .andExpect(status().isUnauthorized());
+        verify(oAuth2Service, never()).generateLinkState(any());
+    }
+
+    @Test
+    void startLink_returnsProviderUrlAndStateCookieForThatUser() throws Exception {
+        alice();
+        when(oAuth2Service.isProviderConfigured("google")).thenReturn(true);
+        when(oAuth2Service.generateLinkState(7L)).thenReturn("link-state");
+        when(oAuth2Service.buildAuthorizationUrl(eq("google"), eq("link-state"), anyString()))
+            .thenReturn("https://accounts.google.com/o/oauth2/v2/auth?state=link-state");
+
+        mockMvc.perform(post("/api/oauth2/google/link").principal(ALICE))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.url").value("https://accounts.google.com/o/oauth2/v2/auth?state=link-state"))
+            .andExpect(header().string("Set-Cookie", containsString("oauth_state=link-state")))
+            .andExpect(header().string("Set-Cookie", containsString("HttpOnly")));
+    }
+
+    @Test
+    void startLink_withUnsupportedProvider_returns400() throws Exception {
+        alice();
+        mockMvc.perform(post("/api/oauth2/github/link").principal(ALICE))
+            .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void accounts_listsPasswordAndLinkedProviders() throws Exception {
+        AppUser alice = alice();
+        when(oAuth2Service.linkedProviders(alice)).thenReturn(List.of("discord"));
+
+        mockMvc.perform(get("/api/oauth2/accounts").principal(ALICE))
+            .andExpect(status().isOk())
+            .andExpect(jsonPath("$.hasPassword").value(true))
+            .andExpect(jsonPath("$.linked[0]").value("discord"));
+    }
+
+    @Test
+    void accounts_withoutLogin_returns401() throws Exception {
+        mockMvc.perform(get("/api/oauth2/accounts"))
+            .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void callback_forALink_linksTheAccountWithoutIssuingAToken() throws Exception {
+        AppUser alice = alice();
+        OAuth2Service.OAuthUserInfo info = new OAuth2Service.OAuthUserInfo("google-9", "a@gmail.com", "Alice");
+        when(oAuth2Service.consumeState("link-state")).thenReturn(Optional.of(linkFor(7L)));
+        when(appUserRepository.findById(7L)).thenReturn(Optional.of(alice));
+        providerReturns(info);
+        when(oAuth2Service.linkAccount(alice, "google", info)).thenReturn(OAuth2Service.LinkResult.LINKED);
+
+        mockMvc.perform(get("/api/oauth2/google/callback")
+                .param("code", "auth-code")
+                .param("state", "link-state")
+                .cookie(new Cookie("oauth_state", "link-state")))
+            .andExpect(status().isFound())
+            .andExpect(header().string("Location", "http://localhost:5173/oauth-callback?linked=google"))
+            .andExpect(header().string("Set-Cookie", containsString("Max-Age=0")));
+
+        verify(oAuth2Service, never()).findOrCreateUser(anyString(), any());
+        verify(jwtUtil, never()).generateToken(anyString());
+    }
+
+    @Test
+    void callback_forALink_whenTheAccountBelongsToSomeoneElse_reportsIt() throws Exception {
+        AppUser alice = alice();
+        OAuth2Service.OAuthUserInfo info = new OAuth2Service.OAuthUserInfo("google-9", null, "Bob");
+        when(oAuth2Service.consumeState("link-state")).thenReturn(Optional.of(linkFor(7L)));
+        when(appUserRepository.findById(7L)).thenReturn(Optional.of(alice));
+        providerReturns(info);
+        when(oAuth2Service.linkAccount(alice, "google", info)).thenReturn(OAuth2Service.LinkResult.TAKEN_BY_OTHER_USER);
+
+        mockMvc.perform(get("/api/oauth2/google/callback")
+                .param("code", "auth-code")
+                .param("state", "link-state")
+                .cookie(new Cookie("oauth_state", "link-state")))
+            .andExpect(status().isFound())
+            .andExpect(header().string("Location", "http://localhost:5173/oauth-callback?link_error=taken&provider=google"));
+    }
+
+    @Test
+    void callback_forALink_whenTheProviderFails_reportsALinkError() throws Exception {
+        when(oAuth2Service.consumeState("link-state")).thenReturn(Optional.of(linkFor(7L)));
+        when(oAuth2Service.exchangeCodeForToken(eq("google"), eq("auth-code"), anyString()))
+            .thenThrow(new RuntimeException("Google is down"));
+
+        mockMvc.perform(get("/api/oauth2/google/callback")
+                .param("code", "auth-code")
+                .param("state", "link-state")
+                .cookie(new Cookie("oauth_state", "link-state")))
+            .andExpect(status().isFound())
+            .andExpect(header().string("Location", "http://localhost:5173/oauth-callback?link_error=auth_failed"));
     }
 
     @Test

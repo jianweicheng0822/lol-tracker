@@ -3,11 +3,11 @@ import { render, screen, act } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import AppHeader from "./AppHeader";
-import { setAuthToken, getAuthToken, fetchAdminStatus } from "../api";
+import { setAuthToken, getAuthToken, fetchAdminStatus, fetchLinkedAccounts, fetchOAuthProviders } from "../api";
 
 vi.mock("../api", async () => {
   const actual = await vi.importActual<typeof import("../api")>("../api");
-  return { ...actual, fetchAdminStatus: vi.fn() };
+  return { ...actual, fetchAdminStatus: vi.fn(), fetchLinkedAccounts: vi.fn(), fetchOAuthProviders: vi.fn() };
 });
 
 vi.mock("./SearchBar", () => ({
@@ -126,6 +126,32 @@ describe("AppHeader", () => {
     expect(getAuthToken()).toBeNull();
     expect(screen.getByRole("button", { name: "Log in" })).toBeInTheDocument();
     expect(screen.getByTestId("toast")).toHaveTextContent("Logged out successfully");
+  });
+
+  it("opens Linked accounts from the account menu", async () => {
+    vi.mocked(fetchLinkedAccounts).mockResolvedValue({ hasPassword: true, linked: ["google"] });
+    vi.mocked(fetchOAuthProviders).mockResolvedValue({ google: true, discord: true });
+    setAuthToken(fakeToken("JIANWEICHENG"));
+    const user = userEvent.setup();
+    renderHeader();
+
+    await user.click(screen.getByRole("button", { name: /JIANWEICHENG/ }));
+    await user.click(screen.getByRole("menuitem", { name: "Linked accounts" }));
+
+    expect(screen.queryByRole("menu")).not.toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Linked accounts" })).toBeInTheDocument();
+    expect(await screen.findByRole("button", { name: "Link Discord" })).toBeInTheDocument();
+  });
+
+  it("shows a toast another page asked for when redirecting here", () => {
+    setAuthToken(fakeToken("JIANWEICHENG"));
+    render(
+      <MemoryRouter initialEntries={[{ pathname: "/", state: { toast: "Google linked" } }]}>
+        <AppHeader />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByTestId("toast")).toHaveTextContent("Google linked");
   });
 
   it("closes the account menu on Escape or an outside click", async () => {

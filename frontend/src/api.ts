@@ -513,6 +513,30 @@ export async function fetchOAuthProviders(): Promise<{ google: boolean; discord:
   return res.json();
 }
 
+export type OAuthProvider = "google" | "discord";
+
+/** How the logged-in user can sign in: a password, and which providers are linked. */
+export async function fetchLinkedAccounts(): Promise<{ hasPassword: boolean; linked: OAuthProvider[] }> {
+  const res = await fetchWithTimeout(`${BASE}/api/oauth2/accounts`, fetchOpts({ headers: authHeaders() }));
+  if (res.status === 401) throw new AuthRequiredError(await readErrorMessage(res));
+  if (!res.ok) throw new Error(await readErrorMessage(res));
+  return res.json();
+}
+
+/**
+ * Start linking Google/Discord to the logged-in account. The caller sends the browser to the
+ * returned URL; the provider then sends it back to /oauth-callback?linked=… (or ?link_error=…).
+ */
+export async function startOAuthLink(provider: OAuthProvider): Promise<string> {
+  const res = await fetchWithTimeout(`${BASE}/api/oauth2/${provider}/link`, fetchOpts({
+    method: "POST",
+    headers: authHeaders(),
+  }));
+  if (res.status === 401) throw new AuthRequiredError(await readErrorMessage(res));
+  if (!res.ok) throw new Error(await readErrorMessage(res));
+  return (await res.json()).url;
+}
+
 // --- Search History ---
 
 export async function fetchSearchHistory(): Promise<{ gameName: string; tagLine: string; region: string; searchedAt: string }[]> {

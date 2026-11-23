@@ -2,6 +2,24 @@ import { useEffect } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { setAuthToken } from "../api";
 import { COLORS } from "../utils/colors";
+import { takeLinkReturnPath } from "../utils/linkReturn";
+
+const PROVIDER_NAMES: Record<string, string> = { google: "Google", discord: "Discord" };
+
+/** Why linking a Google/Discord account didn't work, in words. */
+function linkErrorMessage(code: string, provider: string): string {
+  const name = PROVIDER_NAMES[provider] ?? "That";
+  switch (code) {
+    case "taken":
+      return `This ${name} account is already linked to a different account.`;
+    case "provider_linked":
+      return `Your account already has a different ${name} account linked.`;
+    default:
+      return "Couldn't link the account. Please try again.";
+  }
+}
+
+
 
 export default function OAuthCallbackPage() {
   const [searchParams] = useSearchParams();
@@ -12,27 +30,35 @@ export default function OAuthCallbackPage() {
   // navigating away with replace also keeps it out of the browser history
   const token = new URLSearchParams(hash.replace(/^#/, "")).get("token");
   const errorParam = searchParams.get("error");
+  // Linking Google/Discord to an account that's already logged in: no token comes back
+  const linked = searchParams.get("linked");
+  const linkError = searchParams.get("link_error");
 
   useEffect(() => {
     if (token) {
       setAuthToken(token);
       navigate("/", { replace: true });
+    } else if (linked) {
+      const name = PROVIDER_NAMES[linked] ?? "Account";
+      navigate(takeLinkReturnPath(), { replace: true, state: { toast: `${name} linked` } });
     }
-  }, [token, navigate]);
+  }, [token, linked, navigate]);
 
-  const error = errorParam
-    ? "Authentication failed. Please try again."
-    : !token
-      ? "No authentication token received."
-      : null;
+  const error = linkError
+    ? linkErrorMessage(linkError, searchParams.get("provider") ?? "")
+    : errorParam
+      ? "Authentication failed. Please try again."
+      : !token && !linked
+        ? "No authentication token received."
+        : null;
 
   if (error) {
     return (
       <div style={styles.page}>
         <div style={styles.card}>
           <div style={styles.errorText}>{error}</div>
-          <button style={styles.button} onClick={() => navigate("/")}>
-            Back to Home
+          <button style={styles.button} onClick={() => navigate(linkError ? takeLinkReturnPath() : "/")}>
+            {linkError ? "Back" : "Back to Home"}
           </button>
         </div>
       </div>
@@ -41,7 +67,7 @@ export default function OAuthCallbackPage() {
 
   return (
     <div style={styles.page}>
-      <div style={styles.card}>Logging in...</div>
+      <div style={styles.card}>{linked ? "Linking..." : "Logging in..."}</div>
     </div>
   );
 }

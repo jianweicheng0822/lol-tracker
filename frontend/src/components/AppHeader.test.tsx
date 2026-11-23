@@ -128,7 +128,7 @@ describe("AppHeader", () => {
     expect(screen.getByTestId("toast")).toHaveTextContent("Logged out successfully");
   });
 
-  it("opens Linked accounts from the account menu", async () => {
+  it("opens Account from the account menu", async () => {
     vi.mocked(fetchLinkedAccounts).mockResolvedValue({ hasPassword: true, linked: ["google"] });
     vi.mocked(fetchOAuthProviders).mockResolvedValue({ google: true, discord: true });
     setAuthToken(fakeToken("JIANWEICHENG"));
@@ -136,10 +136,10 @@ describe("AppHeader", () => {
     renderHeader();
 
     await user.click(screen.getByRole("button", { name: /JIANWEICHENG/ }));
-    await user.click(screen.getByRole("menuitem", { name: "Linked accounts" }));
+    await user.click(screen.getByRole("menuitem", { name: "Account" }));
 
     expect(screen.queryByRole("menu")).not.toBeInTheDocument();
-    expect(screen.getByRole("dialog", { name: "Linked accounts" })).toBeInTheDocument();
+    expect(screen.getByRole("dialog", { name: "Account" })).toBeInTheDocument();
     expect(await screen.findByRole("button", { name: "Link Discord" })).toBeInTheDocument();
   });
 

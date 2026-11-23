@@ -4,6 +4,7 @@ import com.jw.backend.entity.AppUser;
 import com.jw.backend.entity.OAuthAccount;
 import com.jw.backend.repository.AppUserRepository;
 import com.jw.backend.repository.OAuthAccountRepository;
+import com.jw.backend.repository.ReleasedUsernameRepository;
 import com.jw.backend.security.OAuth2Properties;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -30,6 +31,11 @@ class OAuth2ServiceTest {
     @Mock
     private AppUserRepository appUserRepository;
 
+    @Mock
+    private ReleasedUsernameRepository releasedUsernameRepository;
+
+    private UsernameService usernameService;
+
     private OAuth2Properties properties;
     private OAuth2Service service;
 
@@ -48,7 +54,9 @@ class OAuth2ServiceTest {
 
         properties.setFrontendUrl("http://localhost:5173");
 
-        service = new OAuth2Service(properties, oauthRepository, appUserRepository);
+        usernameService = new UsernameService(appUserRepository, releasedUsernameRepository, "gtr-admin",
+            java.time.Duration.ofDays(1), java.time.Clock.systemUTC());
+        service = new OAuth2Service(properties, oauthRepository, appUserRepository, usernameService);
     }
 
     @Test
@@ -287,7 +295,7 @@ class OAuth2ServiceTest {
         assertTrue(service.isProviderConfigured("discord"));
 
         OAuth2Properties emptyProps = new OAuth2Properties();
-        OAuth2Service emptyService = new OAuth2Service(emptyProps, oauthRepository, appUserRepository);
+        OAuth2Service emptyService = new OAuth2Service(emptyProps, oauthRepository, appUserRepository, usernameService);
         assertFalse(emptyService.isProviderConfigured("google"));
     }
 

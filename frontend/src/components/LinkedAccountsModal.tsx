@@ -1,11 +1,13 @@
 /**
  * @file LinkedAccountsModal.tsx
- * @description Lets a logged-in user see how they can sign in and link Google/Discord, so a
- * forgotten password doesn't lock them out (we don't collect email, so there's no reset link).
+ * @description The logged-in user's account: change the username (Google/Discord sign-ups get one
+ * made from their profile name, often just "google"), see how they can sign in, and link
+ * Google/Discord so a forgotten password doesn't lock them out (no email, so no reset link).
  * @module frontend.components
  */
 import { useEffect, useState } from "react";
-import { fetchLinkedAccounts, fetchOAuthProviders, startOAuthLink, type OAuthProvider } from "../api";
+import { changeUsername, fetchLinkedAccounts, fetchOAuthProviders, startOAuthLink, type OAuthProvider } from "../api";
+import { useAuth } from "../hooks/useAuth";
 import { COLORS } from "../utils/colors";
 import { useBodyScrollLock } from "../hooks/useBodyScrollLock";
 import { GoogleIcon, DiscordIcon } from "./ProviderIcons";
@@ -26,17 +28,53 @@ export default function LinkedAccountsModal({ onClose }: Props) {
   const [available, setAvailable] = useState<Record<OAuthProvider, boolean>>({ google: false, discord: false });
   const [linking, setLinking] = useState<OAuthProvider | null>(null);
   const [error, setError] = useState("");
+  const { username } = useAuth();
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState("");
+  const [saving, setSaving] = useState(false);
+  const [nameError, setNameError] = useState("");
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    // Escape cancels an edit first, then closes
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== "Escape") return;
+      if (editing) setEditing(false);
+      else onClose();
+    };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-  }, [onClose]);
+  }, [onClose, editing]);
 
   useEffect(() => {
     fetchLinkedAccounts().then(setAccounts).catch(() => setError("Couldn't load your accounts. Please try again."));
     fetchOAuthProviders().then(setAvailable).catch(() => {});
   }, []);
+
+  function startEdit() {
+    setDraft(username ?? "");
+    setNameError("");
+    setSaved(false);
+    setEditing(true);
+  }
+
+  async function saveName(e: React.FormEvent) {
+    e.preventDefault();
+    const name = draft.trim();
+    if (!name) { setNameError("Username is required"); return; }
+    if (name === username) { setEditing(false); return; }
+    setSaving(true);
+    setNameError("");
+    try {
+      await changeUsername(name);
+      setEditing(false);
+      setSaved(true);
+    } catch (err) {
+      setNameError(err instanceof Error && err.message ? err.message : "Couldn't change the username. Please try again.");
+    } finally {
+      setSaving(false);
+    }
+  }
 
   async function link(provider: OAuthProvider) {
     setError("");
@@ -56,16 +94,44 @@ export default function LinkedAccountsModal({ onClose }: Props) {
       <div
         role="dialog"
         aria-modal="true"
-        aria-labelledby="linked-accounts-title"
+        aria-labelledby="account-title"
         onClick={(e) => e.stopPropagation()}
         style={styles.dialog}
       >
-        <h2 id="linked-accounts-title" style={styles.title}>Linked accounts</h2>
+        <h2 id="account-title" style={styles.title}>Account</h2>
+
+        {editing ? (
+          <form onSubmit={saveName} style={{ ...styles.row, gap: 8, borderBottom: "none", paddingBottom: 4 }}>
+            <input
+              autoFocus
+              aria-label="New username"
+              value={draft}
+              maxLength={50}
+              onChange={(e) => setDraft(e.target.value)}
+              style={styles.input}
+            />
+            <button type="submit" style={styles.saveBtn} disabled={saving}>{saving ? "Saving..." : "Save"}</button>
+            <button type="button" style={styles.cancelBtn} onClick={() => setEditing(false)} disabled={saving}>Cancel</button>
+          </form>
+        ) : (
+          <div style={{ ...styles.row, marginTop: 12 }}>
+            <span style={styles.who}>
+              <span style={styles.label}>Username</span>
+              <span style={styles.name}>{username}</span>
+            </span>
+            <button type="button" style={styles.linkBtn} onClick={startEdit} aria-label="Change username">
+              Change
+            </button>
+          </div>
+        )}
+        {editing && nameError && <div role="alert" style={{ ...styles.error, marginTop: 4 }}>{nameError}</div>}
+        {editing && <div style={{ ...styles.muted, padding: "4px 0 12px", borderBottom: `1px solid ${COLORS.divider}` }}>You'll log in with the new name.</div>}
+        {saved && !editing && <div role="status" style={{ ...styles.ok, paddingTop: 8 }}>Username changed</div>}
 
         {!accounts && !error && <div style={styles.muted}>Loading...</div>}
 
         {accounts && (
-          <div style={{ marginTop: 12 }}>
+          <div style={{ marginTop: 4 }}>
             <div style={styles.row}>
               <span style={styles.who}>Username &amp; password</span>
               <span style={accounts.hasPassword ? styles.ok : styles.muted}>
@@ -134,7 +200,37 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 14,
     color: COLORS.textPrimary,
   },
-  who: { display: "flex", alignItems: "center", gap: 10 },
+  who: { display: "flex", alignItems: "center", gap: 10, minWidth: 0 },
+  label: { fontSize: 13, color: COLORS.textDim },
+  name: { fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  input: {
+    flex: 1,
+    minWidth: 0,
+    padding: "7px 10px",
+    borderRadius: 3,
+    border: "1px solid rgba(255,255,255,0.15)",
+    background: "rgba(0,0,0,0.25)",
+    color: COLORS.textPrimary,
+    fontSize: 14,
+  },
+  saveBtn: {
+    padding: "7px 14px",
+    borderRadius: 3,
+    border: "none",
+    background: COLORS.gold,
+    color: "#1a1206",
+    fontSize: 13,
+    fontWeight: 700,
+    cursor: "pointer",
+  },
+  cancelBtn: {
+    padding: "7px 8px",
+    border: "none",
+    background: "transparent",
+    color: COLORS.textDim,
+    fontSize: 13,
+    cursor: "pointer",
+  },
   ok: { fontSize: 13, color: COLORS.teal },
   muted: { fontSize: 13, color: COLORS.textDim },
   linkBtn: {

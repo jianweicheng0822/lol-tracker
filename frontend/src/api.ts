@@ -537,6 +537,26 @@ export async function startOAuthLink(provider: OAuthProvider): Promise<string> {
   return (await res.json()).url;
 }
 
+/**
+ * Change the logged-in user's username. Login tokens carry the username, so the server sends a new
+ * token, which is saved here (everything showing the name updates).
+ *
+ * @returns The new username as stored (trimmed).
+ * @throws Error with the server's message (e.g. "Username already taken").
+ */
+export async function changeUsername(username: string): Promise<string> {
+  const res = await fetchWithTimeout(`${BASE}/api/auth/username`, fetchOpts({
+    method: "PUT",
+    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    body: JSON.stringify({ username }),
+  }));
+  if (res.status === 401) throw new AuthRequiredError(await readErrorMessage(res));
+  if (!res.ok) throw new Error(await readErrorMessage(res));
+  const data: { token: string; username: string } = await res.json();
+  setAuthToken(data.token);
+  return data.username;
+}
+
 // --- Search History ---
 
 export async function fetchSearchHistory(): Promise<{ gameName: string; tagLine: string; region: string; searchedAt: string }[]> {

@@ -171,7 +171,7 @@ export default function AppHeader({ showSearch = true, showLogo = true, searchDe
                   style={styles.menuItem}
                   onClick={() => { setMenuOpen(false); setShowLinkedAccounts(true); }}
                 >
-                  Linked accounts
+                  Account
                 </button>
                 <button role="menuitem" style={styles.menuItem} onClick={logOut}>
                   Log out

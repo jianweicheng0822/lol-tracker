@@ -8,6 +8,11 @@ vi.mock("../api", () => ({
   fetchLinkedAccounts: vi.fn(),
   fetchOAuthProviders: vi.fn(),
   startOAuthLink: vi.fn(),
+  changeUsername: vi.fn(),
+}));
+
+vi.mock("../hooks/useAuth", () => ({
+  useAuth: () => ({ isLoggedIn: true, username: "google" }),
 }));
 
 describe("LinkedAccountsModal", () => {
@@ -19,6 +24,72 @@ describe("LinkedAccountsModal", () => {
     sessionStorage.clear();
     vi.mocked(api.fetchOAuthProviders).mockResolvedValue({ google: true, discord: true });
     vi.stubGlobal("location", { ...window.location, assign, pathname: "/player/NA/Faker/KR1", search: "" });
+  });
+
+  // --- username ---
+
+  it("shows the username and changes it", async () => {
+    vi.mocked(api.fetchLinkedAccounts).mockResolvedValue({ hasPassword: false, linked: ["google"] });
+    vi.mocked(api.changeUsername).mockResolvedValue("李明");
+    const user = userEvent.setup();
+    render(<LinkedAccountsModal onClose={onClose} />);
+
+    expect(screen.getByText("google")).toBeInTheDocument();
+    await user.click(screen.getByRole("button", { name: "Change username" }));
+    const input = screen.getByRole("textbox", { name: "New username" });
+    expect(input).toHaveValue("google");
+    await user.clear(input);
+    await user.type(input, "  李明 {Enter}");
+
+    expect(api.changeUsername).toHaveBeenCalledWith("李明");
+    expect(await screen.findByRole("status")).toHaveTextContent("Username changed");
+    expect(screen.queryByRole("textbox", { name: "New username" })).not.toBeInTheDocument();
+  });
+
+  it("shows the server's error and keeps the edit open", async () => {
+    vi.mocked(api.fetchLinkedAccounts).mockResolvedValue({ hasPassword: true, linked: [] });
+    vi.mocked(api.changeUsername).mockRejectedValue(new Error("Username already taken"));
+    const user = userEvent.setup();
+    render(<LinkedAccountsModal onClose={onClose} />);
+
+    await user.click(screen.getByRole("button", { name: "Change username" }));
+    const input = screen.getByRole("textbox", { name: "New username" });
+    await user.clear(input);
+    await user.type(input, "bob");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("Username already taken");
+    expect(input).toHaveValue("bob");
+  });
+
+  it("doesn't call the server for a blank or unchanged name", async () => {
+    vi.mocked(api.fetchLinkedAccounts).mockResolvedValue({ hasPassword: true, linked: [] });
+    const user = userEvent.setup();
+    render(<LinkedAccountsModal onClose={onClose} />);
+
+    await user.click(screen.getByRole("button", { name: "Change username" }));
+    const input = screen.getByRole("textbox", { name: "New username" });
+    await user.clear(input);
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(screen.getByRole("alert")).toHaveTextContent("Username is required");
+
+    await user.type(input, "google");
+    await user.click(screen.getByRole("button", { name: "Save" }));
+    expect(screen.queryByRole("textbox", { name: "New username" })).not.toBeInTheDocument();
+    expect(api.changeUsername).not.toHaveBeenCalled();
+  });
+
+  it("Escape cancels the edit first, then closes", async () => {
+    vi.mocked(api.fetchLinkedAccounts).mockResolvedValue({ hasPassword: true, linked: [] });
+    const user = userEvent.setup();
+    render(<LinkedAccountsModal onClose={onClose} />);
+
+    await user.click(screen.getByRole("button", { name: "Change username" }));
+    await user.keyboard("{Escape}");
+    expect(screen.queryByRole("textbox", { name: "New username" })).not.toBeInTheDocument();
+    expect(onClose).not.toHaveBeenCalled();
+    await user.keyboard("{Escape}");
+    expect(onClose).toHaveBeenCalled();
   });
 
   function rowFor(label: string) {

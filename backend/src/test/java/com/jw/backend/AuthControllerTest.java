@@ -11,6 +11,12 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.context.annotation.Import;
+import org.springframework.test.context.TestPropertySource;
+import java.security.Principal;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.put;
+import com.jw.backend.repository.ReleasedUsernameRepository;
+import com.jw.backend.service.UsernameService;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.Optional;
@@ -24,6 +30,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
 @WebMvcTest(AuthController.class)
+@Import(UsernameService.class)
+@TestPropertySource(properties = "admin.usernames=gtr-admin")
 @AutoConfigureMockMvc(addFilters = false)
 class AuthControllerTest {
 
@@ -41,6 +49,9 @@ class AuthControllerTest {
 
     @MockitoBean
     private RateLimitService rateLimitService;
+
+    @MockitoBean
+    private ReleasedUsernameRepository releasedUsernameRepository;
 
     // -- Register --
 
@@ -224,4 +235,93 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.token").value("jwt-token"));
     }
+
+    // -- Change username --
+
+    private static final Principal ALICE = () -> "alice";
+
+    private AppUser alice() {
+        AppUser alice = new AppUser("alice", "hashed", true);
+        alice.setId(7L);
+        when(appUserRepository.findByUsername("alice")).thenReturn(Optional.of(alice));
+        return alice;
+    }
+
+    private org.springframework.test.web.servlet.ResultActions rename(Principal who, String newName) throws Exception {
+        var request = put("/api/auth/username")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content("{\"username\": " + (newName == null ? "null" : "\"" + newName + "\"") + "}");
+        if (who != null) request.principal(who);
+        return mockMvc.perform(request);
+    }
+
+    @Test
+    void changeUsername_withoutLogin_returns401() throws Exception {
+        rename(null, "newname").andExpect(status().isUnauthorized());
+        verify(appUserRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void changeUsername_returnsANewTokenForTheNewName() throws Exception {
+        AppUser alice = alice();
+        when(jwtUtil.generateToken("alice2")).thenReturn("new-jwt");
+
+        rename(ALICE, "  alice2 ")
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.username").value("alice2"))
+                .andExpect(jsonPath("$.token").value("new-jwt"));
+        verify(appUserRepository).saveAndFlush(alice);
+        verify(releasedUsernameRepository).save(any());
+    }
+
+    @Test
+    void changeUsername_withABlankOrLongName_returns400() throws Exception {
+        alice();
+        rename(ALICE, "   ").andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Username is required"));
+        rename(ALICE, null).andExpect(status().isBadRequest());
+        rename(ALICE, "a".repeat(51)).andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.error").value("Username must be 50 characters or fewer"));
+        verify(appUserRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void changeUsername_toATakenName_returns409() throws Exception {
+        alice();
+        AppUser bob = new AppUser("bob", "hashed", true);
+        bob.setId(8L);
+        when(appUserRepository.findByUsername("bob")).thenReturn(Optional.of(bob));
+
+        rename(ALICE, "bob").andExpect(status().isConflict())
+                .andExpect(jsonPath("$.error").value("Username already taken"));
+    }
+
+    @Test
+    void changeUsername_toTheAdminName_returns409() throws Exception {
+        alice();
+        rename(ALICE, "gtr-admin").andExpect(status().isConflict());
+        verify(appUserRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void changeUsername_ofTheAdmin_returns403() throws Exception {
+        AppUser admin = new AppUser("gtr-admin", "hashed", true);
+        admin.setId(1L);
+        when(appUserRepository.findByUsername("gtr-admin")).thenReturn(Optional.of(admin));
+
+        rename(() -> "gtr-admin", "someone").andExpect(status().isForbidden());
+        verify(appUserRepository, never()).saveAndFlush(any());
+    }
+
+    @Test
+    void register_withTheAdminName_returns409() throws Exception {
+        mockMvc.perform(post("/api/auth/register")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content("""
+                            {"username": "gtr-admin", "password": "password123"}
+                            """))
+                .andExpect(status().isConflict());
+        verify(appUserRepository, never()).save(any());
+    }
+
 }

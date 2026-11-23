@@ -11,16 +11,19 @@ import com.jw.backend.entity.AppUser;
 import com.jw.backend.repository.AppUserRepository;
 import com.jw.backend.security.JwtUtil;
 import com.jw.backend.service.RateLimitService;
+import com.jw.backend.service.UsernameService;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.nio.charset.StandardCharsets;
+import java.security.Principal;
 import java.util.Map;
 import java.util.Optional;
 
@@ -38,6 +41,7 @@ public class AuthController {
     private final PasswordEncoder passwordEncoder;
     private final JwtUtil jwtUtil;
     private final RateLimitService rateLimitService;
+    private final UsernameService usernameService;
 
     /**
      * Construct the controller with required authentication dependencies.
@@ -46,13 +50,15 @@ public class AuthController {
      * @param passwordEncoder   encoder for hashing and verifying passwords
      * @param jwtUtil           utility for generating signed JWT tokens
      * @param rateLimitService  service for enforcing per-IP rate limits
+     * @param usernameService   who may use which username
      */
     public AuthController(AppUserRepository appUserRepository, PasswordEncoder passwordEncoder,
-                           JwtUtil jwtUtil, RateLimitService rateLimitService) {
+                           JwtUtil jwtUtil, RateLimitService rateLimitService, UsernameService usernameService) {
         this.appUserRepository = appUserRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtUtil = jwtUtil;
         this.rateLimitService = rateLimitService;
+        this.usernameService = usernameService;
     }
 
     /**
@@ -86,7 +92,7 @@ public class AuthController {
             return ResponseEntity.badRequest().body(Map.of("error", PASSWORD_RULE));
         }
 
-        if (appUserRepository.findByUsername(username).isPresent()) {
+        if (!usernameService.isAvailable(username, null)) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(Map.of("error", "Username already taken"));
         }
@@ -125,6 +131,47 @@ public class AuthController {
         AppUser user = optUser.get();
         String token = jwtUtil.generateToken(user.getUsername());
         return ResponseEntity.ok(new AuthResponse(token, user.getTier()));
+    }
+
+    /** Body of PUT /api/auth/username. */
+    public record UsernameChangeRequest(String username) {}
+
+    /**
+     * Change the logged-in user's username. Login tokens carry the username, so this answers with a
+     * new token; the old one (and the user's other devices) stop working.
+     *
+     * @return 200 with {token, username}, 400 for a bad name, 401 if not logged in, 403 for an
+     *         admin account (admin rights go by username), or 409 if the name isn't available
+     */
+    @PutMapping("/username")
+    public ResponseEntity<?> changeUsername(@RequestBody UsernameChangeRequest request, Principal principal,
+                                            HttpServletRequest servletRequest) {
+        AppUser user = principal == null ? null : appUserRepository.findByUsername(principal.getName()).orElse(null);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "Authentication required"));
+        }
+        rateLimitService.checkRateLimit(servletRequest.getRemoteAddr(), 0);
+
+        String requested = request == null ? null : request.username();
+        Optional<String> invalid = usernameService.validationError(requested);
+        if (invalid.isPresent()) {
+            return ResponseEntity.badRequest().body(Map.of("error", invalid.get()));
+        }
+
+        UsernameService.RenameResult result;
+        try {
+            result = usernameService.rename(user, requested);
+        } catch (UsernameService.UsernameTakenException e) {
+            result = UsernameService.RenameResult.TAKEN;
+        }
+        return switch (result) {
+            case RENAMED, UNCHANGED -> ResponseEntity.ok(Map.of(
+                    "token", jwtUtil.generateToken(user.getUsername()),
+                    "username", user.getUsername()));
+            case TAKEN -> ResponseEntity.status(HttpStatus.CONFLICT).body(Map.of("error", "Username already taken"));
+            case ADMIN_CANNOT_RENAME -> ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "Admin accounts can't change their username"));
+        };
     }
 
 }

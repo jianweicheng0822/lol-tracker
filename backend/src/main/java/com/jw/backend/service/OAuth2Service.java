@@ -29,6 +29,7 @@ public class OAuth2Service {
     private final OAuth2Properties properties;
     private final OAuthAccountRepository oauthRepository;
     private final AppUserRepository appUserRepository;
+    private final UsernameService usernameService;
     private final RestTemplate restTemplate;
 
     /**
@@ -67,21 +68,21 @@ public class OAuth2Service {
     @Autowired
     public OAuth2Service(OAuth2Properties properties,
                          OAuthAccountRepository oauthRepository,
-                         AppUserRepository appUserRepository) {
-        this.properties = properties;
-        this.oauthRepository = oauthRepository;
-        this.appUserRepository = appUserRepository;
-        this.restTemplate = new RestTemplate();
+                         AppUserRepository appUserRepository,
+                         UsernameService usernameService) {
+        this(properties, oauthRepository, appUserRepository, usernameService, new RestTemplate());
     }
 
     // Visible for testing
     OAuth2Service(OAuth2Properties properties,
                   OAuthAccountRepository oauthRepository,
                   AppUserRepository appUserRepository,
+                  UsernameService usernameService,
                   RestTemplate restTemplate) {
         this.properties = properties;
         this.oauthRepository = oauthRepository;
         this.appUserRepository = appUserRepository;
+        this.usernameService = usernameService;
         this.restTemplate = restTemplate;
     }
 
@@ -333,7 +334,8 @@ public class OAuth2Service {
 
         String candidate = base;
         int suffix = 1;
-        while (appUserRepository.findByUsername(candidate).isPresent()) {
+        // Same rules as sign-up: not taken, not an admin name, not held after someone's rename
+        while (!usernameService.isAvailable(candidate, null)) {
             candidate = base + suffix;
             suffix++;
         }

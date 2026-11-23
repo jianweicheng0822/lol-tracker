@@ -1,22 +1,12 @@
 import type { RankedEntry } from "../../types";
 import { hideOnError } from "../../utils/ddragon";
-import { TIER_TINTS, TIER_COLORS, formatRank } from "../../utils/lp";
+import { TIER_TINTS, TIER_COLORS, formatRank, tierIconUrl } from "../../utils/lp";
 import { winRateColor, COLORS } from "../../utils/colors";
 
 const QUEUE_LABELS: Record<string, string> = {
   RANKED_SOLO_5x5: "Solo/Duo",
   RANKED_FLEX_SR: "Flex",
 };
-
-const TIER_ICON_BASE =
-  "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-mini-crests";
-
-const SVG_ONLY_TIERS = new Set(["EMERALD"]);
-
-function tierIconUrl(tier: string): string {
-  const ext = SVG_ONLY_TIERS.has(tier.toUpperCase()) ? "svg" : "png";
-  return `${TIER_ICON_BASE}/${tier.toLowerCase()}.${ext}`;
-}
 
 
 
@@ -33,7 +23,7 @@ export default function RankSummary({ entries }: Props) {
         <div style={styles.badge}>
           <div style={styles.queueLabel}>Ranked</div>
           <div style={styles.iconRow}>
-            <img src={`${TIER_ICON_BASE}/unranked.png`} alt="Unranked" style={styles.tierIcon} onError={hideOnError} />
+            <img src={tierIconUrl("unranked")} alt="Unranked" style={styles.tierIcon} onError={hideOnError} />
             <div style={styles.tier}>Unranked</div>
           </div>
         </div>

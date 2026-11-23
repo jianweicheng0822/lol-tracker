@@ -7,7 +7,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { fetchLeaderboard } from "../api";
 import { COLORS, winRateColor } from "../utils/colors";
-import { TIER_COLORS } from "../utils/lp";
+import { TIER_COLORS, tierIconUrl } from "../utils/lp";
 import { useDdragonVersion, ddragonBase } from "../utils/ddragon";
 import type { LeaderboardEntry, Region } from "../types";
 import AppHeader from "../components/AppHeader";
@@ -16,13 +16,6 @@ import { playerPath } from "../utils/playerPath";
 
 // Leaderboards cover the three major regions only (must match the backend's LEADERBOARD_REGIONS)
 const LEADERBOARD_REGIONS: Region[] = ["NA", "EUW", "KR"];
-
-const TIER_ICON_BASE =
-  "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-mini-crests";
-
-function tierIconUrl(tier: string): string {
-  return `${TIER_ICON_BASE}/${tier.toLowerCase()}.png`;
-}
 
 const TIERS = ["challenger", "grandmaster", "master"] as const;
 type Tier = (typeof TIERS)[number];

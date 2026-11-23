@@ -6,18 +6,9 @@ import { fetchAccount, fetchLiveGame } from "../api";
 import { useDdragonVersion, ddragonBase, championIconFallbackUrl, isCommunityDragonUrl, hideOnError, QUEUE_NAMES } from "../utils/ddragon";
 import { loadChampionMap } from "../utils/champion";
 import { COLORS, winRateColor } from "../utils/colors";
-import { TIER_COLORS, formatRank } from "../utils/lp";
+import { TIER_COLORS, formatRank, tierIconUrl } from "../utils/lp";
 import AppHeader from "../components/AppHeader";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
-
-const TIER_ICON_BASE =
-  "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-mini-crests";
-const SVG_ONLY_TIERS = new Set(["EMERALD"]);
-
-function tierIconUrl(tier: string): string {
-  const ext = SVG_ONLY_TIERS.has(tier.toUpperCase()) ? "svg" : "png";
-  return `${TIER_ICON_BASE}/${tier.toLowerCase()}.${ext}`;
-}
 
 
 function formatGameDuration(startTime: number, gameLength: number): string {

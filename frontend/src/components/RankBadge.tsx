@@ -6,23 +6,13 @@
  */
 import type { RankedEntry } from "../types";
 import { hideOnError } from "../utils/ddragon";
-import { TIER_COLORS, formatRank } from "../utils/lp";
+import { TIER_COLORS, formatRank, tierIconUrl } from "../utils/lp";
 import { COLORS } from "../utils/colors";
 
 const QUEUE_LABELS: Record<string, string> = {
   RANKED_SOLO_5x5: "Solo/Duo",
   RANKED_FLEX_SR: "Flex",
 };
-
-const TIER_ICON_BASE =
-  "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-mini-crests";
-
-const SVG_ONLY_TIERS = new Set(["EMERALD"]);
-
-function tierIconUrl(tier: string): string {
-  const ext = SVG_ONLY_TIERS.has(tier.toUpperCase()) ? "svg" : "png";
-  return `${TIER_ICON_BASE}/${tier.toLowerCase()}.${ext}`;
-}
 
 
 
@@ -66,7 +56,7 @@ export default function RankBadge({ entries }: { entries: RankedEntry[] }) {
           <div style={styles.queueLabel}>Ranked</div>
           <div style={styles.iconRow}>
             <img
-              src={`${TIER_ICON_BASE}/unranked.png`}
+              src={tierIconUrl("unranked")}
               alt="Unranked"
               style={styles.tierIcon}
               onError={hideOnError}

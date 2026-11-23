@@ -4,18 +4,8 @@ import type { ChampionMastery, MatchSummary, MultiSearchPlayer } from "../types"
 import { fetchMatchSummaries } from "../api";
 import { useDdragonVersion, ddragonBase, hideOnError, championIconFallbackUrl } from "../utils/ddragon";
 import { loadChampionMap } from "../utils/champion";
-import { TIER_COLORS, formatRank } from "../utils/lp";
+import { TIER_COLORS, formatRank, tierIconUrl } from "../utils/lp";
 import { COLORS, winRateColor } from "../utils/colors";
-
-const TIER_ICON_BASE =
-  "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-mini-crests";
-
-const SVG_ONLY_TIERS = new Set(["EMERALD"]);
-
-function tierIconUrl(tier: string): string {
-  const ext = SVG_ONLY_TIERS.has(tier.toUpperCase()) ? "svg" : "png";
-  return `${TIER_ICON_BASE}/${tier.toLowerCase()}.${ext}`;
-}
 
 /** Ranked solo/duo: the queue players care about when sizing up a lobby. */
 const RANKED_SOLO_QUEUE = 420;

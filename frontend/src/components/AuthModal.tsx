@@ -69,6 +69,8 @@ export default function AuthModal({ onSuccess, onClose }: Props) {
   }
 
   const hasOAuth = providers.google || providers.discord;
+  const submitDisabled = loading || !username.trim() || !password.trim();
+  const oauthVerb = mode === "register" ? "Sign up" : "Continue";
 
   return (
     <div
@@ -94,31 +96,62 @@ export default function AuthModal({ onSuccess, onClose }: Props) {
           padding: "28px 24px",
         }}
       >
-        <h2 style={{ margin: 0, fontSize: 20, fontWeight: 700, color: COLORS.textPrimary, textAlign: "center" }}>
-          {mode === "login" ? "Log In" : "Create Account"}
-        </h2>
-
-        {/* Toggle between login/register */}
-        <div style={{ textAlign: "center", marginTop: 8, fontSize: 13, color: COLORS.textDim }}>
-          {mode === "login" ? "Don't have an account? " : "Already have an account? "}
-          <button
-            type="button"
-            onClick={() => { setMode(mode === "login" ? "register" : "login"); setError(""); }}
-            style={{
-              background: "none",
-              border: "none",
-              color: "#C89B3C",
-              cursor: "pointer",
-              fontSize: 13,
-              textDecoration: "underline",
-              padding: 0,
-            }}
-          >
-            {mode === "login" ? "Register" : "Log in"}
-          </button>
+        {/* Two tabs so it's obvious at a glance whether you're logging in or signing up */}
+        <div role="tablist" aria-label="Log in or create an account" style={tabListStyle}>
+          {(["login", "register"] as const).map((m) => (
+            <button
+              key={m}
+              type="button"
+              role="tab"
+              aria-selected={mode === m}
+              onClick={() => { setMode(m); setError(""); }}
+              style={{
+                ...tabStyle,
+                color: mode === m ? COLORS.textPrimary : COLORS.textDim,
+                borderBottomColor: mode === m ? COLORS.gold : "transparent",
+              }}
+            >
+              {m === "login" ? "Log In" : "Create Account"}
+            </button>
+          ))}
         </div>
 
-        <form onSubmit={handleSubmit} style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 12 }}>
+        {/* Google/Discord come first: there's no password to forget, and username accounts can't be
+            recovered (we don't collect email). Username + password stays available below. */}
+        {hasOAuth && (
+          <>
+            <div style={{ marginTop: 20, display: "flex", flexDirection: "column", gap: 8 }}>
+              {providers.google && (
+                <button
+                  type="button"
+                  onClick={() => { window.location.href = getOAuthUrl("google"); }}
+                  style={oauthBtnStyle}
+                >
+                  <GoogleIcon />
+                  {oauthVerb} with Google
+                </button>
+              )}
+              {providers.discord && (
+                <button
+                  type="button"
+                  onClick={() => { window.location.href = getOAuthUrl("discord"); }}
+                  style={{ ...oauthBtnStyle, background: "#5865F2", color: "#fff", border: "none" }}
+                >
+                  <DiscordIcon />
+                  {oauthVerb} with Discord
+                </button>
+              )}
+            </div>
+
+            <div style={dividerStyle}>
+              <span style={dividerLineStyle} />
+              <span style={{ color: COLORS.textDim, fontSize: 12, padding: "0 12px" }}>or</span>
+              <span style={dividerLineStyle} />
+            </div>
+          </>
+        )}
+
+        <form onSubmit={handleSubmit} style={{ marginTop: hasOAuth ? 0 : 20, display: "flex", flexDirection: "column", gap: 12 }}>
           <input
             value={username}
             onChange={(e) => setUsername(e.target.value)}
@@ -131,24 +164,20 @@ export default function AuthModal({ onSuccess, onClose }: Props) {
           <input
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
+            placeholder={mode === "register" ? `Password (${PASSWORD_MIN}+ characters)` : "Password"}
+            aria-label="Password"
             type="password"
             name="password"
             // Lets password managers fill a saved password on login, or offer to generate/save one on sign-up
             autoComplete={mode === "login" ? "current-password" : "new-password"}
-            aria-describedby={mode === "register" ? "password-hint" : undefined}
+            aria-describedby={mode === "register" ? "recovery-note" : undefined}
             style={inputStyle}
           />
+
+          {/* We don't collect email, so there's no reset link to send */}
           {mode === "register" && (
-            <div
-              id="password-hint"
-              style={{
-                fontSize: 12,
-                marginTop: -6,
-                color: password.length > 0 && password.length < PASSWORD_MIN ? "#E8A87C" : COLORS.textDim,
-              }}
-            >
-              At least {PASSWORD_MIN} characters
+            <div id="recovery-note" role="note" style={{ fontSize: 12, color: "#E8A87C", marginTop: -4 }}>
+              Forgotten passwords can't be reset.
             </div>
           )}
 
@@ -158,55 +187,24 @@ export default function AuthModal({ onSuccess, onClose }: Props) {
 
           <button
             type="submit"
-            disabled={loading || !username.trim() || !password.trim()}
+            disabled={submitDisabled}
             style={{
               padding: "10px 0",
               borderRadius: 3,
-              border: "none",
-              background: loading || !username.trim() || !password.trim() ? "#1E2328" : "#785A28",
-              color: loading || !username.trim() || !password.trim() ? COLORS.textDim : "#fff",
-              cursor: loading || !username.trim() || !password.trim() ? "not-allowed" : "pointer",
+              // With Google/Discord above, this is the secondary option: outlined instead of solid gold
+              border: hasOAuth && !submitDisabled ? "1px solid rgba(200,155,60,0.45)" : "none",
+              background: submitDisabled ? "#1E2328" : hasOAuth ? "transparent" : "#785A28",
+              color: submitDisabled ? COLORS.textDim : hasOAuth ? COLORS.textSecondary : "#fff",
+              cursor: submitDisabled ? "not-allowed" : "pointer",
               fontSize: 14,
               fontWeight: 600,
               marginTop: 4,
             }}
           >
-            {loading ? "Please wait..." : mode === "login" ? "Log In" : "Register"}
+            {loading ? "Please wait..." : mode === "login" ? "Log In" : "Create account"}
           </button>
         </form>
 
-        {hasOAuth && (
-          <>
-            <div style={dividerStyle}>
-              <span style={dividerLineStyle} />
-              <span style={{ color: COLORS.textDim, fontSize: 12, padding: "0 12px" }}>or</span>
-              <span style={dividerLineStyle} />
-            </div>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {providers.google && (
-                <button
-                  type="button"
-                  onClick={() => { window.location.href = getOAuthUrl("google"); }}
-                  style={oauthBtnStyle}
-                >
-                  <GoogleIcon />
-                  Continue with Google
-                </button>
-              )}
-              {providers.discord && (
-                <button
-                  type="button"
-                  onClick={() => { window.location.href = getOAuthUrl("discord"); }}
-                  style={{ ...oauthBtnStyle, background: "#5865F2", color: "#fff", border: "none" }}
-                >
-                  <DiscordIcon />
-                  Continue with Discord
-                </button>
-              )}
-            </div>
-          </>
-        )}
       </div>
     </div>
   );
@@ -253,6 +251,24 @@ const oauthBtnStyle: React.CSSProperties = {
   color: "#333",
   cursor: "pointer",
   fontSize: 14,
+  fontWeight: 600,
+};
+
+const tabListStyle: React.CSSProperties = {
+  display: "flex",
+  borderBottom: "1px solid rgba(255,255,255,0.08)",
+  margin: "-8px -4px 0",
+};
+
+const tabStyle: React.CSSProperties = {
+  flex: 1,
+  padding: "8px 0 12px",
+  marginBottom: -1,
+  background: "none",
+  border: "none",
+  borderBottom: "2px solid transparent",
+  cursor: "pointer",
+  fontSize: 15,
   fontWeight: 600,
 };
 

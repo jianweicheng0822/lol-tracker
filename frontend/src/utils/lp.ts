@@ -43,8 +43,19 @@ export function toAbsoluteLp(tier: string, rank: string, lp: number): number {
   const tierBase = TIER_VALUES[tier.toUpperCase()] ?? 0;
   const rankBase = RANK_VALUES[rank.toUpperCase()] ?? 0;
   // Apex tiers (Master+) have no divisions — LP stacks directly on the base
-  const isApex = ["MASTER", "GRANDMASTER", "CHALLENGER"].includes(tier.toUpperCase());
-  return tierBase + (isApex ? lp : rankBase + lp);
+  return tierBase + (isApexTier(tier) ? lp : rankBase + lp);
+}
+
+const APEX_TIERS = new Set(["MASTER", "GRANDMASTER", "CHALLENGER"]);
+
+/** Master, Grandmaster and Challenger have no divisions (I-IV), only LP. Case-insensitive. */
+export function isApexTier(tier: string): boolean {
+  return APEX_TIERS.has(tier.toUpperCase());
+}
+
+/** "DIAMOND" -> "Diamond". */
+export function formatTier(tier: string): string {
+  return tier.charAt(0) + tier.slice(1).toLowerCase();
 }
 
 /** Canonical solid colors for each ranked tier. */
@@ -57,7 +68,8 @@ export const TIER_COLORS: Record<string, string> = {
   EMERALD: "#28B464",
   DIAMOND: "#6490DC",
   MASTER: "#A064DC",
-  GRANDMASTER: "#DC5050",
+  // Ember orange, not red: red is the loss color, so a red Grandmaster read as "lost"
+  GRANDMASTER: "#E07A3C",
   CHALLENGER: "#F0C850",
 };
 
@@ -71,7 +83,7 @@ export const TIER_TINTS: Record<string, string> = {
   EMERALD: "rgba(40,180,100,0.12)",
   DIAMOND: "rgba(100,140,220,0.14)",
   MASTER: "rgba(160,100,220,0.14)",
-  GRANDMASTER: "rgba(220,80,80,0.14)",
+  GRANDMASTER: "rgba(224,122,60,0.14)",
   CHALLENGER: "rgba(240,200,80,0.14)",
 };
 
@@ -132,8 +144,8 @@ const TIER_ORDER = ["IRON", "BRONZE", "SILVER", "GOLD", "PLATINUM", "EMERALD", "
 
 /** "Diamond II" below Master, just "Grandmaster" for apex tiers. */
 export function formatRank(tier: string, rank: string): string {
-  const t = tier.charAt(0) + tier.slice(1).toLowerCase();
-  return ["MASTER", "GRANDMASTER", "CHALLENGER"].includes(tier.toUpperCase()) ? t : `${t} ${rank}`;
+  const t = formatTier(tier);
+  return isApexTier(tier) ? t : `${t} ${rank}`;
 }
 
 /** "today", "yesterday" or "on Sep 17", for "Tracking started …". */

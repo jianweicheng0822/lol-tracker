@@ -1,6 +1,6 @@
 import type { RankedEntry } from "../../types";
 import { hideOnError } from "../../utils/ddragon";
-import { TIER_TINTS, TIER_COLORS } from "../../utils/lp";
+import { TIER_TINTS, TIER_COLORS, formatRank } from "../../utils/lp";
 import { winRateColor, COLORS } from "../../utils/colors";
 
 const QUEUE_LABELS: Record<string, string> = {
@@ -18,11 +18,7 @@ function tierIconUrl(tier: string): string {
   return `${TIER_ICON_BASE}/${tier.toLowerCase()}.${ext}`;
 }
 
-const APEX_TIERS = new Set(["MASTER", "GRANDMASTER", "CHALLENGER"]);
 
-function formatTier(tier: string): string {
-  return tier.charAt(0) + tier.slice(1).toLowerCase();
-}
 
 type Props = { entries: RankedEntry[] };
 
@@ -64,7 +60,7 @@ export default function RankSummary({ entries }: Props) {
               <div>
                 <div style={styles.tierRow}>
                   <span style={{ ...styles.tier, color: tierColor }}>
-                    {formatTier(entry.tier)}{APEX_TIERS.has(entry.tier) ? "" : ` ${entry.rank}`}
+                    {formatRank(entry.tier, entry.rank)}
                   </span>
                   <span style={styles.lp}>{entry.leaguePoints} LP</span>
                 </div>

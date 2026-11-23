@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { fetchLpHistory } from "../../api";
-import { toAbsoluteLp, TIER_COLORS, pickDefaultRange, filterByRange, startedDay } from "../../utils/lp";
+import { toAbsoluteLp, TIER_COLORS, pickDefaultRange, filterByRange, startedDay, formatRank } from "../../utils/lp";
 import { COLORS } from "../../utils/colors";
 import type { LpSnapshot } from "../../types";
 
@@ -18,16 +18,8 @@ type DataPoint = {
   gained: boolean;
 };
 
-function formatTier(tier: string): string {
-  return tier.charAt(0) + tier.slice(1).toLowerCase();
-}
 
-const APEX_TIERS = new Set(["MASTER", "GRANDMASTER", "CHALLENGER"]);
 
-function formatRank(tier: string, rank: string): string {
-  const t = formatTier(tier);
-  return APEX_TIERS.has(tier.toUpperCase()) ? t : `${t} ${rank}`;
-}
 
 function formatDate(timestamp: number): string {
   const d = new Date(timestamp);

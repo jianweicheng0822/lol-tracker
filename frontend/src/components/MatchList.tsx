@@ -468,8 +468,8 @@ export default function MatchList({ matches, region, puuid, onLoadMore, isLoadin
           const isWin = isArena ? (m.placement >= 1 && m.placement <= 4) : m.win;
 
           // Hextech: teal for wins, red for losses (gold is reserved for "you" and highlights)
-          const winColor = isWin ? "#0AC8B9" : "#E84057";
-          const winTextColor = isWin ? "#0AC8B9" : "#E84057";
+          const winColor = isWin ? COLORS.teal : COLORS.loss;
+          const winTextColor = winColor;
           const winText = isWin ? "Victory" : "Defeat";
           const winBg = isWin
             ? "linear-gradient(135deg, rgba(10,200,185,0.10) 0%, rgba(10,200,185,0.03) 100%)"

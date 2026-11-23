@@ -10,7 +10,7 @@ import type { FavoritePlayer, MatchSummary, RankedEntry } from "../types";
 import { fetchAccountByPuuid, fetchMatchSummaries, fetchRanked, removeFavorite } from "../api";
 import { useDdragonVersion, ddragonBase, hideOnError } from "../utils/ddragon";
 import { COLORS } from "../utils/colors";
-import { TIER_COLORS, tierIconUrl } from "../utils/lp";
+import { TIER_COLORS, tierIconUrl, formatRank } from "../utils/lp";
 
 type FavoritesListProps = {
   favorites: FavoritePlayer[];
@@ -137,7 +137,7 @@ function FavoriteAvatar({ fav, onRemove }: { fav: FavoritePlayer; onRemove: () =
 
   const tierColor = solo ? TIER_COLORS[solo.tier.toUpperCase()] ?? COLORS.gold : COLORS.textDim;
   const rankName = solo
-    ? `${solo.tier.charAt(0)}${solo.tier.slice(1).toLowerCase()}${["MASTER", "GRANDMASTER", "CHALLENGER"].includes(solo.tier.toUpperCase()) ? "" : ` ${solo.rank}`}`
+    ? formatRank(solo.tier, solo.rank)
     : solo === null ? "Unranked" : "";
 
   return (

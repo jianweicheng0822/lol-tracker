@@ -4,14 +4,13 @@ import type { ChampionMastery, MatchSummary, MultiSearchPlayer } from "../types"
 import { fetchMatchSummaries } from "../api";
 import { useDdragonVersion, ddragonBase, hideOnError, championIconFallbackUrl } from "../utils/ddragon";
 import { loadChampionMap } from "../utils/champion";
-import { TIER_COLORS } from "../utils/lp";
+import { TIER_COLORS, formatRank } from "../utils/lp";
 import { COLORS, winRateColor } from "../utils/colors";
 
 const TIER_ICON_BASE =
   "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-mini-crests";
 
 const SVG_ONLY_TIERS = new Set(["EMERALD"]);
-const APEX_TIERS = new Set(["MASTER", "GRANDMASTER", "CHALLENGER"]);
 
 function tierIconUrl(tier: string): string {
   const ext = SVG_ONLY_TIERS.has(tier.toUpperCase()) ? "svg" : "png";
@@ -22,9 +21,6 @@ function tierIconUrl(tier: string): string {
 const RANKED_SOLO_QUEUE = 420;
 const RECENT_GAME_COUNT = 5;
 
-function formatTier(tier: string): string {
-  return tier.charAt(0) + tier.slice(1).toLowerCase();
-}
 
 export default function MultiSearchCard({ player, region }: { player: MultiSearchPlayer; region: string }) {
   const navigate = useNavigate();
@@ -203,7 +199,7 @@ function RankLine({ label, entry }: { label: string; entry?: { tier: string; ran
       <img src={tierIconUrl(entry.tier)} alt={entry.tier} style={styles.tierIcon} onError={hideOnError} />
       <span style={styles.queueLabel}>{label}</span>
       <span style={{ ...styles.tierText, color: tierColor }}>
-        {formatTier(entry.tier)}{APEX_TIERS.has(entry.tier) ? "" : ` ${entry.rank}`}
+        {formatRank(entry.tier, entry.rank)}
       </span>
       <span style={styles.lp}>{entry.leaguePoints} LP</span>
       <span style={{ ...styles.winRate, color: winRateColor(wr) }}>{wr}%</span>

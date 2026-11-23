@@ -6,23 +6,19 @@ import { fetchAccount, fetchLiveGame } from "../api";
 import { useDdragonVersion, ddragonBase, championIconFallbackUrl, isCommunityDragonUrl, hideOnError, QUEUE_NAMES } from "../utils/ddragon";
 import { loadChampionMap } from "../utils/champion";
 import { COLORS, winRateColor } from "../utils/colors";
-import { TIER_COLORS } from "../utils/lp";
+import { TIER_COLORS, formatRank } from "../utils/lp";
 import AppHeader from "../components/AppHeader";
 import { useDocumentTitle } from "../hooks/useDocumentTitle";
 
 const TIER_ICON_BASE =
   "https://raw.communitydragon.org/latest/plugins/rcp-fe-lol-static-assets/global/default/images/ranked-mini-crests";
 const SVG_ONLY_TIERS = new Set(["EMERALD"]);
-const APEX_TIERS = new Set(["MASTER", "GRANDMASTER", "CHALLENGER"]);
 
 function tierIconUrl(tier: string): string {
   const ext = SVG_ONLY_TIERS.has(tier.toUpperCase()) ? "svg" : "png";
   return `${TIER_ICON_BASE}/${tier.toLowerCase()}.${ext}`;
 }
 
-function formatTier(tier: string): string {
-  return tier.charAt(0) + tier.slice(1).toLowerCase();
-}
 
 function formatGameDuration(startTime: number, gameLength: number): string {
   const elapsed = gameLength > 0
@@ -196,7 +192,7 @@ function TeamColumn({
                 <>
                   <img src={tierIconUrl(p.tier)} alt={p.tier} style={styles.tierIcon} onError={hideOnError} />
                   <span style={{ ...styles.tierText, color: TIER_COLORS[p.tier] || COLORS.textPrimary }}>
-                    {formatTier(p.tier)}{APEX_TIERS.has(p.tier) ? "" : ` ${p.rank}`}
+                    {formatRank(p.tier, p.rank ?? "")}
                   </span>
                   <span style={styles.lp}>{p.leaguePoints} LP</span>
                   <span style={{ ...styles.wr, color: winRateColor(p.winRate) }}>{p.winRate}%</span>

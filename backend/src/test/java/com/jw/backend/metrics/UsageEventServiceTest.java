@@ -45,6 +45,20 @@ class UsageEventServiceTest {
     }
 
     @Test
+    void record_skipsTheSmokeTests() {
+        // A real Chrome user agent, plus the marker from frontend/playwright.smoke.config.ts
+        MockHttpServletRequest req = new MockHttpServletRequest();
+        req.addHeader("User-Agent", "Mozilla/5.0 (X11; Linux x86_64) Chrome/130.0 Safari/537.36 LoLTrackerSmoke");
+        req.addHeader("X-Visitor-Id", "0123456789abcdef-xyz");
+
+        service.record("page_view", "home", req);
+
+        verifyNoInteractions(jdbc);
+        assertTrue(UsageEventService.isBot("Mozilla/5.0 Chrome/130.0 LoLTrackerSmoke"));
+        assertFalse(UsageEventService.isBot(CHROME));
+    }
+
+    @Test
     void record_stopsAtTheDailyCap() {
         for (int i = 0; i < 5; i++) service.record("page_view", "home", "visitor-id-000001", null);
         verify(jdbc, times(3)).update(anyString(), any(), any(), any(), any());

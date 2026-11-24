@@ -124,7 +124,8 @@ function fetchOpts(extra?: RequestInit): RequestInit {
 export async function login(username: string, password: string) {
   const res = await fetchWithTimeout(`${BASE}/api/auth/login`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    // No fetchOpts: a stale token mustn't ride along, but the visitor id should (usage metrics)
+    headers: { "Content-Type": "application/json", "X-Visitor-Id": getVisitorId() },
     body: JSON.stringify({ username, password }),
   });
   if (!res.ok) throw new Error(await readErrorMessage(res));
@@ -143,7 +144,8 @@ export async function login(username: string, password: string) {
 export async function register(username: string, password: string) {
   const res = await fetchWithTimeout(`${BASE}/api/auth/register`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    // No fetchOpts: a stale token mustn't ride along, but the visitor id should (usage metrics)
+    headers: { "Content-Type": "application/json", "X-Visitor-Id": getVisitorId() },
     body: JSON.stringify({ username, password }),
   });
   if (!res.ok) throw new Error(await readErrorMessage(res));

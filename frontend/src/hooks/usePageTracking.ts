@@ -10,10 +10,12 @@ import { externalReferrer, pageName } from "../utils/visitor";
 
 /**
  * Send a page view whenever the path changes (not on tab or query-string changes). The first one
- * also says which site the visitor came from. Does nothing in development, so local testing
- * doesn't show up in the numbers.
+ * also says which site the visitor came from. Does nothing in development or on localhost (a
+ * `vite preview` build proxied to the live API), so local testing doesn't show up in the numbers.
  */
-export function usePageTracking(enabled = !import.meta.env.DEV) {
+export function usePageTracking(
+  enabled = !import.meta.env.DEV && !["localhost", "127.0.0.1"].includes(window.location.hostname),
+) {
   const { pathname } = useLocation();
   const first = useRef(true);
 

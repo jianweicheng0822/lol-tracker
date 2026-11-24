@@ -22,6 +22,11 @@ import java.util.Map;
  *
  * <p>Every visitor id an admin was ever logged in with is left out, including that browser's
  * visits while logged out, so testing the site doesn't count as real use.</p>
+ *
+ * <p>Only visitors the frontend identified count as visitors. An {@code ip-} id is a request
+ * without one, mostly the OAuth callback: a browser redirect from someone the frontend already
+ * counts, and a new id every day, so counting it would add a visitor per login. Its events still
+ * count as actions.</p>
  */
 @Service
 public class MetricsService {
@@ -34,7 +39,9 @@ public class MetricsService {
 
     /**
      * The events in the range, minus the admins'. {@code day} is the local date in the metrics
-     * zone. {@code firsts} and {@code days_seen} are only computed by queries that use them.
+     * zone; {@code known} is whether the visitor id came from the frontend, the only ones counted
+     * as visitors. {@code firsts} and {@code days_seen} cover only those, and are only computed by
+     * queries that use them.
      */
     private static final String BASE = """
             WITH admin_visitors AS (
@@ -42,19 +49,20 @@ public class MetricsService {
             ),
             ev AS (
                 SELECT e.event, e.visitor_id, e.username, e.detail, e.created_at,
-                       (e.created_at AT TIME ZONE :zone)::date AS day
+                       (e.created_at AT TIME ZONE :zone)::date AS day,
+                       e.visitor_id NOT LIKE 'ip-%' AS known
                 FROM usage_events e
                 WHERE e.created_at >= :start AND e.created_at < :end
                   AND e.visitor_id NOT IN (SELECT visitor_id FROM admin_visitors)
             ),
             firsts AS (
                 SELECT visitor_id, MIN(created_at) AS first_at FROM usage_events
-                WHERE visitor_id IN (SELECT visitor_id FROM ev) GROUP BY visitor_id
+                WHERE visitor_id IN (SELECT visitor_id FROM ev WHERE known) GROUP BY visitor_id
             ),
             days_seen AS (
                 SELECT visitor_id, COUNT(DISTINCT (created_at AT TIME ZONE :zone)::date) AS n
                 FROM usage_events
-                WHERE created_at < :end AND visitor_id IN (SELECT visitor_id FROM ev)
+                WHERE created_at < :end AND visitor_id IN (SELECT visitor_id FROM ev WHERE known)
                 GROUP BY visitor_id
             )
             """;
@@ -107,7 +115,7 @@ public class MetricsService {
                 .addValue("end", startOf(to.plusDays(1)));
 
         MetricsReport.Totals totals = jdbc.queryForObject(BASE + """
-                SELECT (SELECT COUNT(DISTINCT visitor_id) FROM ev) AS visitors,
+                SELECT (SELECT COUNT(DISTINCT visitor_id) FROM ev WHERE known) AS visitors,
                        (SELECT COUNT(*) FROM firsts WHERE first_at >= :start) AS new_visitors,
                        (SELECT COUNT(*) FROM days_seen WHERE n >= 2) AS returning_visitors,
                        (SELECT COUNT(*) FROM ev WHERE event = 'page_view') AS page_views,
@@ -120,12 +128,12 @@ public class MetricsService {
         Map<LocalDate, MetricsReport.Day> byDay = new HashMap<>();
         jdbc.query(BASE + """
                 SELECT ev.day,
-                       COUNT(DISTINCT ev.visitor_id) AS visitors,
+                       COUNT(DISTINCT ev.visitor_id) FILTER (WHERE ev.known) AS visitors,
                        COUNT(DISTINCT ev.visitor_id)
                            FILTER (WHERE (f.first_at AT TIME ZONE :zone)::date = ev.day) AS new_visitors,
                        COUNT(*) FILTER (WHERE ev.event = 'page_view') AS page_views,
                        COUNT(*) FILTER (WHERE ev.event NOT IN %s) AS actions
-                FROM ev JOIN firsts f ON f.visitor_id = ev.visitor_id
+                FROM ev LEFT JOIN firsts f ON f.visitor_id = ev.visitor_id
                 GROUP BY ev.day
                 """.formatted(NOT_ACTION), params, rs -> {
             LocalDate day = rs.getDate("day").toLocalDate();
@@ -138,15 +146,18 @@ public class MetricsService {
         }
 
         List<MetricsReport.Count> features = counts(BASE + """
-                SELECT event AS name, COUNT(*) AS n, COUNT(DISTINCT visitor_id) AS visitors
+                SELECT event AS name, COUNT(*) AS n,
+                       COUNT(DISTINCT visitor_id) FILTER (WHERE known) AS visitors
                 FROM ev WHERE event NOT IN %s GROUP BY event ORDER BY n DESC, name
                 """.formatted(NOT_ACTION), params);
         List<MetricsReport.Count> pages = counts(BASE + """
-                SELECT COALESCE(detail, 'unknown') AS name, COUNT(*) AS n, COUNT(DISTINCT visitor_id) AS visitors
+                SELECT COALESCE(detail, 'unknown') AS name, COUNT(*) AS n,
+                       COUNT(DISTINCT visitor_id) FILTER (WHERE known) AS visitors
                 FROM ev WHERE event = 'page_view' GROUP BY 1 ORDER BY n DESC, name
                 """, params);
         List<MetricsReport.Count> referrers = counts(BASE + """
-                SELECT detail AS name, COUNT(*) AS n, COUNT(DISTINCT visitor_id) AS visitors
+                SELECT detail AS name, COUNT(*) AS n,
+                       COUNT(DISTINCT visitor_id) FILTER (WHERE known) AS visitors
                 FROM ev WHERE event = 'referral' AND detail IS NOT NULL
                 GROUP BY detail ORDER BY visitors DESC, n DESC, name LIMIT 20
                 """, params);

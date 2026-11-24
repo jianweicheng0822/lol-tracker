@@ -32,7 +32,8 @@ import java.util.regex.Pattern;
  *
  * <p>Rows are written on a background thread: tracking must never slow down or fail the request
  * it describes, so failures are only logged. Bots and scripts (by user agent) are skipped, and a
- * daily cap keeps a flood of requests from filling the table.</p>
+ * daily cap keeps a flood of requests from filling the table. The post-deploy smoke tests drive a
+ * real Chrome, so their user agent carries {@code LoLTrackerSmoke} to be skipped too.</p>
  *
  * <p>A visitor is the random id the frontend keeps in localStorage and sends as
  * {@value #VISITOR_HEADER}. Without one (a browser redirect, a script) it's a hash of IP, user
@@ -47,7 +48,9 @@ public class UsageEventService {
     static final Pattern VISITOR_ID = Pattern.compile("^[A-Za-z0-9-]{16,64}$");
     static final Pattern BOT_USER_AGENT = Pattern.compile(
             "bot|crawl|spider|slurp|curl|wget|python|java/|go-http|okhttp|headless|axios|node-fetch|"
-                    + "httpclient|scrapy|lighthouse|facebookexternalhit|preview|monitor|uptime|postman",
+                    + "httpclient|scrapy|lighthouse|facebookexternalhit|preview|monitor|uptime|postman|"
+                    // frontend/playwright.smoke.config.ts
+                    + "loltrackersmoke",
             Pattern.CASE_INSENSITIVE);
     static final int DETAIL_MAX = 100;
     static final int USERNAME_MAX = 255;

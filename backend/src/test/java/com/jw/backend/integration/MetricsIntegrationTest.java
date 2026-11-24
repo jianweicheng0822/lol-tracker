@@ -109,6 +109,28 @@ class MetricsIntegrationTest extends BaseIntegrationSupport {
             .andExpect(status().isNotFound());
     }
 
+    @Test
+    void report_doesNotCountIpVisitorsAsVisitors_butCountsTheirEvents() {
+        LocalDate today = metricsService.today();
+        String oauthHop = "ip-0123456789abcdef01234567";
+        insert(A, null, "page_view", "home", today);
+        // A, signing in with Google: the callback is a redirect without the visitor header
+        insert(oauthHop, null, "login_oauth", "google", today);
+        // Only seen through ip- ids: no visitor at all
+        insert("ip-aaaaaaaaaaaaaaaaaaaaaaaa", null, "player_view", "NA", today);
+        insert("ip-bbbbbbbbbbbbbbbbbbbbbbbb", null, "page_view", "home", today.minusDays(1));
+
+        MetricsReport report = metricsService.lastDays(7);
+
+        assertEquals(new MetricsReport.Totals(1, 1, 0, 2, 2, 0), report.totals());
+        assertEquals(new MetricsReport.Day(today, 1, 1, 1, 2), report.daily().get(6));
+        // Days with only ip- events keep their page views and actions
+        assertEquals(new MetricsReport.Day(today.minusDays(1), 0, 0, 1, 0), report.daily().get(5));
+        assertEquals(List.of(new MetricsReport.Count("login_oauth", 1, 0), new MetricsReport.Count("player_view", 1, 0)),
+                report.features());
+        assertEquals(List.of(new MetricsReport.Count("home", 2, 1)), report.pages());
+    }
+
     private void insert(String visitor, String username, String event, String detail, LocalDate day) {
         Timestamp at = Timestamp.from(day.atTime(LocalTime.NOON).atZone(metricsService.zone()).toInstant());
         jdbc.update("INSERT INTO usage_events (event, visitor_id, username, detail, created_at) VALUES (?, ?, ?, ?, ?)",

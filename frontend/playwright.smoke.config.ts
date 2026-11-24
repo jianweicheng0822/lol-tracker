@@ -16,5 +16,14 @@ export default defineConfig({
   // Live Riot lookups can be slow on a cold cache
   expect: { timeout: 30_000 },
   timeout: 90_000,
-  projects: [{ name: "desktop", use: { ...devices["Desktop Chrome"] } }],
+  projects: [
+    {
+      name: "desktop",
+      use: {
+        ...devices["Desktop Chrome"],
+        // Marks these runs as tests so the site's visitor stats skip them (UsageEventService)
+        userAgent: `${devices["Desktop Chrome"].userAgent} LoLTrackerSmoke`,
+      },
+    },
+  ],
 });

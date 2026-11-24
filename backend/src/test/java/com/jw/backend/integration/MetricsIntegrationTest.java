@@ -109,6 +109,20 @@ class MetricsIntegrationTest extends BaseIntegrationSupport {
             .andExpect(status().isNotFound());
     }
 
+    @Test
+    void report_doesNotCountIdsWithoutABrowser_asVisitors() {
+        LocalDate today = metricsService.today();
+        insert(A, null, "page_view", "home", today);
+        // An OAuth callback is a redirect without the browser's id, so it gets an ip- id
+        insert("ip-0123456789abcdef01234567", null, "login_oauth", "google", today);
+
+        MetricsReport report = metricsService.lastDays(7);
+
+        assertEquals(new MetricsReport.Totals(1, 1, 0, 1, 1, 0), report.totals());
+        assertEquals(new MetricsReport.Day(today, 1, 1, 1, 1), report.daily().get(6));
+        assertEquals(List.of(new MetricsReport.Count("login_oauth", 1, 0)), report.features());
+    }
+
     private void insert(String visitor, String username, String event, String detail, LocalDate day) {
         Timestamp at = Timestamp.from(day.atTime(LocalTime.NOON).atZone(metricsService.zone()).toInstant());
         jdbc.update("INSERT INTO usage_events (event, visitor_id, username, detail, created_at) VALUES (?, ?, ?, ?, ?)",

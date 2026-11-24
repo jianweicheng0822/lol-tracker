@@ -47,7 +47,9 @@ public class UsageEventService {
     static final Pattern VISITOR_ID = Pattern.compile("^[A-Za-z0-9-]{16,64}$");
     static final Pattern BOT_USER_AGENT = Pattern.compile(
             "bot|crawl|spider|slurp|curl|wget|python|java/|go-http|okhttp|headless|axios|node-fetch|"
-                    + "httpclient|scrapy|lighthouse|facebookexternalhit|preview|monitor|uptime|postman",
+                    + "httpclient|scrapy|lighthouse|facebookexternalhit|preview|monitor|uptime|postman|"
+                    // The post-deploy smoke tests run real Chrome; their config adds this marker
+                    + "loltrackersmoke",
             Pattern.CASE_INSENSITIVE);
     static final int DETAIL_MAX = 100;
     static final int USERNAME_MAX = 255;

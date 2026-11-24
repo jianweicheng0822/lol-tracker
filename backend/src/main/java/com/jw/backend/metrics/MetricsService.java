@@ -22,6 +22,11 @@ import java.util.Map;
  *
  * <p>Every visitor id an admin was ever logged in with is left out, including that browser's
  * visits while logged out, so testing the site doesn't count as real use.</p>
+ *
+ * <p>Only browser ids count as visitors. An {@code ip-} id is what a request without the browser's
+ * id gets (an OAuth redirect, a script that got past the bot filter), and it changes every day,
+ * so counting it would add a second "visitor" for every OAuth sign-in. Those events still count
+ * as feature use.</p>
  */
 @Service
 public class MetricsService {
@@ -31,6 +36,9 @@ public class MetricsService {
 
     /** Not feature use: page views and where visitors came from are reported separately. */
     private static final String NOT_ACTION = "('page_view', 'referral')";
+
+    /** A visitor id that belongs to a browser (see the class comment). */
+    private static final String BROWSER_ID = "visitor_id NOT LIKE 'ip-%'";
 
     /**
      * The events in the range, minus the admins'. {@code day} is the local date in the metrics
@@ -49,15 +57,15 @@ public class MetricsService {
             ),
             firsts AS (
                 SELECT visitor_id, MIN(created_at) AS first_at FROM usage_events
-                WHERE visitor_id IN (SELECT visitor_id FROM ev) GROUP BY visitor_id
+                WHERE visitor_id IN (SELECT visitor_id FROM ev) AND %1$s GROUP BY visitor_id
             ),
             days_seen AS (
                 SELECT visitor_id, COUNT(DISTINCT (created_at AT TIME ZONE :zone)::date) AS n
                 FROM usage_events
-                WHERE created_at < :end AND visitor_id IN (SELECT visitor_id FROM ev)
+                WHERE created_at < :end AND visitor_id IN (SELECT visitor_id FROM ev) AND %1$s
                 GROUP BY visitor_id
             )
-            """;
+            """.formatted(BROWSER_ID);
 
     private final NamedParameterJdbcTemplate jdbc;
     private final List<String> admins;
@@ -107,27 +115,27 @@ public class MetricsService {
                 .addValue("end", startOf(to.plusDays(1)));
 
         MetricsReport.Totals totals = jdbc.queryForObject(BASE + """
-                SELECT (SELECT COUNT(DISTINCT visitor_id) FROM ev) AS visitors,
+                SELECT (SELECT COUNT(DISTINCT visitor_id) FROM ev WHERE %2$s) AS visitors,
                        (SELECT COUNT(*) FROM firsts WHERE first_at >= :start) AS new_visitors,
                        (SELECT COUNT(*) FROM days_seen WHERE n >= 2) AS returning_visitors,
                        (SELECT COUNT(*) FROM ev WHERE event = 'page_view') AS page_views,
-                       (SELECT COUNT(*) FROM ev WHERE event NOT IN %s) AS actions,
+                       (SELECT COUNT(*) FROM ev WHERE event NOT IN %1$s) AS actions,
                        (SELECT COUNT(*) FROM ev WHERE event = 'signup') AS signups
-                """.formatted(NOT_ACTION), params, (rs, i) -> new MetricsReport.Totals(
+                """.formatted(NOT_ACTION, BROWSER_ID), params, (rs, i) -> new MetricsReport.Totals(
                 rs.getLong("visitors"), rs.getLong("new_visitors"), rs.getLong("returning_visitors"),
                 rs.getLong("page_views"), rs.getLong("actions"), rs.getLong("signups")));
 
         Map<LocalDate, MetricsReport.Day> byDay = new HashMap<>();
         jdbc.query(BASE + """
                 SELECT ev.day,
-                       COUNT(DISTINCT ev.visitor_id) AS visitors,
+                       COUNT(DISTINCT ev.visitor_id) FILTER (WHERE ev.%2$s) AS visitors,
                        COUNT(DISTINCT ev.visitor_id)
                            FILTER (WHERE (f.first_at AT TIME ZONE :zone)::date = ev.day) AS new_visitors,
                        COUNT(*) FILTER (WHERE ev.event = 'page_view') AS page_views,
-                       COUNT(*) FILTER (WHERE ev.event NOT IN %s) AS actions
-                FROM ev JOIN firsts f ON f.visitor_id = ev.visitor_id
+                       COUNT(*) FILTER (WHERE ev.event NOT IN %1$s) AS actions
+                FROM ev LEFT JOIN firsts f ON f.visitor_id = ev.visitor_id
                 GROUP BY ev.day
-                """.formatted(NOT_ACTION), params, rs -> {
+                """.formatted(NOT_ACTION, BROWSER_ID), params, rs -> {
             LocalDate day = rs.getDate("day").toLocalDate();
             byDay.put(day, new MetricsReport.Day(day, rs.getLong("visitors"), rs.getLong("new_visitors"),
                     rs.getLong("page_views"), rs.getLong("actions")));
@@ -138,18 +146,21 @@ public class MetricsService {
         }
 
         List<MetricsReport.Count> features = counts(BASE + """
-                SELECT event AS name, COUNT(*) AS n, COUNT(DISTINCT visitor_id) AS visitors
-                FROM ev WHERE event NOT IN %s GROUP BY event ORDER BY n DESC, name
-                """.formatted(NOT_ACTION), params);
+                SELECT event AS name, COUNT(*) AS n,
+                       COUNT(DISTINCT visitor_id) FILTER (WHERE %2$s) AS visitors
+                FROM ev WHERE event NOT IN %1$s GROUP BY event ORDER BY n DESC, name
+                """.formatted(NOT_ACTION, BROWSER_ID), params);
         List<MetricsReport.Count> pages = counts(BASE + """
-                SELECT COALESCE(detail, 'unknown') AS name, COUNT(*) AS n, COUNT(DISTINCT visitor_id) AS visitors
+                SELECT COALESCE(detail, 'unknown') AS name, COUNT(*) AS n,
+                       COUNT(DISTINCT visitor_id) FILTER (WHERE %s) AS visitors
                 FROM ev WHERE event = 'page_view' GROUP BY 1 ORDER BY n DESC, name
-                """, params);
+                """.formatted(BROWSER_ID), params);
         List<MetricsReport.Count> referrers = counts(BASE + """
-                SELECT detail AS name, COUNT(*) AS n, COUNT(DISTINCT visitor_id) AS visitors
+                SELECT detail AS name, COUNT(*) AS n,
+                       COUNT(DISTINCT visitor_id) FILTER (WHERE %s) AS visitors
                 FROM ev WHERE event = 'referral' AND detail IS NOT NULL
                 GROUP BY detail ORDER BY visitors DESC, n DESC, name LIMIT 20
-                """, params);
+                """.formatted(BROWSER_ID), params);
 
         List<MetricsReport.Recent> recent = jdbc.query(BASE + """
                 SELECT created_at, event, detail, visitor_id, username FROM ev

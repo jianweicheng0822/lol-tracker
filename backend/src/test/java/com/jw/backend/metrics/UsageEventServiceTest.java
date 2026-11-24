@@ -36,7 +36,8 @@ class UsageEventServiceTest {
 
     @Test
     void record_skipsBotsAndMissingUserAgents() {
-        for (String ua : new String[]{null, "", "Googlebot/2.1", "curl/8.4", "Mozilla/5.0 HeadlessChrome/130"}) {
+        for (String ua : new String[]{null, "", "Googlebot/2.1", "curl/8.4", "Mozilla/5.0 HeadlessChrome/130",
+                "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130.0 Safari/537.36 LoLTrackerSmoke"}) {
             MockHttpServletRequest req = new MockHttpServletRequest();
             if (ua != null) req.addHeader("User-Agent", ua);
             service.record("page_view", "home", req);

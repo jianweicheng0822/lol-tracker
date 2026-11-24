@@ -19,7 +19,8 @@ public record FeedbackRequest(String type, String message, String email, String 
     public static final int EMAIL_MAX = 254;
     public static final Set<String> TYPES = Set.of("bug", "idea", "other");
 
-    private static final Pattern EMAIL = Pattern.compile("^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$");
+    // The domain is split into dot-free labels so the pattern can't backtrack (CodeQL: ReDoS)
+    private static final Pattern EMAIL = Pattern.compile("^[^@\\s]+@[^@\\s.]+(?:\\.[^@\\s.]+)+$");
 
     /** True when the hidden honeypot field was filled in, i.e. a bot sent this. */
     public boolean isBot() {

@@ -40,6 +40,13 @@ class FeedbackRequestTest {
         assertNotNull(req("bug", "Something broke", "not-an-email").validationError());
         assertNotNull(req("bug", "Something broke", "a@b").validationError());
         assertNotNull(req("bug", "Something broke", "a".repeat(250) + "@x.com").validationError());
+        assertNotNull(req("bug", "Something broke", "a@b..com").validationError());
+        assertNotNull(req("bug", "Something broke", "a@.b.com").validationError());
+    }
+
+    @Test
+    void emailWithSubdomain_accepted() {
+        assertNull(req("bug", "Something broke", "me@mail.example.co.uk").validationError());
     }
 
     @Test

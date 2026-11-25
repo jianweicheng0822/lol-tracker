@@ -1,6 +1,6 @@
 # LoL Tracker
 
-![Java](https://img.shields.io/badge/Java_25-ED8B00?style=flat&logo=openjdk&logoColor=white)
+![Java](https://img.shields.io/badge/Java_21-ED8B00?style=flat&logo=openjdk&logoColor=white)
 ![Spring Boot](https://img.shields.io/badge/Spring_Boot-6DB33F?style=flat&logo=spring-boot&logoColor=white)
 ![React](https://img.shields.io/badge/React-61DAFB?style=flat&logo=react&logoColor=black)
 ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat&logo=typescript&logoColor=white)
@@ -19,11 +19,12 @@ A full-stack League of Legends stats site with AI match coaching: search any pla
 ## Engineering highlights
 
 - **Zero-downtime deploys on a single 1 GB server.** Each release starts next to the running one (blue/green) and nginx switches over only once it's healthy; if it never gets healthy, the old version keeps serving. Measured during a deploy: 0 failed requests out of 1,046. → [Deployment](#deployment)
-- **966 automated tests gate every deploy.** 527 frontend unit tests, 404 backend unit and 15 integration tests (real PostgreSQL via Testcontainers), and 20 Playwright end-to-end runs on desktop and phone. Smoke tests then check the live site after each release. → [Testing](#testing)
+- **1,000+ automated tests gate every deploy.** 555 frontend unit tests, 457 backend unit and 26 integration tests (real PostgreSQL via Testcontainers), and 20 Playwright end-to-end runs on desktop and phone. Smoke tests then check the live site after each release. → [Testing](#testing)
 - **Security-reviewed.** OAuth sign-in hardened against login CSRF, per-visitor rate limits behind Cloudflare, Stripe webhook signature checks, and CodeQL scanning with 0 open alerts. → [Security](#security)
 - **Accessible.** Checked with axe-core (0 violations on every page); every control works from the keyboard, and the layout holds down to a 320px-wide phone.
-- **Fast despite a rate-limited data source.** About 65% of the 14M+ Riot API lookups so far were served from Redis, which takes a 10-match history load from ~700 ms to ~200 ms. A sliding-window limiter keeps calls under Riot's 100-requests-per-2-minutes cap, and leaderboards are prefetched in the background within that budget.
+- **Fast despite a rate-limited data source.** About 65% of the 14M+ Riot API lookups so far were served from Redis, which takes a 10-match history load from ~700 ms to ~200 ms. A two-window sliding limiter keeps calls under both of Riot's caps (20 requests per second and 100 per 2 minutes), and leaderboards are prefetched in the background within that budget.
 - **Its own data pipeline.** A scheduled job records matches and LP for tracked players, building the LP history Riot doesn't provide: 140K+ matches and 35K+ LP snapshots for 1,200+ players so far.
+- **Self-built, bot-filtered usage analytics.** Page views and feature use (player lookups, live games, match details, sign-ups) are recorded in PostgreSQL. Bots, the post-deploy smoke tests and the admins' own browsers are left out, and raw IPs are never stored. An admin page shows visitors, referrers and feature use, and a summary of the day before is emailed every morning.
 - **Streaming AI coaching behind a PRO tier.** Match analysis streams from OpenAI over Server-Sent Events. PRO is granted only by signature-verified Stripe webhooks (Stripe runs in test mode, so no real charges).
 
 ## Screenshots
@@ -73,7 +74,9 @@ A full-stack League of Legends stats site with AI match coaching: search any pla
 
 **Feedback** — A Feedback button on every page (in the header on wider screens, floating in the corner on phones) sends bug reports and ideas (with the page they came from) straight to the database, and emails each one to the maintainer when `FEEDBACK_NOTIFY_EMAIL` is set. Admins read and resolve them in an inbox reached from the account menu; to everyone else the inbox doesn't exist (404)
 
-**Accounts** — Username/password or Google/Discord sign-in. Without an account, everything except AI coaching and favorites is available
+**Accounts** — Username/password or Google/Discord sign-in. Signed-in users can change their username and link Google or Discord to an existing account to sign in with it. Without an account, everything except AI coaching and favorites is available
+
+**Usage Analytics** — Admins see visitors (new and returning), feature use, pages, referrers and recent activity at `/admin/usage`, plus a daily summary email. Events are written in the background, capped per day and kept for 180 days
 
 **Subscriptions** — FREE and PRO via Stripe. Everything except AI coaching is free; PRO ($4.99/month) adds AI match coaching. Stripe is in test mode, so checkout takes Stripe's test cards and nothing is actually charged
 
@@ -113,13 +116,13 @@ The React app is built into the Spring Boot image and served by it, so one conta
 
 | Suite | Count | Tool | What it covers |
 |-------|------:|------|----------------|
-| Frontend unit | 527 | Vitest, React Testing Library | Components, pages, hooks, utilities, API client |
-| Backend unit | 404 | JUnit, MockMvc, Mockito | Controllers (`@WebMvcTest` with mocked services) and services (Mockito), no database |
-| Backend integration | 15 | Testcontainers | Real PostgreSQL with the Flyway migrations: auth, favorites, subscriptions, feedback |
+| Frontend unit | 555 | Vitest, React Testing Library | Components, pages, hooks, utilities, API client |
+| Backend unit | 457 | JUnit, MockMvc, Mockito | Controllers (`@WebMvcTest` with mocked services) and services (Mockito), no database |
+| Backend integration | 26 | Testcontainers | Real PostgreSQL with the Flyway migrations: auth, account linking, favorites, subscriptions, feedback, usage analytics |
 | End-to-end | 20 | Playwright | 10 user journeys, each on desktop and phone |
 | Smoke | 3 | Playwright | The live site, right after each deploy |
 
-Everything except the smoke tests runs in CI on every pull request and push. Backend line coverage must stay at 70% or more (JaCoCo; currently 76%).
+Everything except the smoke tests runs in CI on every pull request and push. Backend line coverage must stay at 70% or more (JaCoCo; currently 81%).
 
 **End-to-end tests** (`frontend/e2e`) run the production build in Chromium. The API is served from fixtures and every request outside the app is blocked, so the tests are deterministic and never depend on Riot. They cover:
 
@@ -141,9 +144,9 @@ The tests were checked to fail when the feature they cover is broken.
 
 | Area | Count | Examples |
 |------|------:|----------|
-| Components | 245 | MatchList, ScoreboardTable, FavoritesList, PerformanceModal, ProfileHeader, OverviewTab, ChampionsTab |
-| Utilities | 101 | `playerInsights`, `trends`, LP conversion and chart axes, URL helpers |
-| Pages and routing | 103 | HomePage, PlayerPage, MatchDetailPage, LeaderboardPage, MultiSearchPage, AdminFeedbackPage |
+| Components | 260 | MatchList, ScoreboardTable, FavoritesList, PerformanceModal, ProfileHeader, OverviewTab, ChampionsTab |
+| Utilities | 106 | `playerInsights`, `trends`, LP conversion and chart axes, URL helpers |
+| Pages and routing | 111 | HomePage, PlayerPage, MatchDetailPage, LeaderboardPage, MultiSearchPage, AdminFeedbackPage |
 | API client | 53 | Token handling, login/register, error parsing |
 | Hooks | 25 | `useAuth`, `useBodyScrollLock`, `useIsMobile`, `useTabNavigation`, `useDocumentTitle` |
 
@@ -250,7 +253,7 @@ docker run -p 8080:8080 \
 ### Backend
 | Technology | Purpose |
 |------------|---------|
-| Java 25 (LTS) / Spring Boot 3.5 | Web framework and REST API (code targets Java 21) |
+| Java 21 / Spring Boot 3.5 | Web framework and REST API (built and run on Java 25 in production) |
 | Spring Security + JWT | Stateless authentication (jjwt) |
 | Spring Data JPA | Database access (repositories) |
 | PostgreSQL | Relational database |
@@ -360,7 +363,9 @@ Create a `backend/.env` file (or set env vars). The backend uses [spring-dotenv]
 | `AI_DAILY_LIMIT` | No | `300` | Maximum AI analysis requests per UTC day across all users |
 | `ADMIN_USERNAMES` | No | — | Comma-separated usernames that can read feedback at `/admin/feedback` |
 | `FEEDBACK_DAILY_LIMIT` | No | `200` | Maximum feedback messages saved per UTC day across all users |
-| `FEEDBACK_NOTIFY_EMAIL` | No | — | Where to email new feedback; empty means it is only saved to the database |
+| `FEEDBACK_NOTIFY_EMAIL` | No | — | Where to email new feedback and the daily usage summary; empty means both are only saved to the database |
+| `METRICS_DIGEST_EMAIL` | No | `FEEDBACK_NOTIFY_EMAIL` | Send the daily usage summary somewhere else |
+| `METRICS_ZONE` | No | `America/Denver` | Time zone that usage days and the 08:00 summary follow |
 | `MAIL_USERNAME` / `MAIL_PASSWORD` | No | — | SMTP login for those emails (Gmail by default; use an App Password, not the account password) |
 | `MAIL_HOST` / `MAIL_PORT` | No | `smtp.gmail.com` / `587` | SMTP server, if not Gmail |
 | `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | No | — | Google OAuth credentials (required for Google sign-in) |
@@ -379,9 +384,12 @@ Interactive Swagger UI is available at `/swagger-ui.html` when the app is runnin
 |--------|--------|----------|-------------|
 | Auth | POST | `/api/auth/register` | Register new user, returns JWT |
 | | POST | `/api/auth/login` | Login, returns JWT |
+| | PUT | `/api/auth/username` | Change your username, returns a new JWT |
 | OAuth2 | GET | `/api/oauth2/{provider}/authorize` | Start Google/Discord sign-in (sets the state cookie, redirects) |
 | | GET | `/api/oauth2/{provider}/callback` | Provider callback; redirects to the app with a JWT |
 | | GET | `/api/oauth2/providers` | Which sign-in providers are configured |
+| | POST | `/api/oauth2/{provider}/link` | Start linking Google/Discord to the logged-in account |
+| | GET | `/api/oauth2/accounts` | Whether the account has a password, and its linked providers |
 | Summoner | GET | `/api/summoner` | Resolve Riot ID to account |
 | | GET | `/api/summoner/by-puuid` | Resolve PUUID to account |
 | Matches | GET | `/api/matches/recent` | Recent match IDs |
@@ -414,6 +422,8 @@ Interactive Swagger UI is available at `/swagger-ui.html` when the app is runnin
 | | GET | `/api/admin/status` | Whether the logged-in user is an admin |
 | | GET | `/api/admin/feedback` | Latest feedback (admins only) |
 | | PUT | `/api/admin/feedback/{id}` | Mark feedback resolved or open (admins only) |
+| Usage | POST | `/api/nav` | Record a page view (named so ad blockers don't drop it) |
+| | GET | `/api/admin/usage` | Visitors, feature use, pages and referrers (admins only) |
 | Leaderboard | GET | `/api/leaderboard` | Regional ranked leaderboard (Challenger/Grandmaster/Master) |
 | Live Game | GET | `/api/live-game` | Active game data via Spectator API |
 | Multi-Search | POST | `/api/multi-search` | Batch player lookup |
@@ -440,6 +450,8 @@ PostgreSQL with Flyway-managed migrations. The schema is validated at startup (`
 | `V7__add_search_history.sql` | Adds `search_history` table for per-user recent searches |
 | `V8__add_oauth_accounts.sql` | Adds `email` to `app_users` and `oauth_accounts` table for Google/Discord login |
 | `V9__add_feedback.sql` | Adds `feedback` table for messages sent from the feedback form |
+| `V10__add_usage_events.sql` | Adds `usage_events` table for page views and feature use |
+| `V11__add_released_usernames.sql` | Holds a username given up by a rename for 24 hours, so nobody else can take it while old tokens still carry it |
 
 </details>
 
@@ -466,6 +478,7 @@ lol-tracker/
 │   │   ├── repository/         # Spring Data JPA interfaces
 │   │   ├── entity/             # JPA entities (AppUser, MatchRecord, etc.)
 │   │   ├── dto/                # Immutable records for API transport
+│   │   ├── metrics/            # Usage analytics: event recording, admin report, daily email
 │   │   ├── region/             # Riot region routing/platform mappings
 │   │   ├── util/               # LogSanitizer, PlayerFields (input validation)
 │   │   └── exception/          # Global exception handler + custom exceptions
